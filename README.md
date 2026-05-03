@@ -116,7 +116,7 @@ This card follows the **Deye inverter convention**:
 
 ## Credits
 
-Designed and built by [@BTNBx](https://github.com/BTNBx) with assistance from Claude (Anthropic).
+Designed and built by [@BTNBx](https://github.com/BTNBx).
 
 Inspired by [sunsynk-power-flow-card](https://github.com/slipx06/sunsynk-power-flow-card).
 
