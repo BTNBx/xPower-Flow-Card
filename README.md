@@ -4,7 +4,7 @@ A modern, futuristic power flow card for **solar hybrid inverters** in Home Assi
 
 Built from scratch with solid SVG icons, animated dot-flow lines, smooth 24h sparkline charts, battery runtime estimation, and a dark glassmorphism aesthetic.
 
-![xPower Flow Card](screenshots/card.png)
+![Display Preview](card.png)
 
 ## Features
 
@@ -45,7 +45,7 @@ Built from scratch with solid SVG icons, animated dot-flow lines, smooth 24h spa
 
 Add the card via the UI and use the built-in visual editor to configure all entities, language, and options.
 
-![Editor](screenshots/editor.png)
+![Editor](editor.png)
 
 ### YAML
 
@@ -92,7 +92,7 @@ All entities default to `sensor.deye_*` naming convention. Change them in the vi
 
 When the battery is discharging, the card shows estimated runtime:
 
-![Runtime](screenshots/runtime.png)
+![Runtime](runtime.png)
 
 - Time remaining until shutdown SOC
 - ETA (clock time when battery reaches minimum)
