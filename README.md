@@ -146,6 +146,39 @@ The card normalizes all values internally to: **positive = discharging/importing
 
 ## Changelog
 
+### v1.0.4
+
+- Grid status dot removed for cleaner look
+- Label alignment improved (GRID/HOME closer to icons)
+- Flow lines no longer overlap icons or text
+- Autarky pill resized and repositioned
+- Sparkline tooltips now show actual time (e.g. `330 W · 14:30`)
+- Editor SOC field ID conflict fixed (`#ed-soc` → `#ed-ssoc`)
+
+### v1.0.3
+
+- Multi-inverter support — 8 presets: Deye, Sunsynk, Huawei, Fronius, Growatt, Victron, SolarEdge, Custom
+- Polarity normalization — configurable `bat_polarity` and `grid_polarity`
+- Preset selector in visual editor with auto-fill
+- Named constants replacing magic numbers
+- Runtime flicker fix (50W minimum threshold)
+- SVG class handling improved (`className.baseVal` → `setAttribute`)
+- Empty entity guard in `_gv()`
+- Sparkline auto-refresh every 5 minutes
+- Battery gauge fix (was inverted)
+- Unavailable sensors show `--` instead of `0 W`
+- Editor memory leak fix (event delegation)
+- HACS metadata corrected
+
+### v1.0.4
+
+- Grid status dot removed for cleaner look
+- Label alignment improved (GRID/HOME closer to icons)
+- Flow lines no longer overlap icons or text
+- Autarky pill resized and repositioned
+- Sparkline tooltips now show actual time (e.g. `330 W · 14:30`)
+- Editor SOC field ID conflict fixed (`#ed-soc` → `#ed-ssoc`)
+
 ### v1.0.2
 
 - **Multi-inverter support** — 8 presets: Deye, Sunsynk, Huawei, Fronius, Growatt, Victron, SolarEdge, Custom
