@@ -1,4 +1,4 @@
-const V='3.0.0';
+const V='1.0.2';
 
 /* ═══════════════════════════════════════
    xPower Flow Card — i18n
@@ -378,27 +378,60 @@ svg{width:100%;height:auto;display:block}
 .ss .sv{color:var(--solar)}.sc .sv{color:var(--load)}.sg .sv{color:var(--grid)}
 .sb svg{width:100%;height:40px;display:block;margin-top:4px}
 .sb path{stroke-linecap:round;stroke-linejoin:round}
+.sb{position:relative;cursor:crosshair}
+.sb-tip{position:absolute;top:2px;right:4px;font-size:10px;font-weight:600;opacity:0;transition:opacity 0.15s;pointer-events:none;padding:2px 6px;border-radius:4px;background:rgba(0,0,0,0.7)}
+.sb-tip.show{opacity:1}
+.sb line.cursor{stroke:rgba(255,255,255,0.3);stroke-width:1;stroke-dasharray:2 2;display:none}
+.sb circle.cursor-dot{fill:rgba(255,255,255,0.8);display:none}
 .ss #hs{fill:none;stroke:rgba(255,179,0,0.7);stroke-width:1.2}.sc #hl{fill:none;stroke:rgba(38,198,218,0.7);stroke-width:1.2}.sg #hg{fill:none;stroke:rgba(66,165,245,0.7);stroke-width:1.2}
 .ss #hsa{fill:rgba(255,179,0,0.12);stroke:none}.sc #hla{fill:rgba(38,198,218,0.12);stroke:none}.sg #hga{fill:rgba(66,165,245,0.12);stroke:none}
 </style>
-<ha-card><svg viewBox="0 0 526 485"><g transform="translate(25.5,10) scale(0.95)">
-<path class="fl" d="M250,96 L250,162"/><path class="fl" d="M250,242 L250,320"/><path class="fl" d="M90,202 L181,202"/><path class="fl" d="M319,202 L410,202"/>
-<path id="fs" class="fa" d="M250,96 L250,162" opacity="0"/><path id="fb" class="fa" d="M250,242 L250,320" opacity="0"/><path id="fg" class="fa" d="M90,202 L181,202" opacity="0"/><path id="fh" class="fa" d="M319,202 L410,202" opacity="0"/>
+<ha-card><svg viewBox="0 0 526 500"><g transform="translate(25.5,10) scale(0.95)">
+<path class="fl" d="M250,96 L250,162"/><path class="fl" d="M250,242 L250,312"/><path class="fl" d="M90,202 L181,202"/><path class="fl" d="M319,202 L395,202"/>
+<path id="fs" class="fa" d="M250,96 L250,162" opacity="0"/><path id="fb" class="fa" d="M250,242 L250,312" opacity="0"/><path id="fg" class="fa" d="M90,202 L181,202" opacity="0"/><path id="fh" class="fa" d="M319,202 L395,202" opacity="0"/>
 <g><g transform="translate(250,38) scale(1.65) translate(-250,-38)"><circle cx="250" cy="38" r="9" fill="var(--solar)" opacity="0.85"/><line x1="250" y1="25" x2="250" y2="21" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.6"/><line x1="250" y1="51" x2="250" y2="55" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.6"/><line x1="237" y1="38" x2="233" y2="38" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.6"/><line x1="263" y1="38" x2="267" y2="38" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.6"/><line x1="240.8" y1="28.8" x2="238" y2="26" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.5"/><line x1="259.2" y1="47.2" x2="262" y2="50" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.5"/><line x1="259.2" y1="28.8" x2="262" y2="26" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.5"/><line x1="240.8" y1="47.2" x2="238" y2="50" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.5"/></g><text x="250" y="82" class="vm" id="vs"></text><text x="250" y="-2" class="vl">${L.solar}</text><text x="305" y="30" class="vd" id="ds" text-anchor="start"></text><text x="305" y="44" class="vc" id="pv" text-anchor="start"></text></g>
 <g><rect x="186" y="167" width="128" height="70" rx="14" class="ib"/><path d="M244,182 L239,197 L247,197 L242,212 L258,192 L250,192 L255,182 Z" fill="rgba(255,255,255,0.08)"/><text x="250" y="229" class="il">${INV}</text><text x="295" y="247" class="vc" id="tp" text-anchor="start"></text></g>
-<g><g transform="translate(66,196) scale(1.65) translate(-66,-196)"><rect x="64" y="181" width="4" height="30" rx="1" fill="var(--grid)" opacity="0.8"/><rect x="54" y="183" width="24" height="3" rx="1" fill="var(--grid)" opacity="0.7"/><rect x="57" y="192" width="18" height="2.5" rx="1" fill="var(--grid)" opacity="0.6"/><path d="M60,211 L64,199 L68,199 L72,211" fill="var(--grid)" opacity="0.5"/><circle cx="56" cy="184" r="1.5" fill="var(--grid)" opacity="0.9"/><circle cx="76" cy="184" r="1.5" fill="var(--grid)" opacity="0.9"/><circle cx="58" cy="193" r="1.2" fill="var(--grid)" opacity="0.8"/><circle cx="74" cy="193" r="1.2" fill="var(--grid)" opacity="0.8"/><line x1="54" y1="184" x2="46" y2="181" stroke="var(--grid)" stroke-width="0.8" opacity="0.4"/><line x1="78" y1="184" x2="86" y2="181" stroke="var(--grid)" stroke-width="0.8" opacity="0.4"/></g><circle cx="88" cy="167" r="5" fill="var(--green)" id="gd"/><text x="66" y="238" class="vm" id="vg"></text><text x="66" y="160" class="vl">${L.grid}</text><text x="66" y="256" class="vc" id="gv"></text><text x="66" y="270" class="vd" id="dg"></text></g>
-<g><g transform="translate(434,187) scale(1.65) translate(-434,-187)"><path d="M416,188 L434,174 L452,188 Z" fill="var(--load)" opacity="0.8"/><rect x="420" y="187" width="28" height="18" rx="1" fill="var(--load)" opacity="0.6"/><rect x="430" y="195" width="8" height="10" rx="1" fill="rgba(0,0,0,0.3)"/><rect x="422" y="190" width="6" height="5" rx="0.5" fill="rgba(255,255,255,0.15)"/><rect x="440" y="190" width="6" height="5" rx="0.5" fill="rgba(255,255,255,0.15)"/><rect x="441" y="176" width="5" height="8" rx="1" fill="var(--load)" opacity="0.5"/></g><text x="434" y="232" class="vm" id="vl"></text><text x="434" y="160" class="vl">${L.load}</text><text x="434" y="248" class="vd" id="dl"></text></g>
+<g><g transform="translate(66,196) scale(1.65) translate(-66,-196)"><rect x="64" y="181" width="4" height="30" rx="1" fill="var(--grid)" opacity="0.8"/><rect x="54" y="183" width="24" height="3" rx="1" fill="var(--grid)" opacity="0.7"/><rect x="57" y="192" width="18" height="2.5" rx="1" fill="var(--grid)" opacity="0.6"/><path d="M60,211 L64,199 L68,199 L72,211" fill="var(--grid)" opacity="0.5"/><circle cx="56" cy="184" r="1.5" fill="var(--grid)" opacity="0.9"/><circle cx="76" cy="184" r="1.5" fill="var(--grid)" opacity="0.9"/><circle cx="58" cy="193" r="1.2" fill="var(--grid)" opacity="0.8"/><circle cx="74" cy="193" r="1.2" fill="var(--grid)" opacity="0.8"/><line x1="54" y1="184" x2="46" y2="181" stroke="var(--grid)" stroke-width="0.8" opacity="0.4"/><line x1="78" y1="184" x2="86" y2="181" stroke="var(--grid)" stroke-width="0.8" opacity="0.4"/></g><text x="66" y="238" class="vm" id="vg"></text><text x="66" y="150" class="vl">${L.grid}</text><text x="66" y="256" class="vc" id="gv"></text><text x="66" y="270" class="vd" id="dg"></text></g>
+<g><g transform="translate(434,187) scale(1.65) translate(-434,-187)"><path d="M416,188 L434,174 L452,188 Z" fill="var(--load)" opacity="0.8"/><rect x="420" y="187" width="28" height="18" rx="1" fill="var(--load)" opacity="0.6"/><rect x="430" y="195" width="8" height="10" rx="1" fill="rgba(0,0,0,0.3)"/><rect x="422" y="190" width="6" height="5" rx="0.5" fill="rgba(255,255,255,0.15)"/><rect x="440" y="190" width="6" height="5" rx="0.5" fill="rgba(255,255,255,0.15)"/><rect x="441" y="176" width="5" height="8" rx="1" fill="var(--load)" opacity="0.5"/></g><text x="434" y="232" class="vm" id="vl"></text><text x="434" y="150" class="vl">${L.load}</text><text x="434" y="248" class="vd" id="dl"></text></g>
 <g><g transform="translate(250,350) scale(1.70) translate(-250,-350)"><rect x="232" y="341" width="32" height="20" rx="3" fill="var(--battery)" opacity="0.75"/><rect x="264" y="345.5" width="6" height="11" rx="2" fill="var(--battery)" opacity="0.9"/><rect x="235" y="344" width="26" height="14" rx="1.5" fill="rgba(0,0,0,0.35)"/><rect id="bl" x="235" y="344" width="26" height="14" rx="1.5" fill="var(--battery)" opacity="0.45"/></g><text x="250" y="390" class="vm" id="vb"></text><text x="250" y="412" class="vs" id="vc"></text><text x="250" y="322" class="vl">${L.battery}</text><text x="310" y="344" class="vc" id="bv" text-anchor="start"></text><text x="310" y="356" class="vc" id="bt" text-anchor="start"></text><text x="250" y="433" class="vd" id="db"></text><text x="250" y="448" class="vc" id="br" style="fill:var(--battery)"></text></g>
-<rect id="ap" x="175" y="462" width="150" height="18" class="au-pill" fill="var(--green)"/><text x="250" y="472.5" class="au" id="va"></text>
+<rect id="ap" x="185" y="475" width="130" height="16" class="au-pill" fill="var(--green)"/><text x="250" y="484" class="au" id="va"></text>
 </g></svg>
 <div class="sr">
-<div class="sb sg"><div class="sb-header"><span class="sl">${L.grid24}</span><span class="sv" id="hz"></span></div><svg viewBox="0 0 200 40" preserveAspectRatio="none"><path id="hga"/><path id="hg"/></svg></div>
-<div class="sb ss"><div class="sb-header"><span class="sl">${L.solar24}</span><span class="sv" id="hv"></span></div><svg viewBox="0 0 200 40" preserveAspectRatio="none"><path id="hsa"/><path id="hs"/></svg></div>
-<div class="sb sc"><div class="sb-header"><span class="sl">${L.load24}</span><span class="sv" id="hx"></span></div><svg viewBox="0 0 200 40" preserveAspectRatio="none"><path id="hla"/><path id="hl"/></svg></div>
-</div></ha-card>`;}
+<div class="sb sg"><div class="sb-header"><span class="sl">${L.grid24}</span><span class="sv" id="hz"></span></div><svg viewBox="0 0 200 40" preserveAspectRatio="none"><path id="hga"/><path id="hg"/><line class="cursor" id="cg" x1="0" y1="0" x2="0" y2="40"/><circle class="cursor-dot" id="dg2" cx="0" cy="0" r="3"/></svg><span class="sb-tip" id="tg"></span></div>
+<div class="sb ss"><div class="sb-header"><span class="sl">${L.solar24}</span><span class="sv" id="hv"></span></div><svg viewBox="0 0 200 40" preserveAspectRatio="none"><path id="hsa"/><path id="hs"/><line class="cursor" id="cs" x1="0" y1="0" x2="0" y2="40"/><circle class="cursor-dot" id="ds2" cx="0" cy="0" r="3"/></svg><span class="sb-tip" id="ts"></span></div>
+<div class="sb sc"><div class="sb-header"><span class="sl">${L.load24}</span><span class="sv" id="hx"></span></div><svg viewBox="0 0 200 40" preserveAspectRatio="none"><path id="hla"/><path id="hl"/><line class="cursor" id="cl" x1="0" y1="0" x2="0" y2="40"/><circle class="cursor-dot" id="dl2" cx="0" cy="0" r="3"/></svg><span class="sb-tip" id="tl"></span></div>
+</div></ha-card>`;this._setupTooltips();}
 
 /* ── DOM helpers ── */
 _$(id){return this.shadowRoot.getElementById(id);}
+_setupTooltips(){
+  const self=this;
+  const setup=(svgParent,cursorId,dotId,tipId,dataKey,color)=>{
+    const svg=self.shadowRoot.querySelector('#'+cursorId)?.closest('svg');
+    if(!svg)return;
+    const cursor=self._$(cursorId);const dot=self._$(dotId);const tip=self._$(tipId);
+    if(!cursor||!dot||!tip)return;
+    svg.addEventListener('mousemove',(e)=>{
+      const data=self._hist[dataKey];if(!data||!data.length)return;
+      const rect=svg.getBoundingClientRect();
+      const x=(e.clientX-rect.left)/rect.width;
+      const idx=Math.min(Math.max(Math.round(x*(data.length-1)),0),data.length-1);
+      const val=data[idx];const svgX=x*200;
+      const max=Math.max(...data)||1;const svgY=2+(1-val/max)*36;
+      cursor.setAttribute('x1',svgX);cursor.setAttribute('x2',svgX);cursor.style.display='';
+      dot.setAttribute('cx',svgX);dot.setAttribute('cy',svgY);dot.style.display='';dot.setAttribute('fill',color);
+      const hrs=Math.round((1-idx/(data.length-1))*24);
+      tip.textContent=(val>=1000?(val/1000).toFixed(1)+' kW':val.toFixed(0)+' W')+(hrs>0?' · -'+hrs+'h':' · agora');
+      tip.style.color=color;tip.classList.add('show');
+    });
+    svg.addEventListener('mouseleave',()=>{
+      cursor.style.display='none';dot.style.display='none';tip.classList.remove('show');
+    });
+  };
+  setup(null,'cg','dg2','tg','grid','#42A5F5');
+  setup(null,'cs','ds2','ts','solar','#FFB300');
+  setup(null,'cl','dl2','tl','load','#26C6DA');
+}
 _spd(p){const a=Math.abs(p);if(a<10)return 0;return Math.max(ANIM_MIN_SPD,ANIM_MAX_SPD-(a/ANIM_MAX_W)*(ANIM_MAX_SPD-ANIM_MIN_SPD));}
 _sf(el,id,p,d,c,o){if(Math.abs(p)<10){el.style.display='none';this._fs[id]=null;return;}el.style.display='';el.setAttribute('stroke',c);el.setAttribute('opacity',o);el.style.setProperty('--spd',this._spd(p).toFixed(1)+'s');if(this._fs[id]!==d){this._fs[id]=d;el.setAttribute('class','fa '+d);}}
 _spark(id,aid,data){const el=this._$(id);const af=this._$(aid);if(!el||!data.length)return;const w=200,h=40,py=2,max=Math.max(...data)||1;const pts=data.map((v,i)=>[(i/(data.length-1))*w,py+(1-v/max)*(h-py*2)]);if(pts.length<2)return;const tension=0.3;const cp=(p0,p1,p2,t)=>[p1[0]+(p2[0]-p0[0])*t,p1[1]+(p2[1]-p0[1])*t];let d='M'+pts[0][0].toFixed(1)+','+pts[0][1].toFixed(1);for(let i=0;i<pts.length-1;i++){const p0=pts[Math.max(0,i-1)];const p1=pts[i];const p2=pts[i+1];const p3=pts[Math.min(pts.length-1,i+2)];const c1=cp(p0,p1,p2,tension);const c2=[p2[0]-(p3[0]-p1[0])*tension,p2[1]-(p3[1]-p1[1])*tension];d+=' C'+c1[0].toFixed(1)+','+c1[1].toFixed(1)+' '+c2[0].toFixed(1)+','+c2[1].toFixed(1)+' '+p2[0].toFixed(1)+','+p2[1].toFixed(1);}el.setAttribute('d',d);if(af){af.setAttribute('d',d+'L'+w+','+h+'L0,'+h+'Z');}}
@@ -438,8 +471,7 @@ if(gv!==null&&gv>0&&freq!==null)this._$('gv').textContent=gv.toFixed(0)+'V \u00B
 if(bv!==null&&bv>0)this._$('bv').textContent=bv.toFixed(1)+'V';else this._$('bv').textContent='';
 const bt=this._gv(c.battery_temperature);if(bt!==null&&bt>0)this._$('bt').textContent=bt.toFixed(0)+'\u00B0C';else this._$('bt').textContent='';
 
-const gd=this._$('gd');
-if(gd){if(c.grid_status)gd.setAttribute('fill',gon?'var(--green)':'var(--red)');else gd.setAttribute('fill','var(--t3)');}
+
 
 const dS=this._gv(c.daily_solar)??0,dI=this._gv(c.daily_import)??0,dE=this._gv(c.daily_export)??0,dL=this._gv(c.daily_load)??0,dC=this._gv(c.daily_charge)??0,dD=this._gv(c.daily_discharge)??0;
 this._$('ds').textContent=L.daily+' '+this._fmtE(dS);
