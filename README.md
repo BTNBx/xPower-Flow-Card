@@ -146,6 +146,11 @@ The card normalizes all values internally to: **positive = discharging/importing
 
 ## Changelog
 
+### v1.0.5
+
+- Colored power values — Solar (yellow), Grid (red), Home (cyan), Battery (purple)
+- Labels and secondary info (voltage, kWh, temperature) remain neutral gray
+
 ### v1.0.4
 
 - Grid status dot removed for cleaner look
