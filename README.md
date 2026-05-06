@@ -12,12 +12,15 @@ Built from scratch with solid SVG icons, animated dot-flow lines, smooth 24h spa
 - **Animated dot flow** — speed proportional to power (more watts = faster dots)
 - **Color-coded flows** — green for charging/exporting, red for importing, purple for discharging
 - **Battery runtime** — estimated time to shutdown SOC with ETA
+- **Battery gauge** — visual SOC level inside the battery icon
 - **Battery temperature & voltage** — displayed alongside the battery icon
-- **24h sparkline charts** — smooth Catmull-Rom spline area charts for Grid, Solar, and Home
+- **24h sparkline charts** — smooth Catmull-Rom spline area charts for Grid, Solar, and Home with auto-refresh every 5 minutes
+- **Auto-scaling sparklines** — dynamic Y-axis based on actual data, works with any system size
 - **Autarky pill** — color changes based on self-sufficiency level (green/orange/red)
 - **Daily totals** — import/export arrows with kWh values
 - **Trend arrows** — ▴ rising, ▾ falling, ▸ stable
 - **Grid status dot** — green online, red offline
+- **Unavailable handling** — shows `--` when sensors are offline instead of false zeros
 - **Visual editor** — configure all entities through the UI
 - **Multi-language** — Portuguese (pt) and English (en)
 
@@ -81,7 +84,7 @@ daily_discharge: sensor.deye_today_battery_discharge
 |--------|---------|-------------|
 | `language` | `pt` | Card language (`pt` or `en`) |
 | `inverter_name` | `DEYE 6K` | Display name for the inverter |
-| `shutdown_soc` | `20` | Battery shutdown SOC percentage |
+| `shutdown_soc` | `20` | Battery shutdown SOC percentage (supports `0`) |
 | `battery_capacity` | `5120` | Battery capacity in Wh |
 
 ### Entity Defaults
@@ -113,6 +116,24 @@ This card follows the **Deye inverter convention**:
 - **Sol-Ark** inverters
 - Any other inverter — just map the correct sensor entities
 - Tested with `solarman`, `deye_inverter`, and `sunsynk` integrations
+
+## Changelog
+
+### v1.0.1
+
+- **Sparkline auto-refresh** — history charts now update every 5 minutes instead of loading only once
+- **Auto-scaling sparklines** — Y-axis scales dynamically based on actual data instead of hardcoded limits
+- **Battery gauge fix** — visual fill now correctly represents SOC level (was inverted)
+- **Unavailable/unknown handling** — sensors that go offline show `--` instead of false `0 W` values
+- **Falsy config values** — `shutdown_soc: 0` and other zero values now work correctly
+- **Lifecycle cleanup** — proper `disconnectedCallback` clears timers when card is removed
+- **CSS cleanup** — removed `!important` overrides, uses HA CSS custom properties instead
+- **HACS metadata** — added `"type": "plugin"` for correct categorization
+- **Editor robustness** — `parseInt` handling improved for edge cases
+
+### v1.0.0
+
+- Initial public release
 
 ## Credits
 
