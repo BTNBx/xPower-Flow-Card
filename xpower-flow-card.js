@@ -1,4 +1,4 @@
-const V='1.0.2';
+const V='3.0.0';
 
 /* ═══════════════════════════════════════
    xPower Flow Card — i18n
@@ -182,7 +182,7 @@ class XPowerFlowCardEditor extends HTMLElement{
     cfg.inverter_name=this.querySelector('#ed-inv').value;
     cfg.bat_polarity=this.querySelector('#ed-bpol').value;
     cfg.grid_polarity=this.querySelector('#ed-gpol').value;
-    const socVal=parseInt(this.querySelector('#ed-soc').value);
+    const socVal=parseInt(this.querySelector('#ed-ssoc').value);
     cfg.shutdown_soc=isNaN(socVal)?20:socVal;
     const capVal=parseInt(this.querySelector('#ed-cap').value);
     cfg.battery_capacity=isNaN(capVal)?5120:capVal;
@@ -272,7 +272,7 @@ class XPowerFlowCardEditor extends HTMLElement{
       <div class="row">
         <div class="field">
           <label>${L.editor_soc}</label>
-          <input type="number" id="ed-soc" min="0" max="100" value="${c.shutdown_soc??20}">
+          <input type="number" id="ed-ssoc" min="0" max="100" value="${c.shutdown_soc??20}">
         </div>
         <div class="field">
           <label>${L.editor_capacity}</label>
