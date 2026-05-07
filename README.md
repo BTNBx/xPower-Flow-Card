@@ -146,6 +146,12 @@ The card normalizes all values internally to: **positive = discharging/importing
 
 ## Changelog:
 
+### v1.0.8
+
+- Flow lines properly aligned with inverter icon edges
+- Battery SOC and runtime text changed to white
+- Reduced bottom spacing below autarky pill
+
 ### v1.0.7
 
 - Flow lines realigned with inverter icon
