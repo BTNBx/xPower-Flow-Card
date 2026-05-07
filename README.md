@@ -144,7 +144,11 @@ Different inverters report battery and grid power with different sign convention
 
 The card normalizes all values internally to: **positive = discharging/importing**, **negative = charging/exporting**.
 
-## Changelog
+## Changelog:
+
+### v1.0.6
+
+- Inverter icon redesigned — realistic device with display, LEDs, and status bars replacing the old plain box
 
 ### v1.0.5
 
@@ -174,15 +178,6 @@ The card normalizes all values internally to: **positive = discharging/importing
 - Unavailable sensors show `--` instead of `0 W`
 - Editor memory leak fix (event delegation)
 - HACS metadata corrected
-
-### v1.0.4
-
-- Grid status dot removed for cleaner look
-- Label alignment improved (GRID/HOME closer to icons)
-- Flow lines no longer overlap icons or text
-- Autarky pill resized and repositioned
-- Sparkline tooltips now show actual time (e.g. `330 W · 14:30`)
-- Editor SOC field ID conflict fixed (`#ed-soc` → `#ed-ssoc`)
 
 ### v1.0.2
 
