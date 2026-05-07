@@ -2,7 +2,7 @@
 
 A modern, lightweight power flow card for **solar hybrid inverters** in Home Assistant.
 
-Built from scratch with animated dot-flow lines, smooth 24h sparkline charts, battery runtime estimation, and a dark glassmorphism aesthetic — all in a single ~34KB file with zero dependencies.
+Built from scratch with animated dot-flow lines, smooth 24h sparkline charts, battery runtime estimation, and a dark glassmorphism aesthetic — all in a single ~34K.5B file with zero dependencies.
 
 ![xPower Flow Card](card.png)
 
