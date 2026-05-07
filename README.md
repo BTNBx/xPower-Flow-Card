@@ -146,6 +146,13 @@ The card normalizes all values internally to: **positive = discharging/importing
 
 ## Changelog:
 
+### v1.0.7
+
+- Flow lines realigned with inverter icon
+- Inverter name is now optional — leave empty to hide
+- Solar values changed to green, Battery values changed to yellow
+- Sparkline colors updated to match new scheme
+
 ### v1.0.6
 
 - Inverter icon redesigned — realistic device with display, LEDs, and status bars replacing the old plain box
@@ -166,8 +173,6 @@ The card normalizes all values internally to: **positive = discharging/importing
 
 ### v1.0.3
 
-- Multi-inverter support — 8 presets: Deye, Sunsynk, Huawei, Fronius, Growatt, Victron, SolarEdge, Custom
-- Polarity normalization — configurable `bat_polarity` and `grid_polarity`
 - Preset selector in visual editor with auto-fill
 - Named constants replacing magic numbers
 - Runtime flicker fix (50W minimum threshold)
