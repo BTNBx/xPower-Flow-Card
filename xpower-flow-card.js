@@ -1,4 +1,4 @@
-const V='1.0.8';
+const V='1.0.9';
 
 /* ═══════════════════════════════════════
    xPower Flow Card — i18n
@@ -25,7 +25,73 @@ const LANG={
       editor_capacity:'Battery Capacity (Wh)',editor_inverter_name:'Inverter Name',
       editor_preset:'Brand / Preset',editor_polarity:'Polarity',
       editor_bat_pol:'Battery: negative =',editor_grid_pol:'Grid: positive =',
-      charging:'charging',discharging:'discharging',importing:'import',exporting:'export'}
+      charging:'charging',discharging:'discharging',importing:'import',exporting:'export'},
+  de:{solar:'SOLAR',grid:'NETZ',load:'HAUS',battery:'BATTERIE',inverter:'Wechselrichter',
+      autarky:'Autarkie',runtime_to:'bis',
+      charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
+      daily:'\u25B8',solar24:'SOLAR (24h)',load24:'HAUS (24h)',grid24:'NETZ (24h)',
+      unavailable:'--',
+      editor_title:'xPower Flow Card',editor_lang:'Sprache',editor_entities:'Entit\u00E4ten',
+      editor_options:'Optionen',editor_soc:'Abschalt-SOC (%)',
+      editor_capacity:'Batteriekapazit\u00E4t (Wh)',editor_inverter_name:'Wechselrichter Name',
+      editor_preset:'Marke / Vorlage',editor_polarity:'Polarit\u00E4t',
+      editor_bat_pol:'Batterie: negativ =',editor_grid_pol:'Netz: positiv =',
+      charging:'Laden',discharging:'Entladen',importing:'Bezug',exporting:'Einspeisung'},
+  fr:{solar:'SOLAIRE',grid:'R\u00C9SEAU',load:'MAISON',battery:'BATTERIE',inverter:'Onduleur',
+      autarky:'Autosuffisance',runtime_to:'jusqu\u0027\u00E0',
+      charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
+      daily:'\u25B8',solar24:'SOLAIRE (24h)',load24:'MAISON (24h)',grid24:'R\u00C9SEAU (24h)',
+      unavailable:'--',
+      editor_title:'xPower Flow Card',editor_lang:'Langue',editor_entities:'Entit\u00E9s',
+      editor_options:'Options',editor_soc:'SOC Minimum (%)',
+      editor_capacity:'Capacit\u00E9 Batterie (Wh)',editor_inverter_name:'Nom Onduleur',
+      editor_preset:'Marque / Pr\u00E9r\u00E9glage',editor_polarity:'Polarit\u00E9',
+      editor_bat_pol:'Batterie: n\u00E9gatif =',editor_grid_pol:'R\u00E9seau: positif =',
+      charging:'charge',discharging:'d\u00E9charge',importing:'importation',exporting:'exportation'},
+  es:{solar:'SOLAR',grid:'RED',load:'HOGAR',battery:'BATER\u00CDAS',inverter:'Inversor',
+      autarky:'Autosuficiencia',runtime_to:'hasta',
+      charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
+      daily:'\u25B8',solar24:'SOLAR (24h)',load24:'HOGAR (24h)',grid24:'RED (24h)',
+      unavailable:'--',
+      editor_title:'xPower Flow Card',editor_lang:'Idioma',editor_entities:'Entidades',
+      editor_options:'Opciones',editor_soc:'SOC M\u00EDnimo (%)',
+      editor_capacity:'Capacidad Bater\u00EDa (Wh)',editor_inverter_name:'Nombre Inversor',
+      editor_preset:'Marca / Preset',editor_polarity:'Polaridad',
+      editor_bat_pol:'Bater\u00EDa: negativo =',editor_grid_pol:'Red: positivo =',
+      charging:'carga',discharging:'descarga',importing:'importaci\u00F3n',exporting:'exportaci\u00F3n'},
+  it:{solar:'SOLARE',grid:'RETE',load:'CASA',battery:'BATTERIA',inverter:'Inverter',
+      autarky:'Autosufficienza',runtime_to:'fino a',
+      charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
+      daily:'\u25B8',solar24:'SOLARE (24h)',load24:'CASA (24h)',grid24:'RETE (24h)',
+      unavailable:'--',
+      editor_title:'xPower Flow Card',editor_lang:'Lingua',editor_entities:'Entit\u00E0',
+      editor_options:'Opzioni',editor_soc:'SOC Minimo (%)',
+      editor_capacity:'Capacit\u00E0 Batteria (Wh)',editor_inverter_name:'Nome Inverter',
+      editor_preset:'Marca / Preset',editor_polarity:'Polarit\u00E0',
+      editor_bat_pol:'Batteria: negativo =',editor_grid_pol:'Rete: positivo =',
+      charging:'carica',discharging:'scarica',importing:'importazione',exporting:'esportazione'},
+  nl:{solar:'ZONNE',grid:'NET',load:'HUIS',battery:'BATTERIJ',inverter:'Omvormer',
+      autarky:'Zelfvoorziening',runtime_to:'tot',
+      charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
+      daily:'\u25B8',solar24:'ZONNE (24h)',load24:'HUIS (24h)',grid24:'NET (24h)',
+      unavailable:'--',
+      editor_title:'xPower Flow Card',editor_lang:'Taal',editor_entities:'Entiteiten',
+      editor_options:'Opties',editor_soc:'Uitschakel-SOC (%)',
+      editor_capacity:'Batterijcapaciteit (Wh)',editor_inverter_name:'Omvormer Naam',
+      editor_preset:'Merk / Preset',editor_polarity:'Polariteit',
+      editor_bat_pol:'Batterij: negatief =',editor_grid_pol:'Net: positief =',
+      charging:'laden',discharging:'ontladen',importing:'import',exporting:'export'},
+  pl:{solar:'SOLAR',grid:'SIE\u0106',load:'DOM',battery:'BATERIA',inverter:'Falownik',
+      autarky:'Samowystarczalno\u015B\u0107',runtime_to:'do',
+      charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
+      daily:'\u25B8',solar24:'SOLAR (24h)',load24:'DOM (24h)',grid24:'SIE\u0106 (24h)',
+      unavailable:'--',
+      editor_title:'xPower Flow Card',editor_lang:'J\u0119zyk',editor_entities:'Encje',
+      editor_options:'Opcje',editor_soc:'Min. SOC (%)',
+      editor_capacity:'Pojemno\u015B\u0107 baterii (Wh)',editor_inverter_name:'Nazwa falownika',
+      editor_preset:'Marka / Preset',editor_polarity:'Polaryzacja',
+      editor_bat_pol:'Bateria: ujemny =',editor_grid_pol:'Sie\u0107: dodatni =',
+      charging:'\u0142adowanie',discharging:'roz\u0142adowanie',importing:'pobieranie',exporting:'oddawanie'}
 };
 
 /* ═══════════════════════════════════════
@@ -140,7 +206,8 @@ const DEFAULTS={
   ...PRESETS.deye.e,
   bat_polarity:'negative',grid_polarity:'positive',
   shutdown_soc:20,battery_capacity:5120,language:'pt',
-  inverter_name:'DEYE'
+  inverter_name:'DEYE',
+  weather_temp:'',weather_humidity:''
 };
 
 /* Entity field definitions for editor */
@@ -153,7 +220,8 @@ const ENTITY_FIELDS=[
   {key:'frequency',label:'Grid Frequency'},{key:'grid_status',label:'Grid Status'},
   {key:'daily_solar',label:'Daily Solar'},{key:'daily_import',label:'Daily Import'},
   {key:'daily_export',label:'Daily Export'},{key:'daily_load',label:'Daily Load'},
-  {key:'daily_charge',label:'Daily Charge'},{key:'daily_discharge',label:'Daily Discharge'}
+  {key:'daily_charge',label:'Daily Charge'},{key:'daily_discharge',label:'Daily Discharge'},
+  {key:'weather_temp',label:'Weather Temp.'},{key:'weather_humidity',label:'Weather Humidity'}
 ];
 
 /* ═══════════════════════════════════════
@@ -239,6 +307,12 @@ class XPowerFlowCardEditor extends HTMLElement{
           <select id="ed-lang" style="${selStyle}">
             <option value="pt" ${c.language==='pt'?'selected':''}>Portugu\u00EAs</option>
             <option value="en" ${c.language==='en'?'selected':''}>English</option>
+            <option value="de" ${c.language==='de'?'selected':''}>Deutsch</option>
+            <option value="fr" ${c.language==='fr'?'selected':''}>Fran\u00E7ais</option>
+            <option value="es" ${c.language==='es'?'selected':''}>Espa\u00F1ol</option>
+            <option value="it" ${c.language==='it'?'selected':''}>Italiano</option>
+            <option value="nl" ${c.language==='nl'?'selected':''}>Nederlands</option>
+            <option value="pl" ${c.language==='pl'?'selected':''}>Polski</option>
           </select>
         </div>
       </div>
@@ -352,15 +426,17 @@ _norm(raw,type){
 async _loadHistory(){try{const now=new Date();const start=new Date(now.getTime()-24*60*60*1000);const iso=start.toISOString();const entities=[this._c.solar,this._c.load,this._c.grid].filter(Boolean).join(',');if(!entities)return;const url='history/period/'+iso+'?filter_entity_id='+entities+'&minimal_response&no_attributes&significant_changes_only';const res=await this._h.callApi('GET',url);if(!res||!res.length)return;const downsample=(arr,n)=>{if(!arr||!arr.length)return[];const out=[];for(let i=0;i<n;i++){const s=Math.floor(i*arr.length/n);const e=Math.floor((i+1)*arr.length/n);let sum=0,cnt=0;for(let j=s;j<e;j++){const v=parseFloat(arr[j].state);if(!isNaN(v)){sum+=Math.abs(v);cnt++;}}if(cnt>0)out.push(sum/cnt);else out.push(0);}const sm=[];for(let i=0;i<out.length;i++){const p=i>0?out[i-1]:out[i];const nx=i<out.length-1?out[i+1]:out[i];sm.push((p+out[i]*2+nx)/4);}return sm;};for(const series of res){if(!series.length)continue;const eid=series[0].entity_id;const pts=downsample(series,HIST_POINTS);if(eid===this._c.solar)this._hist.solar=pts;else if(eid===this._c.load)this._hist.load=pts;else if(eid===this._c.grid)this._hist.grid=pts;}this._drawSparks();}catch(e){console.warn('xPower history:',e);}}
 
 /* ── SVG Render ── */
-_render(){const L=this._lang;const INV=this._c.inverter_name||L.inverter;const s=this.shadowRoot;s.innerHTML=`<style>
+_render(){const L=this._lang;const INV=this._c.inverter_name||'';const s=this.shadowRoot;s.innerHTML=`<style>
 :host{--solar:#FFB300;--battery:#7C4DFF;--grid:#42A5F5;--load:#26C6DA;--green:#66BB6A;--red:#EF5350;--orange:#FFA726;--t1:rgba(255,255,255,0.92);--t3:rgba(255,255,255,0.45)}
 ha-card{background:rgba(12,14,24,0.92);border:1px solid rgba(255,255,255,0.06);border-radius:20px;box-shadow:0 2px 40px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.04);padding:6px 8px 14px;position:relative;overflow:hidden;font-family:-apple-system,sans-serif;--ha-card-background:transparent;--ha-card-border-width:0;--ha-card-border-radius:20px;--ha-card-box-shadow:none}
 ha-card::before{content:'';position:absolute;top:-1px;left:20%;right:20%;height:1px;background:linear-gradient(90deg,transparent,rgba(124,77,255,0.25),transparent)}
 svg{width:100%;height:auto;display:block}
 .fl{fill:none;stroke:rgba(255,255,255,0.04);stroke-width:2;stroke-linecap:round}
-.fa{fill:none;stroke-width:5;stroke-linecap:round;stroke-dasharray:0.5 20}
+.fa{fill:none;stroke-width:3;stroke-linecap:round;stroke-dasharray:60 200}
 .fd{animation:fD var(--spd,2s) linear infinite}.fu{animation:fU var(--spd,2s) linear infinite}.fr{animation:fR var(--spd,2s) linear infinite}.fL{animation:fL var(--spd,2s) linear infinite}
-@keyframes fR{from{stroke-dashoffset:20.5}to{stroke-dashoffset:0}}@keyframes fL{from{stroke-dashoffset:0}to{stroke-dashoffset:20.5}}@keyframes fD{from{stroke-dashoffset:20.5}to{stroke-dashoffset:0}}@keyframes fU{from{stroke-dashoffset:0}to{stroke-dashoffset:20.5}}
+@keyframes ledBlink{0%,100%{opacity:1}50%{opacity:0.2}}
+.led-on{animation:ledBlink 1.5s ease-in-out infinite}
+@keyframes fR{from{stroke-dashoffset:260}to{stroke-dashoffset:0}}@keyframes fL{from{stroke-dashoffset:0}to{stroke-dashoffset:260}}@keyframes fD{from{stroke-dashoffset:260}to{stroke-dashoffset:0}}@keyframes fU{from{stroke-dashoffset:0}to{stroke-dashoffset:260}}
 .vm{fill:var(--t1);font-size:24px;font-weight:600;text-anchor:middle;dominant-baseline:middle}
 .vl{fill:var(--t3);font-size:10px;font-weight:600;letter-spacing:0.14em;text-anchor:middle;dominant-baseline:middle}
 .vs{fill:var(--t1);font-size:22px;font-weight:700;text-anchor:middle;dominant-baseline:middle}
@@ -370,6 +446,7 @@ svg{width:100%;height:auto;display:block}
 .il{fill:rgba(255,255,255,0.35);font-size:12px;font-weight:600;letter-spacing:0.05em;text-anchor:middle;dominant-baseline:middle}
 .au{fill:white;font-size:9px;font-weight:600;letter-spacing:0.04em;text-anchor:middle;dominant-baseline:middle}
 .au-pill{rx:8;ry:8;transition:fill 0.5s ease}
+.wt{fill:var(--t3);font-size:11px;font-weight:500;text-anchor:start;dominant-baseline:middle;font-family:-apple-system,sans-serif}
 .sr{display:flex;gap:6px;margin-top:16px}
 .sb{flex:1;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:2px;overflow:hidden}
 .sb-header{display:flex;justify-content:space-between;align-items:baseline}
@@ -386,15 +463,16 @@ svg{width:100%;height:auto;display:block}
 .ss #hs{fill:none;stroke:rgba(102,187,106,0.7);stroke-width:1.2}.sc #hl{fill:none;stroke:rgba(38,198,218,0.7);stroke-width:1.2}.sg #hg{fill:none;stroke:rgba(66,165,245,0.7);stroke-width:1.2}
 .ss #hsa{fill:rgba(102,187,106,0.12);stroke:none}.sc #hla{fill:rgba(38,198,218,0.12);stroke:none}.sg #hga{fill:rgba(66,165,245,0.12);stroke:none}
 </style>
-<ha-card><svg viewBox="0 0 526 488"><g transform="translate(25.5,10) scale(0.95)">
-<path class="fl" d="M250,96 L250,148"/><path class="fl" d="M250,242 L250,312"/><path class="fl" d="M90,195 L215,195"/><path class="fl" d="M285,195 L395,195"/>
-<path id="fs" class="fa" d="M250,96 L250,148" opacity="0"/><path id="fb" class="fa" d="M250,242 L250,312" opacity="0"/><path id="fg" class="fa" d="M90,195 L215,195" opacity="0"/><path id="fh" class="fa" d="M285,195 L395,195" opacity="0"/>
-<g><g transform="translate(250,38) scale(1.65) translate(-250,-38)"><circle cx="250" cy="38" r="9" fill="var(--solar)" opacity="0.85"/><line x1="250" y1="25" x2="250" y2="21" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.6"/><line x1="250" y1="51" x2="250" y2="55" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.6"/><line x1="237" y1="38" x2="233" y2="38" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.6"/><line x1="263" y1="38" x2="267" y2="38" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.6"/><line x1="240.8" y1="28.8" x2="238" y2="26" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.5"/><line x1="259.2" y1="47.2" x2="262" y2="50" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.5"/><line x1="259.2" y1="28.8" x2="262" y2="26" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.5"/><line x1="240.8" y1="47.2" x2="238" y2="50" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.5"/></g><text x="250" y="82" class="vm" style="fill:var(--green)" id="vs"></text><text x="250" y="-2" class="vl">${L.solar}</text><text x="305" y="30" class="vd" id="ds" text-anchor="start"></text><text x="305" y="44" class="vc" id="pv" text-anchor="start"></text></g>
-<g><g transform="translate(250,195) scale(1.65)"><rect x="-18" y="-24" width="36" height="48" rx="2" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.25)" stroke-width="1"/><rect x="-18" y="-24" width="36" height="5" rx="2" fill="rgba(255,255,255,0.12)"/><rect x="-12" y="-15" width="24" height="12" rx="1.5" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.2)" stroke-width="0.7"/><rect x="-8" y="-12" width="16" height="6" rx="1" fill="rgba(102,187,106,0.4)"/><circle cx="-6" cy="2" r="1.2" fill="rgba(102,187,106,0.7)"/><circle cx="-2" cy="2" r="1.2" fill="rgba(255,179,0,0.6)"/><circle cx="2" cy="2" r="1.2" fill="rgba(255,255,255,0.2)"/><circle cx="6" cy="2" r="1.2" fill="rgba(255,255,255,0.2)"/><path d="M-6,9 L-8,15 L-4,15 L-6,21" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.3)" stroke-width="0.5"/><rect x="2" y="12" width="10" height="3" rx="0.5" fill="rgba(255,255,255,0.1)"/><rect x="2" y="17" width="10" height="3" rx="0.5" fill="rgba(255,255,255,0.1)"/></g>${INV?'<text x="250" y="242" class="il">'+INV+'</text>':''}<text x="305" y="247" class="vc" id="tp" text-anchor="start"></text></g>
-<g><g transform="translate(66,195) scale(1.65) translate(-66,-195)"><rect x="64" y="181" width="4" height="30" rx="1" fill="var(--grid)" opacity="0.8"/><rect x="54" y="183" width="24" height="3" rx="1" fill="var(--grid)" opacity="0.7"/><rect x="57" y="192" width="18" height="2.5" rx="1" fill="var(--grid)" opacity="0.6"/><path d="M60,211 L64,199 L68,199 L72,211" fill="var(--grid)" opacity="0.5"/><circle cx="56" cy="184" r="1.5" fill="var(--grid)" opacity="0.9"/><circle cx="76" cy="184" r="1.5" fill="var(--grid)" opacity="0.9"/><circle cx="58" cy="193" r="1.2" fill="var(--grid)" opacity="0.8"/><circle cx="74" cy="193" r="1.2" fill="var(--grid)" opacity="0.8"/><line x1="54" y1="184" x2="46" y2="181" stroke="var(--grid)" stroke-width="0.8" opacity="0.4"/><line x1="78" y1="184" x2="86" y2="181" stroke="var(--grid)" stroke-width="0.8" opacity="0.4"/></g><text x="66" y="238" class="vm" style="fill:var(--red)" id="vg"></text><text x="66" y="155" class="vl">${L.grid}</text><text x="66" y="256" class="vc" id="gv"></text><text x="66" y="270" class="vd" id="dg"></text></g>
-<g><g transform="translate(434,187) scale(1.65) translate(-434,-187)"><path d="M416,188 L434,174 L452,188 Z" fill="var(--load)" opacity="0.8"/><rect x="420" y="187" width="28" height="18" rx="1" fill="var(--load)" opacity="0.6"/><rect x="430" y="195" width="8" height="10" rx="1" fill="rgba(0,0,0,0.3)"/><rect x="422" y="190" width="6" height="5" rx="0.5" fill="rgba(255,255,255,0.15)"/><rect x="440" y="190" width="6" height="5" rx="0.5" fill="rgba(255,255,255,0.15)"/><rect x="441" y="176" width="5" height="8" rx="1" fill="var(--load)" opacity="0.5"/></g><text x="434" y="232" class="vm" style="fill:var(--load)" id="vl"></text><text x="434" y="155" class="vl">${L.load}</text><text x="434" y="248" class="vd" id="dl"></text></g>
-<g><g transform="translate(250,350) scale(1.70) translate(-250,-350)"><rect x="232" y="341" width="32" height="20" rx="3" fill="var(--battery)" opacity="0.75"/><rect x="264" y="345.5" width="6" height="11" rx="2" fill="var(--battery)" opacity="0.9"/><rect x="235" y="344" width="26" height="14" rx="1.5" fill="rgba(0,0,0,0.35)"/><rect id="bl" x="235" y="344" width="26" height="14" rx="1.5" fill="var(--battery)" opacity="0.45"/></g><text x="250" y="390" class="vm" style="fill:var(--solar)" id="vb"></text><text x="250" y="412" class="vs" id="vc"></text><text x="250" y="322" class="vl">${L.battery}</text><text x="310" y="344" class="vc" id="bv" text-anchor="start"></text><text x="310" y="356" class="vc" id="bt" text-anchor="start"></text><text x="250" y="433" class="vd" id="db"></text><text x="250" y="448" class="vc" id="br" style="fill:var(--t1)"></text></g>
-<rect id="ap" x="185" y="475" width="130" height="16" class="au-pill" fill="var(--green)"/><text x="250" y="484" class="au" id="va"></text>
+<ha-card><svg viewBox="0 0 526 526"><g transform="translate(25.5,10) scale(0.95)">
+<text x="5" y="8" class="wt" id="wt"></text>
+<path class="fl" d="M250,96 L250,178"/><path class="fl" d="M250,272 L250,364"/><path class="fl" d="M90,225 L215,225"/><path class="fl" d="M285,225 L395,225"/>
+<path id="fs" class="fa" d="M250,96 L250,178" opacity="0"/><path id="fb" class="fa" d="M250,272 L250,364" opacity="0"/><path id="fg" class="fa" d="M90,225 L215,225" opacity="0"/><path id="fh" class="fa" d="M285,225 L395,225" opacity="0"/>
+<g><g transform="translate(250,38) scale(1.65) translate(-250,-38)"><circle cx="250" cy="38" r="9" fill="var(--solar)" opacity="0.85"/><line x1="250" y1="25" x2="250" y2="21" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.6"/><line x1="250" y1="51" x2="250" y2="55" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.6"/><line x1="237" y1="38" x2="233" y2="38" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.6"/><line x1="263" y1="38" x2="267" y2="38" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.6"/><line x1="240.8" y1="28.8" x2="238" y2="26" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.5"/><line x1="259.2" y1="47.2" x2="262" y2="50" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.5"/><line x1="259.2" y1="28.8" x2="262" y2="26" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.5"/><line x1="240.8" y1="47.2" x2="238" y2="50" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.5"/></g><text x="250" y="82" class="vm" style="fill:var(--green)" id="vs"></text><text x="250" y="-2" class="vl">${L.solar}</text><text x="295" y="30" class="vc" id="ds" text-anchor="start"></text><text x="295" y="44" class="vc" id="pv" text-anchor="start"></text></g>
+<g><g transform="translate(250,225) scale(1.65)"><rect x="-18" y="-24" width="36" height="48" rx="2" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.25)" stroke-width="1"/><rect x="-18" y="-24" width="36" height="5" rx="2" fill="rgba(255,255,255,0.12)"/><rect x="-12" y="-15" width="24" height="12" rx="1.5" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.2)" stroke-width="0.7"/><rect x="-8" y="-12" width="16" height="6" rx="1" fill="rgba(102,187,106,0.4)"/><circle id="led1" cx="-6" cy="2" r="1.2" fill="rgba(255,255,255,0.12)"/><circle id="led2" cx="-2" cy="2" r="1.2" fill="rgba(255,255,255,0.12)"/><circle id="led3" cx="2" cy="2" r="1.2" fill="rgba(255,255,255,0.12)"/><circle id="led4" cx="6" cy="2" r="1.2" fill="rgba(255,255,255,0.12)"/><path d="M-6,9 L-8,15 L-4,15 L-6,21" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.3)" stroke-width="0.5"/><rect x="2" y="12" width="10" height="3" rx="0.5" fill="rgba(255,255,255,0.1)"/><rect x="2" y="17" width="10" height="3" rx="0.5" fill="rgba(255,255,255,0.1)"/></g>${INV?'<text x="250" y="272" class="il">'+INV+'</text>':''}<text x="305" y="260" class="vc" id="tp" text-anchor="start"></text></g>
+<g><g transform="translate(66,225) scale(1.65) translate(-66,-196)"><rect x="64" y="181" width="4" height="30" rx="1" fill="var(--grid)" opacity="0.8"/><rect x="54" y="183" width="24" height="3" rx="1" fill="var(--grid)" opacity="0.7"/><rect x="57" y="192" width="18" height="2.5" rx="1" fill="var(--grid)" opacity="0.6"/><path d="M60,211 L64,199 L68,199 L72,211" fill="var(--grid)" opacity="0.5"/><circle cx="56" cy="184" r="1.5" fill="var(--grid)" opacity="0.9"/><circle cx="76" cy="184" r="1.5" fill="var(--grid)" opacity="0.9"/><circle cx="58" cy="193" r="1.2" fill="var(--grid)" opacity="0.8"/><circle cx="74" cy="193" r="1.2" fill="var(--grid)" opacity="0.8"/><line x1="54" y1="184" x2="46" y2="181" stroke="var(--grid)" stroke-width="0.8" opacity="0.4"/><line x1="78" y1="184" x2="86" y2="181" stroke="var(--grid)" stroke-width="0.8" opacity="0.4"/></g><text x="66" y="268" class="vm" style="fill:var(--red)" id="vg"></text><text x="66" y="190" class="vl">${L.grid}</text><text x="66" y="286" class="vc" id="gv"></text><text x="66" y="300" class="vd" id="dg"></text></g>
+<g><g transform="translate(434,225) scale(1.65) translate(-434,-188)"><path d="M416,188 L434,174 L452,188 Z" fill="var(--load)" opacity="0.8"/><rect x="420" y="187" width="28" height="18" rx="1" fill="var(--load)" opacity="0.6"/><rect x="430" y="195" width="8" height="10" rx="1" fill="rgba(0,0,0,0.3)"/><rect x="422" y="190" width="6" height="5" rx="0.5" fill="rgba(255,255,255,0.15)"/><rect x="440" y="190" width="6" height="5" rx="0.5" fill="rgba(255,255,255,0.15)"/><rect x="441" y="176" width="5" height="8" rx="1" fill="var(--load)" opacity="0.5"/></g><text x="434" y="268" class="vm" style="fill:var(--load)" id="vl"></text><text x="434" y="190" class="vl">${L.load}</text><text x="434" y="288" class="vd" id="dl"></text></g>
+<g><g transform="translate(250,400) scale(1.70) translate(-250,-351)"><rect x="232" y="341" width="32" height="20" rx="3" fill="var(--battery)" opacity="0.75"/><rect x="264" y="345.5" width="6" height="11" rx="2" fill="var(--battery)" opacity="0.9"/><rect x="235" y="344" width="26" height="14" rx="1.5" fill="rgba(0,0,0,0.35)"/><rect id="bl" x="235" y="344" width="26" height="14" rx="1.5" fill="var(--battery)" opacity="0.45"/></g><text x="250" y="440" class="vm" style="fill:var(--solar)" id="vb"></text><text x="250" y="462" class="vs" id="vc"></text><text x="250" y="372" class="vl">${L.battery}</text><text x="310" y="394" class="vc" id="bv" text-anchor="start"></text><text x="310" y="406" class="vc" id="bt" text-anchor="start"></text><text x="250" y="483" class="vd" id="db"></text><text x="250" y="498" class="vc" id="br" style="fill:var(--t1)"></text></g>
+<rect id="ap" x="185" y="512" width="130" height="16" class="au-pill" fill="var(--green)"/><text x="250" y="521" class="au" id="va"></text>
 </g></svg>
 <div class="sr">
 <div class="sb sg"><div class="sb-header"><span class="sl">${L.grid24}</span><span class="sv" id="hz"></span></div><svg viewBox="0 0 200 40" preserveAspectRatio="none"><path id="hga"/><path id="hg"/><line class="cursor" id="cg" x1="0" y1="0" x2="0" y2="40"/><circle class="cursor-dot" id="dg2" cx="0" cy="0" r="3"/></svg><span class="sb-tip" id="tg"></span></div>
@@ -502,6 +580,18 @@ const gridImp=gridF>0?gridF:0;
 const au=loadF>0?Math.max(0,Math.min(100,((loadF-gridImp)/loadF)*100)):0;
 this._$('va').textContent=L.autarky+': '+au.toFixed(0)+'%';
 const ap=this._$('ap');if(ap){let pc;if(au>=80)pc='#66BB6A';else if(au>=50)pc='#FFA726';else if(au>=25)pc='#FF7043';else pc='#EF5350';ap.setAttribute('fill',pc);}
+
+// Weather
+const wt=this._gv(c.weather_temp);const wh=this._gv(c.weather_humidity);
+let ws='';if(wt!==null)ws+=wt.toFixed(0)+'\u00B0C';if(wh!==null)ws+=(ws?' · ':'')+wh.toFixed(0)+'%';
+this._$('wt').textContent=ws;
+
+// LEDs
+const _led=(id,on,color)=>{const el=this._$(id);if(!el)return;el.setAttribute('fill',on?color:'rgba(255,255,255,0.12)');if(on)el.setAttribute('class','led-on');else el.removeAttribute('class');};
+_led('led1',solF>10,'#66BB6A');
+_led('led2',batF>10,'#FFA726');
+_led('led3',gridF>10,'#EF5350');
+_led('led4',loadF>10,'#26C6DA');
 
 // Sparkline values
 this._$('hv').textContent=this._fmt(sol)+' / '+this._fmtE(dS);
