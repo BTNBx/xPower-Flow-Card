@@ -229,4 +229,4 @@ Designed and built by [@BTNBx](https://github.com/BTNBx).
 
 ## License
 
-Custom License
+// Licensed under GPL-3.0 — see LICENSE file
