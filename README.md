@@ -164,6 +164,16 @@ LEDs blink when active, dim gray when inactive.
 
 ## Changelog
 
+### v1.1.3
+
+- Grid tower icon changed to dark red
+- Solar voltage aligned with kWh numbers (arrow removed)
+- Inverter temperature repositioned with small gap
+- Weather: humidity closer, divider line between temp and humidity
+- Light theme support — auto-detects HA theme or manual dark/light/auto option
+- Animation stutter fix — flow speed cached with 10% threshold
+- Adaptive history sampling for large datasets (>10k points)
+
 ### v1.1.2
 
 - Animation stutter fix — flow speed only updates on >10% change, prevents CSS restart
