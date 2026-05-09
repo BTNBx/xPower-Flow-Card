@@ -2,44 +2,47 @@
 
 A modern, lightweight power flow card for **solar hybrid inverters** in Home Assistant.
 
-Built from scratch with animated dot-flow lines, smooth 24h sparkline charts, battery runtime estimation, and a dark glassmorphism aesthetic — all in a single ~34.5KB file with zero dependencies.
+Animated pulse flows, smooth 24h sparkline charts with tooltips, battery runtime estimation, dynamic inverter LEDs, and a dark glassmorphism aesthetic — all in a single file with zero dependencies.
 
 ![xPower Flow Card](card.png)
 
 ## Supported Inverters
 
-| Brand | Integration | Polarity | Status |
-|-------|-------------|----------|--------|
-| **Deye** | Solarman / deye_inverter | bat: neg=charge, grid: pos=import | Tested |
-| **Sunsynk** | Sunsynk / modbus | bat: neg=charge, grid: pos=import | Preset |
-| **Huawei** | FusionSolar | bat: pos=charge, grid: pos=import | Preset |
-| **Fronius** | Gen24 / Modbus | bat: pos=charge, grid: pos=import | Preset |
-| **Growatt** | Growatt / modbus | bat: neg=charge, grid: pos=import | Preset |
-| **Victron** | Venus OS / GX | bat: neg=charge, grid: pos=import | Preset |
-| **SolarEdge** | Modbus / SunSpec | bat: pos=charge, grid: neg=import | Preset |
-| **Any other** | Custom | Configurable | Custom preset |
+| Brand | Integration | Status |
+|-------|-------------|--------|
+| **Deye** | Solarman / deye_inverter | ✅ Tested |
+| **Sunsynk** | Sunsynk / modbus | ✅ Preset |
+| **Huawei** | FusionSolar | ✅ Preset |
+| **Fronius** | Gen24 / Modbus | ✅ Preset |
+| **Growatt** | Growatt / modbus | ✅ Preset |
+| **Victron** | Venus OS / GX | ✅ Preset |
+| **SolarEdge** | Modbus / SunSpec | ✅ Preset |
+| **Any other** | Custom | ✅ Custom preset |
 
 Select your brand in the visual editor — entities and polarity are auto-configured.
 
 ## Features
 
 - **8 inverter presets** — Deye, Sunsynk, Huawei, Fronius, Growatt, Victron, SolarEdge, Custom
+- **8 languages** — Portuguese, English, German, French, Spanish, Italian, Dutch, Polish
 - **Polarity normalization** — configurable battery and grid sign conventions
-- **Animated dot flow** — speed proportional to power (more watts = faster dots)
-- **Color-coded flows** — green for charging/exporting, red for importing, purple for discharging
+- **Pulse flow animation** — continuous snake-style energy flow, speed proportional to power
+- **Color-coded values** — Solar (green), Grid (red), Home (cyan), Battery (yellow)
+- **Dynamic inverter LEDs** — 4 LEDs blink based on active flows (solar/battery/grid/home)
+- **Realistic inverter icon** — device with display, LEDs, and status bars
 - **Battery runtime** — estimated time to shutdown SOC with ETA clock
 - **Battery gauge** — visual SOC level inside the battery icon
-- **Battery temperature & voltage** — displayed alongside the battery icon
+- **Weather display** — optional temperature and humidity in top-left corner
 - **24h sparkline charts** — smooth Catmull-Rom area charts with auto-refresh every 5 minutes
+- **Sparkline tooltips** — hover to see power value and time (e.g. `330 W · 14:30`)
 - **Auto-scaling sparklines** — dynamic Y-axis based on actual data
 - **Autarky pill** — color changes based on self-sufficiency (green/orange/red)
-- **Daily totals** — import/export arrows with kWh values
+- **Daily totals** — import/export with kWh values
 - **Trend arrows** — ▴ rising, ▾ falling, ▸ stable
-- **Grid status dot** — green/red/gray (when unconfigured)
 - **Unavailable handling** — shows `--` when sensors are offline
-- **Visual editor** — preset selector, polarity config, entity fields
-- **Multi-language** — Portuguese (pt) and English (en)
-- **Lightweight** — ~34KB single file, no build step, no dependencies
+- **Visual editor** — preset selector, polarity config, all entity fields
+- **Inverter name optional** — leave empty to hide
+- **Lightweight** — single file, no build step, no dependencies
 
 ## Installation
 
@@ -74,6 +77,8 @@ language: pt
 inverter_name: DEYE 6K
 shutdown_soc: 20
 battery_capacity: 5120
+weather_temp: sensor.outdoor_temperature
+weather_humidity: sensor.outdoor_humidity
 ```
 
 ### YAML (Huawei example)
@@ -81,7 +86,7 @@ battery_capacity: 5120
 ```yaml
 type: custom:xpower-flow-card
 preset: huawei
-language: en
+language: de
 inverter_name: Huawei SUN2000
 shutdown_soc: 10
 battery_capacity: 10000
@@ -94,8 +99,8 @@ type: custom:xpower-flow-card
 preset: custom
 language: en
 inverter_name: My Inverter
-bat_polarity: negative   # negative = charging (Deye convention)
-grid_polarity: positive  # positive = importing
+bat_polarity: negative
+grid_polarity: positive
 shutdown_soc: 15
 battery_capacity: 10240
 solar: sensor.my_pv_power
@@ -116,6 +121,8 @@ daily_load: sensor.my_daily_consumption
 daily_charge: sensor.my_daily_charge
 daily_discharge: sensor.my_daily_discharge
 battery_temperature: sensor.my_battery_temp
+weather_temp: sensor.my_outdoor_temp
+weather_humidity: sensor.my_outdoor_humidity
 ```
 
 ### Options
@@ -123,16 +130,16 @@ battery_temperature: sensor.my_battery_temp
 | Option | Default | Description |
 |--------|---------|-------------|
 | `preset` | `deye` | Inverter brand preset |
-| `language` | `pt` | Card language (`pt` or `en`) |
-| `inverter_name` | `DEYE` | Display name for the inverter |
-| `bat_polarity` | `negative` | Battery: `negative` = charging (Deye) or `positive` = charging (Huawei) |
-| `grid_polarity` | `positive` | Grid: `positive` = import (Deye) or `negative` = import (SolarEdge) |
+| `language` | `pt` | Card language (`pt`, `en`, `de`, `fr`, `es`, `it`, `nl`, `pl`) |
+| `inverter_name` | `DEYE` | Display name (leave empty to hide) |
+| `bat_polarity` | `negative` | `negative` = charging (Deye) or `positive` = charging (Huawei) |
+| `grid_polarity` | `positive` | `positive` = import (Deye) or `negative` = import (SolarEdge) |
 | `shutdown_soc` | `20` | Battery shutdown SOC percentage |
 | `battery_capacity` | `5120` | Battery capacity in Wh |
+| `weather_temp` | | Optional temperature sensor for top-left display |
+| `weather_humidity` | | Optional humidity sensor for top-left display |
 
 ### Polarity Guide
-
-Different inverters report battery and grid power with different sign conventions:
 
 **Battery power:**
 - `negative` = charging: Deye, Sunsynk, Growatt, Victron
@@ -142,75 +149,75 @@ Different inverters report battery and grid power with different sign convention
 - `positive` = importing: Deye, Sunsynk, Huawei, Fronius, Growatt, Victron
 - `negative` = importing: SolarEdge
 
-The card normalizes all values internally to: **positive = discharging/importing**, **negative = charging/exporting**.
+### Inverter LEDs
 
-## Changelog:
+The 4 LEDs on the inverter icon indicate active power flows:
+
+| LED | Color | Meaning |
+|-----|-------|---------|
+| 1st | 🟢 Green | Solar producing (>10W) |
+| 2nd | 🟠 Orange | Battery discharging (>10W) |
+| 3rd | 🔴 Red | Grid importing (>10W) |
+| 4th | 🔵 Cyan | Home consuming (>10W) |
+
+LEDs blink when active, dim gray when inactive.
+
+## Changelog
+
+### v1.0.9
+
+- Flow animation changed from dots to pulse/snake style
+- Middle section repositioned for balanced flow lines
+- Grid/Home icons aligned with values
+- Battery spacing from icon matched to other entities
+- Inverter icon redesigned with dynamic LEDs (green=solar, orange=battery, red=grid, cyan=home)
+- Inverter name optional — empty field shows nothing
+- Inverter temperature positioned next to icon
+- Solar side values aligned by numbers with arrow
+- Solar value green, Battery value yellow, SOC white
+- Weather display in top-left — configurable temperature and humidity sensors
+- 8 languages: PT, EN, DE, FR, ES, IT, NL, PL
+- Reduced bottom spacing below autarky pill
 
 ### v1.0.8
 
-- Flow lines properly aligned with inverter icon edges
+- Flow lines aligned with inverter icon edges
 - Battery SOC and runtime text changed to white
 - Reduced bottom spacing below autarky pill
 
 ### v1.0.7
 
 - Flow lines realigned with inverter icon
-- Inverter name is now optional — leave empty to hide
-- Solar values changed to green, Battery values changed to yellow
-- Sparkline colors updated to match new scheme
+- Inverter name optional
+- Solar values green, Battery values yellow
+- Sparkline colors updated
 
 ### v1.0.6
 
-- Inverter icon redesigned — realistic device with display, LEDs, and status bars replacing the old plain box
+- Inverter icon redesigned — realistic device with display, LEDs, and status bars
 
 ### v1.0.5
 
-- Colored power values — Solar (yellow), Grid (red), Home (cyan), Battery (purple)
-- Labels and secondary info (voltage, kWh, temperature) remain neutral gray
+- Colored power values — Solar (green), Grid (red), Home (cyan), Battery (yellow)
 
 ### v1.0.4
 
-- Grid status dot removed for cleaner look
-- Label alignment improved (GRID/HOME closer to icons)
-- Flow lines no longer overlap icons or text
-- Autarky pill resized and repositioned
-- Sparkline tooltips now show actual time (e.g. `330 W · 14:30`)
-- Editor SOC field ID conflict fixed (`#ed-soc` → `#ed-ssoc`)
+- Grid status dot removed
+- Label alignment improved
+- Flow lines no longer overlap icons
+- Sparkline tooltips with actual time
+- Editor SOC field ID conflict fixed
 
 ### v1.0.3
 
-- Preset selector in visual editor with auto-fill
-- Named constants replacing magic numbers
-- Runtime flicker fix (50W minimum threshold)
-- SVG class handling improved (`className.baseVal` → `setAttribute`)
-- Empty entity guard in `_gv()`
+- Multi-inverter support — 8 presets
+- Polarity normalization
 - Sparkline auto-refresh every 5 minutes
-- Battery gauge fix (was inverted)
-- Unavailable sensors show `--` instead of `0 W`
-- Editor memory leak fix (event delegation)
-- HACS metadata corrected
+- Battery gauge fix
+- Unavailable sensors show `--`
+- Editor memory leak fix
 
 ### v1.0.2
-
-- **Multi-inverter support** — 8 presets: Deye, Sunsynk, Huawei, Fronius, Growatt, Victron, SolarEdge, Custom
-- **Polarity normalization** — configurable `bat_polarity` and `grid_polarity` with visual editor
-- **Preset selector** — changing preset auto-fills all entity names and polarity
-- **Named constants** — magic numbers replaced with `HIST_POINTS`, `RUNTIME_MIN_W`, `ANIM_MAX_W`, etc.
-- **Runtime flicker fix** — 50W minimum threshold prevents display flicker near zero
-- **className.baseVal → setAttribute** — more robust SVG class handling
-- **Empty entity guard** — `_gv()` safely handles unconfigured entities
-- **Grid dot gray** — shows gray when `grid_status` entity is not configured
-
-### v1.0.1
-
-- Sparkline auto-refresh every 5 minutes
-- Auto-scaling Y-axis
-- Battery gauge fix (was inverted)
-- Unavailable/unknown → `--` display
-- Editor memory leak fix (event delegation)
-- Icon/text overlap fixes
-
-### v1.0.0
 
 - Initial public release
 
@@ -220,4 +227,4 @@ Designed and built by [@BTNBx](https://github.com/BTNBx).
 
 ## License
 
-License
+Custom License
