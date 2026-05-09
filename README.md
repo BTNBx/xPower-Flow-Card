@@ -1,8 +1,8 @@
-# ⚡ xPower Flow Card
+# ⚡ xPower Flow Card ⚡
 
 A modern, lightweight power flow card for **solar hybrid inverters** in Home Assistant.
 
-Animated pulse flows, smooth 24h sparkline charts with tooltips, battery runtime estimation, dynamic inverter LEDs, and a dark glassmorphism aesthetic — all in a single file with zero dependencies.
+Animated pulse flows, smooth 24h sparkline charts with tooltips, battery runtime estimation, dynamic inverter LEDs, and a dark glassmorphism aesthetic, all in a single file with zero dependencies.
 
 ![xPower Flow Card](demo.gif)
 
