@@ -164,6 +164,15 @@ LEDs blink when active, dim gray when inactive.
 
 ## Changelog
 
+### v1.1.2
+
+- Animation stutter fix — flow speed only updates on >10% change, prevents CSS restart
+- Adaptive history sampling — pre-samples >10k points for better performance on low-power devices
+
+ ### v1.1.1
+
+- Minor update
+
 ### v1.1.0
 
 - Zero-value sensors now display correctly (0°C, 0V no longer hidden)
