@@ -164,6 +164,21 @@ LEDs blink when active, dim gray when inactive.
 
 ## Changelog
 
+### v1.1.0
+
+- Zero-value sensors now display correctly (0°C, 0V no longer hidden)
+- XSS protection in editor via input sanitization
+- History request deduplication guard
+- URL-encoded history API parameters
+- Removed dead grid status code
+- Snake flow refined — head reaches end before tail follows, slower animation (1.5s–3.5s)
+- Solar side values aligned with arrows (▸ 13.0 kWh / ▸ 363V)
+- Inverter temperature repositioned closer to icon
+- Weather display with thermometer and droplet icons
+- 8 languages: PT, EN, DE, FR, ES, IT, NL, PL
+- GPL-3.0 license
+- Reduced bottom spacing below autarky pill
+
 ### v1.0.9/v1.1.0
 
 - Flow animation changed from dots to pulse/snake style
