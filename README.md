@@ -188,7 +188,7 @@ LEDs blink when active, dim gray when inactive.
 - GPL-3.0 license
 - Reduced bottom spacing below autarky pill
 
-### v1.0.9/v1.1.0
+### v1.0.9
 
 - Flow animation changed from dots to pulse/snake style
 - Middle section repositioned for balanced flow lines
