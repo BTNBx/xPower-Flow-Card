@@ -1,7 +1,7 @@
 // xPower Flow Card — Modern power flow card for solar hybrid inverters
 // Copyright (C) 2025 BTNBx
 // Licensed under GPL-3.0 — see LICENSE file
-const V='1.1.0';
+const V='1.1.1';
 
 /* ═══════════════════════════════════════
    xPower Flow Card — i18n
@@ -242,6 +242,7 @@ const ANIM_MAX_SPD=3.5;
    ═══════════════════════════════════════ */
 class XPowerFlowCardEditor extends HTMLElement{
   constructor(){super();this._config={};this._hass=null;this._onchange=this._fire.bind(this);}
+  _esc(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
   setConfig(config){this._config={...DEFAULTS,...config};this._render();}
   set hass(hass){this._hass=hass;}
   disconnectedCallback(){const el=this.querySelector('.editor');if(el)el.removeEventListener('change',this._onchange);}
@@ -323,7 +324,7 @@ class XPowerFlowCardEditor extends HTMLElement{
       <div class="row">
         <div class="field">
           <label>${L.editor_inverter_name}</label>
-          <input type="text" id="ed-inv" value="${c.inverter_name??''}">
+          <input type="text" id="ed-inv" value="${this._esc(c.inverter_name)}">
         </div>
       </div>
 
@@ -362,7 +363,7 @@ class XPowerFlowCardEditor extends HTMLElement{
         ${ENTITY_FIELDS.map(f=>`
           <div class="field">
             <label>${f.label}</label>
-            <input type="text" id="ed-${f.key}" value="${c[f.key]??''}" placeholder="${PRESETS[c.preset||'deye']?.e[f.key]??''}">
+            <input type="text" id="ed-${f.key}" value="${this._esc(c[f.key])}" placeholder="${this._esc(PRESETS[c.preset||'deye']?.e[f.key])}">
           </div>
         `).join('')}
       </div>
@@ -376,7 +377,7 @@ customElements.define('xpower-flow-card-editor',XPowerFlowCardEditor);
    MAIN CARD
    ═══════════════════════════════════════ */
 class XPowerFlowCard extends HTMLElement{
-constructor(){super();this.attachShadow({mode:'open'});this._c={};this._h=null;this._prev={solar:0,bat:0,grid:0,load:0};this._hist={solar:[],load:[],grid:[]};this._fs={};this._histTimer=null;this._histLastLoad=0;}
+constructor(){super();this.attachShadow({mode:'open'});this._c={};this._h=null;this._prev={solar:0,bat:0,grid:0,load:0};this._hist={solar:[],load:[],grid:[]};this._fs={};this._histTimer=null;this._histLastLoad=0;this._histLoading=false;}
 
 static getConfigElement(){return document.createElement('xpower-flow-card-editor');}
 static getStubConfig(){return{...DEFAULTS};}
@@ -426,7 +427,7 @@ _norm(raw,type){
 }
 
 /* ── History ── */
-async _loadHistory(){try{const now=new Date();const start=new Date(now.getTime()-24*60*60*1000);const iso=start.toISOString();const entities=[this._c.solar,this._c.load,this._c.grid].filter(Boolean).join(',');if(!entities)return;const url='history/period/'+iso+'?filter_entity_id='+entities+'&minimal_response&no_attributes&significant_changes_only';const res=await this._h.callApi('GET',url);if(!res||!res.length)return;const downsample=(arr,n)=>{if(!arr||!arr.length)return[];const out=[];for(let i=0;i<n;i++){const s=Math.floor(i*arr.length/n);const e=Math.floor((i+1)*arr.length/n);let sum=0,cnt=0;for(let j=s;j<e;j++){const v=parseFloat(arr[j].state);if(!isNaN(v)){sum+=Math.abs(v);cnt++;}}if(cnt>0)out.push(sum/cnt);else out.push(0);}const sm=[];for(let i=0;i<out.length;i++){const p=i>0?out[i-1]:out[i];const nx=i<out.length-1?out[i+1]:out[i];sm.push((p+out[i]*2+nx)/4);}return sm;};for(const series of res){if(!series.length)continue;const eid=series[0].entity_id;const pts=downsample(series,HIST_POINTS);if(eid===this._c.solar)this._hist.solar=pts;else if(eid===this._c.load)this._hist.load=pts;else if(eid===this._c.grid)this._hist.grid=pts;}this._drawSparks();}catch(e){console.warn('xPower history:',e);}}
+async _loadHistory(){if(this._histLoading)return;this._histLoading=true;try{const now=new Date();const start=new Date(now.getTime()-24*60*60*1000);const iso=encodeURIComponent(start.toISOString());const entities=encodeURIComponent([this._c.solar,this._c.load,this._c.grid].filter(Boolean).join(','));if(!entities)return;const url='history/period/'+iso+'?filter_entity_id='+entities+'&minimal_response&no_attributes&significant_changes_only';const res=await this._h.callApi('GET',url);if(!res||!res.length)return;const downsample=(arr,n)=>{if(!arr||!arr.length)return[];const out=[];for(let i=0;i<n;i++){const s=Math.floor(i*arr.length/n);const e=Math.floor((i+1)*arr.length/n);let sum=0,cnt=0;for(let j=s;j<e;j++){const v=parseFloat(arr[j].state);if(!isNaN(v)){sum+=Math.abs(v);cnt++;}}if(cnt>0)out.push(sum/cnt);else out.push(0);}const sm=[];for(let i=0;i<out.length;i++){const p=i>0?out[i-1]:out[i];const nx=i<out.length-1?out[i+1]:out[i];sm.push((p+out[i]*2+nx)/4);}return sm;};for(const series of res){if(!series.length)continue;const eid=series[0].entity_id;const pts=downsample(series,HIST_POINTS);if(eid===this._c.solar)this._hist.solar=pts;else if(eid===this._c.load)this._hist.load=pts;else if(eid===this._c.grid)this._hist.grid=pts;}this._drawSparks();}catch(e){console.warn('xPower history:',e);}finally{this._histLoading=false;}}
 
 /* ── SVG Render ── */
 _render(){const L=this._lang;const INV=this._c.inverter_name||'';const s=this.shadowRoot;s.innerHTML=`<style>
@@ -466,12 +467,17 @@ svg{width:100%;height:auto;display:block}
 .ss #hs{fill:none;stroke:rgba(102,187,106,0.7);stroke-width:1.2}.sc #hl{fill:none;stroke:rgba(38,198,218,0.7);stroke-width:1.2}.sg #hg{fill:none;stroke:rgba(66,165,245,0.7);stroke-width:1.2}
 .ss #hsa{fill:rgba(102,187,106,0.12);stroke:none}.sc #hla{fill:rgba(38,198,218,0.12);stroke:none}.sg #hga{fill:rgba(66,165,245,0.12);stroke:none}
 </style>
-<ha-card><svg viewBox="0 0 526 526"><g transform="translate(25.5,10) scale(0.95)">
-<text x="5" y="8" class="wt" id="wt"></text>
+<ha-card><svg viewBox="0 0 526 520"><g transform="translate(25.5,10) scale(0.95)">
+<g id="wicons" style="display:none">
+<g transform="translate(0,1)"><rect x="6" y="0" width="2.5" height="7" rx="1.2" fill="none" stroke="var(--t3)" stroke-width="0.7"/><circle cx="7.2" cy="9" r="2.5" fill="none" stroke="var(--t3)" stroke-width="0.7"/><line x1="7.2" y1="3" x2="7.2" y2="7" stroke="var(--red)" stroke-width="1" stroke-linecap="round"/><circle cx="7.2" cy="9" r="1.2" fill="var(--red)"/></g>
+<text x="14" y="8" class="wt" id="wt"></text>
+<g id="wdrop" transform="translate(0,1)"><path d="M58,9 Q58,4 61,0 Q64,4 64,9 Q64,12 61,12 Q58,12 58,9Z" fill="none" stroke="var(--t3)" stroke-width="0.7"/><path d="M59.2,8.5 Q59.2,5.5 61,2 Q62.8,5.5 62.8,8.5 Q62.8,10.5 61,10.5 Q59.2,10.5 59.2,8.5Z" fill="var(--grid)" opacity="0.5"/></g>
+<text x="68" y="8" class="wt" id="wh"></text>
+</g>
 <path class="fl" d="M250,96 L250,178"/><path class="fl" d="M250,272 L250,364"/><path class="fl" d="M90,225 L215,225"/><path class="fl" d="M285,225 L395,225"/>
 <path id="fs" class="fa" d="M250,96 L250,178" pathLength="100" opacity="0"/><path id="fb" class="fa" d="M250,272 L250,364" pathLength="100" opacity="0"/><path id="fg" class="fa" d="M90,225 L215,225" pathLength="100" opacity="0"/><path id="fh" class="fa" d="M285,225 L395,225" pathLength="100" opacity="0"/>
 <g><g transform="translate(250,38) scale(1.65) translate(-250,-38)"><circle cx="250" cy="38" r="9" fill="var(--solar)" opacity="0.85"/><line x1="250" y1="25" x2="250" y2="21" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.6"/><line x1="250" y1="51" x2="250" y2="55" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.6"/><line x1="237" y1="38" x2="233" y2="38" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.6"/><line x1="263" y1="38" x2="267" y2="38" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.6"/><line x1="240.8" y1="28.8" x2="238" y2="26" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.5"/><line x1="259.2" y1="47.2" x2="262" y2="50" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.5"/><line x1="259.2" y1="28.8" x2="262" y2="26" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.5"/><line x1="240.8" y1="47.2" x2="238" y2="50" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.5"/></g><text x="250" y="82" class="vm" style="fill:var(--green)" id="vs"></text><text x="250" y="-2" class="vl">${L.solar}</text><text x="310" y="30" class="vc" id="ds" text-anchor="start"></text><text x="310" y="44" class="vc" id="pv" text-anchor="start"></text></g>
-<g><g transform="translate(250,225) scale(1.65)"><rect x="-18" y="-24" width="36" height="48" rx="2" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.25)" stroke-width="1"/><rect x="-18" y="-24" width="36" height="5" rx="2" fill="rgba(255,255,255,0.12)"/><rect x="-12" y="-15" width="24" height="12" rx="1.5" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.2)" stroke-width="0.7"/><rect x="-8" y="-12" width="16" height="6" rx="1" fill="rgba(102,187,106,0.4)"/><circle id="led1" cx="-6" cy="2" r="1.2" fill="rgba(255,255,255,0.12)"/><circle id="led2" cx="-2" cy="2" r="1.2" fill="rgba(255,255,255,0.12)"/><circle id="led3" cx="2" cy="2" r="1.2" fill="rgba(255,255,255,0.12)"/><circle id="led4" cx="6" cy="2" r="1.2" fill="rgba(255,255,255,0.12)"/><path d="M-6,9 L-8,15 L-4,15 L-6,21" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.3)" stroke-width="0.5"/><rect x="2" y="12" width="10" height="3" rx="0.5" fill="rgba(255,255,255,0.1)"/><rect x="2" y="17" width="10" height="3" rx="0.5" fill="rgba(255,255,255,0.1)"/></g>${INV?'<text x="250" y="272" class="il">'+INV+'</text>':''}<text x="305" y="260" class="vc" id="tp" text-anchor="start"></text></g>
+<g><g transform="translate(250,225) scale(1.65)"><rect x="-18" y="-24" width="36" height="48" rx="2" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.25)" stroke-width="1"/><rect x="-18" y="-24" width="36" height="5" rx="2" fill="rgba(255,255,255,0.12)"/><rect x="-12" y="-15" width="24" height="12" rx="1.5" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.2)" stroke-width="0.7"/><rect x="-8" y="-12" width="16" height="6" rx="1" fill="rgba(102,187,106,0.4)"/><circle id="led1" cx="-6" cy="2" r="1.2" fill="rgba(255,255,255,0.12)"/><circle id="led2" cx="-2" cy="2" r="1.2" fill="rgba(255,255,255,0.12)"/><circle id="led3" cx="2" cy="2" r="1.2" fill="rgba(255,255,255,0.12)"/><circle id="led4" cx="6" cy="2" r="1.2" fill="rgba(255,255,255,0.12)"/><path d="M-6,9 L-8,15 L-4,15 L-6,21" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.3)" stroke-width="0.5"/><rect x="2" y="12" width="10" height="3" rx="0.5" fill="rgba(255,255,255,0.1)"/><rect x="2" y="17" width="10" height="3" rx="0.5" fill="rgba(255,255,255,0.1)"/></g>${INV?'<text x="250" y="272" class="il">'+INV+'</text>':''}<text x="290" y="264" class="vc" id="tp" text-anchor="start"></text></g>
 <g><g transform="translate(66,225) scale(1.65) translate(-66,-196)"><rect x="64" y="181" width="4" height="30" rx="1" fill="var(--grid)" opacity="0.8"/><rect x="54" y="183" width="24" height="3" rx="1" fill="var(--grid)" opacity="0.7"/><rect x="57" y="192" width="18" height="2.5" rx="1" fill="var(--grid)" opacity="0.6"/><path d="M60,211 L64,199 L68,199 L72,211" fill="var(--grid)" opacity="0.5"/><circle cx="56" cy="184" r="1.5" fill="var(--grid)" opacity="0.9"/><circle cx="76" cy="184" r="1.5" fill="var(--grid)" opacity="0.9"/><circle cx="58" cy="193" r="1.2" fill="var(--grid)" opacity="0.8"/><circle cx="74" cy="193" r="1.2" fill="var(--grid)" opacity="0.8"/><line x1="54" y1="184" x2="46" y2="181" stroke="var(--grid)" stroke-width="0.8" opacity="0.4"/><line x1="78" y1="184" x2="86" y2="181" stroke="var(--grid)" stroke-width="0.8" opacity="0.4"/></g><text x="66" y="268" class="vm" style="fill:var(--red)" id="vg"></text><text x="66" y="190" class="vl">${L.grid}</text><text x="66" y="286" class="vc" id="gv"></text><text x="66" y="300" class="vd" id="dg"></text></g>
 <g><g transform="translate(434,225) scale(1.65) translate(-434,-188)"><path d="M416,188 L434,174 L452,188 Z" fill="var(--load)" opacity="0.8"/><rect x="420" y="187" width="28" height="18" rx="1" fill="var(--load)" opacity="0.6"/><rect x="430" y="195" width="8" height="10" rx="1" fill="rgba(0,0,0,0.3)"/><rect x="422" y="190" width="6" height="5" rx="0.5" fill="rgba(255,255,255,0.15)"/><rect x="440" y="190" width="6" height="5" rx="0.5" fill="rgba(255,255,255,0.15)"/><rect x="441" y="176" width="5" height="8" rx="1" fill="var(--load)" opacity="0.5"/></g><text x="434" y="268" class="vm" style="fill:var(--load)" id="vl"></text><text x="434" y="190" class="vl">${L.load}</text><text x="434" y="288" class="vd" id="dl"></text></g>
 <g><g transform="translate(250,400) scale(1.70) translate(-250,-351)"><rect x="232" y="341" width="32" height="20" rx="3" fill="var(--battery)" opacity="0.75"/><rect x="264" y="345.5" width="6" height="11" rx="2" fill="var(--battery)" opacity="0.9"/><rect x="235" y="344" width="26" height="14" rx="1.5" fill="rgba(0,0,0,0.35)"/><rect id="bl" x="235" y="344" width="26" height="14" rx="1.5" fill="var(--battery)" opacity="0.45"/></g><text x="250" y="440" class="vm" style="fill:var(--solar)" id="vb"></text><text x="250" y="462" class="vs" id="vc"></text><text x="250" y="372" class="vl">${L.battery}</text><text x="310" y="394" class="vc" id="bv" text-anchor="start"></text><text x="310" y="406" class="vc" id="bt" text-anchor="start"></text><text x="250" y="483" class="vd" id="db"></text><text x="250" y="498" class="vc" id="br" style="fill:var(--t1)"></text></g>
@@ -535,7 +541,6 @@ const gv=this._gv(c.grid_voltage);
 const bv=this._gv(c.battery_voltage);
 const pvv=this._gv(c.pv_voltage);
 const freq=this._gv(c.frequency);
-const gon=this._gs(c.grid_status)==='on';
 
 const p=this._prev;
 this._$('vs').textContent=this._arrow(sol,p.solar)+this._fmt(sol);
@@ -548,11 +553,11 @@ const socVal=soc??0;
 this._$('vc').textContent=soc!==null?Math.round(soc)+'% | '+c.shutdown_soc+'%':L.unavailable;
 this._$('bl').setAttribute('width',(26*(socVal/100)).toFixed(1));
 
-if(temp!==null&&temp>0)this._$('tp').textContent=temp.toFixed(0)+'\u00B0C';else this._$('tp').textContent='';
-if(pvv!==null&&pvv>0)this._$('pv').textContent=pvv.toFixed(0)+'V';else this._$('pv').textContent='';
-if(gv!==null&&gv>0&&freq!==null)this._$('gv').textContent=gv.toFixed(0)+'V \u00B7 '+freq.toFixed(1)+'Hz';else this._$('gv').textContent='';
-if(bv!==null&&bv>0)this._$('bv').textContent=bv.toFixed(1)+'V';else this._$('bv').textContent='';
-const bt=this._gv(c.battery_temperature);if(bt!==null&&bt>0)this._$('bt').textContent=bt.toFixed(0)+'\u00B0C';else this._$('bt').textContent='';
+if(temp!==null)this._$('tp').textContent=temp.toFixed(0)+'\u00B0C';else this._$('tp').textContent='';
+if(pvv!==null)this._$('pv').textContent=L.daily+' '+pvv.toFixed(0)+'V';else this._$('pv').textContent='';
+if(gv!==null&&freq!==null)this._$('gv').textContent=gv.toFixed(0)+'V \u00B7 '+freq.toFixed(1)+'Hz';else this._$('gv').textContent='';
+if(bv!==null)this._$('bv').textContent=bv.toFixed(1)+'V';else this._$('bv').textContent='';
+const bt=this._gv(c.battery_temperature);if(bt!==null)this._$('bt').textContent=bt.toFixed(0)+'\u00B0C';else this._$('bt').textContent='';
 
 
 
@@ -585,9 +590,17 @@ this._$('va').textContent=L.autarky+': '+au.toFixed(0)+'%';
 const ap=this._$('ap');if(ap){let pc;if(au>=80)pc='#66BB6A';else if(au>=50)pc='#FFA726';else if(au>=25)pc='#FF7043';else pc='#EF5350';ap.setAttribute('fill',pc);}
 
 // Weather
-const wt=this._gv(c.weather_temp);const wh=this._gv(c.weather_humidity);
-let ws='';if(wt!==null)ws+=wt.toFixed(0)+'\u00B0C';if(wh!==null)ws+=(ws?' · ':'')+wh.toFixed(0)+'%';
-this._$('wt').textContent=ws;
+const wtv=this._gv(c.weather_temp);const whv=this._gv(c.weather_humidity);
+const wicons=this._$('wicons');const wdrop=this._$('wdrop');
+const wtEl=this._$('wt');const whEl=this._$('wh');
+if(wtv!==null||whv!==null){
+  if(wicons)wicons.style.display='';
+  if(wtEl)wtEl.textContent=wtv!==null?wtv.toFixed(0)+'\u00B0C':'';
+  if(whEl)whEl.textContent=whv!==null?whv.toFixed(0)+'%':'';
+  if(wdrop)wdrop.style.display=whv!==null?'':'none';
+}else{
+  if(wicons)wicons.style.display='none';
+}
 
 // LEDs
 const _led=(id,on,color)=>{const el=this._$(id);if(!el)return;el.setAttribute('fill',on?color:'rgba(255,255,255,0.12)');if(on)el.setAttribute('class','led-on');else el.removeAttribute('class');};
