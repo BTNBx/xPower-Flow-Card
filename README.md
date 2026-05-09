@@ -4,7 +4,7 @@ A modern, lightweight power flow card for **solar hybrid inverters** in Home Ass
 
 Animated pulse flows, smooth 24h sparkline charts with tooltips, battery runtime estimation, dynamic inverter LEDs, and a dark glassmorphism aesthetic — all in a single file with zero dependencies.
 
-![xPower Flow Card](card.png)
+![xPower Flow Card](demo.gif)
 
 ## Supported Inverters
 
