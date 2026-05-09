@@ -220,4 +220,4 @@ Designed and built by [@BTNBx](https://github.com/BTNBx).
 
 ## License
 
-MIT
+License
