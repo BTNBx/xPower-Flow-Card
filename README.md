@@ -164,7 +164,7 @@ LEDs blink when active, dim gray when inactive.
 
 ## Changelog
 
-### v1.0.9
+### v1.0.9/v1.1.0
 
 - Flow animation changed from dots to pulse/snake style
 - Middle section repositioned for balanced flow lines
