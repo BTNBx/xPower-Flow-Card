@@ -178,6 +178,8 @@ LEDs blink when active, dim gray when inactive.
 - Weather display in top-left — configurable temperature and humidity sensors
 - 8 languages: PT, EN, DE, FR, ES, IT, NL, PL
 - Reduced bottom spacing below autarky pill
+- Snake flow refined — head reaches end before tail follows, slower animation (1.5s–3.5s)
+- Solar side values (kWh, voltage) moved further from icon and aligned
 
 ### v1.0.8
 
