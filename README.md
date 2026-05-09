@@ -10,14 +10,14 @@ Animated pulse flows, smooth 24h sparkline charts with tooltips, battery runtime
 
 | Brand | Integration | Status |
 |-------|-------------|--------|
-| **Deye** | Solarman / deye_inverter | ✅ Tested |
-| **Sunsynk** | Sunsynk / modbus | ✅ Preset |
-| **Huawei** | FusionSolar | ✅ Preset |
-| **Fronius** | Gen24 / Modbus | ✅ Preset |
-| **Growatt** | Growatt / modbus | ✅ Preset |
-| **Victron** | Venus OS / GX | ✅ Preset |
-| **SolarEdge** | Modbus / SunSpec | ✅ Preset |
-| **Any other** | Custom | ✅ Custom preset |
+| **Deye** | Solarman / deye_inverter | Tested |
+| **Sunsynk** | Sunsynk / modbus | Preset |
+| **Huawei** | FusionSolar | Preset |
+| **Fronius** | Gen24 / Modbus | Preset |
+| **Growatt** | Growatt / modbus | Preset |
+| **Victron** | Venus OS / GX | Preset |
+| **SolarEdge** | Modbus / SunSpec | Preset |
+| **Any other** | Custom | Custom preset |
 
 Select your brand in the visual editor — entities and polarity are auto-configured.
 
