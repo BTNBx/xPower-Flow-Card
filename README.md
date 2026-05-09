@@ -1,4 +1,4 @@
-# ⚡ xPower Flow Card ⚡
+# xPower Flow Card ⚡
 
 A modern, lightweight power flow card for **solar hybrid inverters** in Home Assistant.
 
