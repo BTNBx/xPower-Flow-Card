@@ -23,8 +23,8 @@ Select your brand in the visual editor — entities and polarity are auto-config
 
 ## Features
 
-- **8 inverter presets** — Deye, Sunsynk, Huawei, Fronius, Growatt, Victron, SolarEdge, Custom
-- **8 languages** — Portuguese, English, German, French, Spanish, Italian, Dutch, Polish
+- **8 inverter presets: Deye, Sunsynk, Huawei, Fronius, Growatt, Victron, SolarEdge, and Custom 
+- **Supports 8 languages: Portuguese, English, German, French, Spanish, Italian, Dutch, and Polish  
 - **Polarity normalization** — configurable battery and grid sign conventions
 - **Pulse flow animation** — continuous snake-style energy flow, speed proportional to power
 - **Color-coded values** — Solar (green), Grid (red), Home (cyan), Battery (yellow)
