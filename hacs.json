@@ -1,6 +1,5 @@
 {
   "name": "xPower Flow Card",
-  "type": "plugin",
   "render_readme": true,
   "filename": "xpower-flow-card.js"
 }
