@@ -164,6 +164,10 @@ LEDs blink when active, dim gray when inactive.
 
 ## Changelog
 
+### v1.1.4
+
+- Minor bug fixing
+
 ### v1.1.3
 
 - Grid tower icon changed to dark red
