@@ -23,26 +23,26 @@ Select your brand in the visual editor — entities and polarity are auto-config
 
 ## Features
 
-- **8 inverter presets: Deye, Sunsynk, Huawei, Fronius, Growatt, Victron, SolarEdge, and Custom 
-- **Supports 8 languages: Portuguese, English, German, French, Spanish, Italian, Dutch, and Polish  
-- **Polarity normalization** — configurable battery and grid sign conventions
-- **Pulse flow animation** — continuous snake-style energy flow, speed proportional to power
-- **Color-coded values** — Solar (green), Grid (red), Home (cyan), Battery (yellow)
-- **Dynamic inverter LEDs** — 4 LEDs blink based on active flows (solar/battery/grid/home)
-- **Realistic inverter icon** — device with display, LEDs, and status bars
-- **Battery runtime** — estimated time to shutdown SOC with ETA clock
-- **Battery gauge** — visual SOC level inside the battery icon
-- **Weather display** — optional temperature and humidity in top-left corner
-- **24h sparkline charts** — smooth Catmull-Rom area charts with auto-refresh every 5 minutes
-- **Sparkline tooltips** — hover to see power value and time (e.g. `330 W · 14:30`)
-- **Auto-scaling sparklines** — dynamic Y-axis based on actual data
-- **Autarky pill** — color changes based on self-sufficiency (green/orange/red)
-- **Daily totals** — import/export with kWh values
-- **Trend arrows** — ▴ rising, ▾ falling, ▸ stable
-- **Unavailable handling** — shows `--` when sensors are offline
-- **Visual editor** — preset selector, polarity config, all entity fields
-- **Inverter name optional** — leave empty to hide
-- **Lightweight** — single file, no build step, no dependencies
+- 8 inverter presets: Deye, Sunsynk, Huawei, Fronius, Growatt, Victron, SolarEdge, and Custom  
+- Supports 8 languages: Portuguese, English, German, French, Spanish, Italian, Dutch, and Polish  
+- Polarity normalization lets you set battery and grid sign conventions  
+- Pulse flow animation shows a smooth, snake-like energy flow with speed based on power  
+- Values are color-coded—solar (green), grid (red), home (cyan), battery (yellow)  
+- Four inverter LEDs blink to show active flows: solar, battery, grid, or home  
+- Inverter icon looks realistic, complete with a display, LEDs, and status bars  
+- Estimated battery runtime displays shutdown SOC and ETA clock  
+- Battery gauge shows SOC level right inside the battery icon  
+- Optional weather in the top-left corner shows temperature and humidity  
+- 24-hour sparkline charts update every five minutes with smooth, Catmull-Rom areas  
+- Hover over sparklines for tooltips with power value and time—for example, 330 W · 14:30  
+- Sparklines autoscale the Y-axis to fit your actual data  
+- Autarky pill changes color—green, orange, or red—based on self-sufficiency  
+- Daily totals show import/export in kWh  
+- Trend arrows indicate rising, falling, or stable values: ▴ ▾ ▸  
+- If sensors are offline, see -- instead of numbers  
+- Visual editor lets you pick a preset, set polarity, and edit all entity fields  
+- You can hide the inverter name—just leave it blank  
+- Super lightweight: a single file, no build step, no dependencies
 
 ## Installation
 
