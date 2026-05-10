@@ -41,7 +41,7 @@ Select your brand in the visual editor — entities and polarity are auto-config
 - Trend arrows indicate rising, falling, or stable values: ▴ ▾ ▸  
 - If sensors are offline, see -- instead of numbers  
 - Visual editor lets you pick a preset, set polarity, and edit all entity fields  
-- You can hide the inverter name—just leave it blank  
+- You can hide the inverter name — just leave it blank  
 - Super lightweight: a single file, no build step, no dependencies
 
 ## Installation
