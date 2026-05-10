@@ -34,7 +34,7 @@ Select your brand in the visual editor — entities and polarity are auto-config
 - Battery gauge shows SOC level right inside the battery icon  
 - Optional weather in the top-left corner shows temperature and humidity  
 - 24-hour sparkline charts update every five minutes with smooth, Catmull-Rom areas  
-- Hover over sparklines for tooltips with power value and time—for example, 330 W · 14:30  
+- Hover over sparklines for tooltips with power value and time — for example, 330 W · 14:30  
 - Sparklines autoscale the Y-axis to fit your actual data  
 - Autarky pill changes color — green, orange, or red — based on self-sufficiency  
 - Daily totals show import/export in kWh  
