@@ -36,7 +36,7 @@ Select your brand in the visual editor — entities and polarity are auto-config
 - 24-hour sparkline charts update every five minutes with smooth, Catmull-Rom areas  
 - Hover over sparklines for tooltips with power value and time—for example, 330 W · 14:30  
 - Sparklines autoscale the Y-axis to fit your actual data  
-- Autarky pill changes color—green, orange, or red—based on self-sufficiency  
+- Autarky pill changes color — green, orange, or red — based on self-sufficiency  
 - Daily totals show import/export in kWh  
 - Trend arrows indicate rising, falling, or stable values: ▴ ▾ ▸  
 - If sensors are offline, see -- instead of numbers  
