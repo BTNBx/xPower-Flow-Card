@@ -167,22 +167,22 @@ LEDs blink when active, dim gray when inactive.
 v1.1.5
 
 Flow Line Colors
-- Solar → Inverter** flow line now uses **green** instead of amber, matching the solar power value color
-- Inverter → Home** flow line is now **dynamic** based on the dominant energy source:
-  - **Green** when solar is the primary source
-  - **Red** when grid import is dominant
-  - **Purple** when battery discharge is dominant
-- Battery flow** remains green when charging, purple when discharging
+- Solar → Inverter flow line now uses green instead of amber, matching the solar power value color
+- Inverter → Home flow line is now dynamic based on the dominant energy source:
+  - Green when solar is the primary source
+  - Red when grid import is dominant
+  - Purple when battery discharge is dominant
+- Battery flow remains green when charging, purple when discharging
 Flow Speed Boost
-- Flow dot animation now has **stepped speed increases** based on power:
+- Flow dot animation now has stepped speed increases based on power:
   - ≥1000 W → 20% faster
   - ≥2000 W → 40% faster
   - ≥3000 W → 60% faster
 Inverter Lightning Bolt Glow
-- The lightning bolt icon inside the inverter now glows in **solar yellow** with a soft blur effect
+- The lightning bolt icon inside the inverter now glows in solar yellow with a soft blur effect
 Weather Widget
 - Shifted the temperature/humidity widget slightly to the left
-- Added a subtle **rounded border box** around the weather indicators
+- Added a subtle rounded border box around the weather indicators
 
 ### v1.1.4
 
