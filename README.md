@@ -164,6 +164,21 @@ LEDs blink when active, dim gray when inactive.
 
 ## Changelog
 
+v1.1.6
+
+### Synchronized Flow Animation
+- Flow dots now animate **in sequence**: energy arrives at the inverter first, then exits to home or battery
+- Outgoing flows (inverter → home, inverter → battery charging) have a calculated delay based on the fastest incoming flow speed
+- Creates a realistic "energy flowing through the inverter" visual effect
+
+### Inverter Lightning Bolt
+- Bolt glow now **only activates when receiving solar energy**
+- When solar is off, the bolt reverts to a dim neutral appearance
+- Glow uses solar yellow color with soft blur filter
+
+### Weather Widget
+- Widened the border box to prevent humidity text from being clipped
+
 ### v1.1.5
 
 Flow Line Colors
