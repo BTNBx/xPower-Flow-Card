@@ -164,7 +164,7 @@ LEDs blink when active, dim gray when inactive.
 
 ## Changelog
 
-## v1.1.5
+v1.1.5
 
 ### Flow Line Colors
 - **Solar → Inverter** flow line now uses **green** instead of amber, matching the solar power value color
