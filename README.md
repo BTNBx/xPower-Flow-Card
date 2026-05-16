@@ -164,6 +164,9 @@ LEDs blink when active, dim gray when inactive.
 
 ## Changelog
 
+## v1.2.0
+- Bug fixing
+
 ## v1.1.9
 
 Sun Icon
