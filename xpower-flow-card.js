@@ -1,7 +1,7 @@
 // xPower Flow Card — Modern power flow card for solar hybrid inverters
 // Copyright (C) 2025 BTNBx
 // Licensed under GPL-3.0 — see LICENSE file
-const V='1.1.9';
+const V='1.2.0';
 
 /* ═══════════════════════════════════════
    xPower Flow Card — i18n
@@ -617,6 +617,10 @@ const sunG=this._$('sunG');if(sunG){if(solF>10){sunG.classList.add('sun-spin');s
 const gridIcon=this._$('gridIcon');if(gridIcon){gridIcon.style.opacity=Math.abs(gridF)>10?'1':'0.25';}
 const loadIcon=this._$('loadIcon');if(loadIcon){loadIcon.style.opacity=loadF>10?'1':'0.25';}
 const batIcon=this._$('batIcon');if(batIcon){batIcon.style.opacity=Math.abs(batF)>10?'1':'0.25';}
+this._$('vs').style.opacity=solF>10?'1':'0.25';
+this._$('vg').style.opacity=Math.abs(gridF)>10?'1':'0.25';
+this._$('vl').style.opacity=loadF>10?'1':'0.25';
+this._$('vb').style.opacity=Math.abs(batF)>10?'1':'0.25';
 
 this._$('hv').textContent=this._fmt(sol)+' / '+this._fmtE(dS);
 this._$('hx').textContent=this._fmt(load)+' / '+this._fmtE(dL);
