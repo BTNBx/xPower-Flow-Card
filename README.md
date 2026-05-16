@@ -164,6 +164,26 @@ LEDs blink when active, dim gray when inactive.
 
 ## Changelog
 
+## v1.1.8
+
+Inverter Bolt
+- Bolt is now stroke-only (no fill) with solar yellow color
+- Breathing glow animation (2s cycle, opacity 0.3↔1) runs continuously
+
+Battery Charging Animation
+- When charging (>10W), battery fill turns Apple green (#4CD964) with pulsing animation (1.5s cycle)
+- When idle/discharging, reverts to default purple fill
+
+Sun Icon Rotation
+- Sun icon rotates slowly (20s full rotation) while generating solar power (>10W)
+- Stops when solar output drops to zero
+
+Flow Line Colors
+- Inverter → Home flow now uses yellow (var(--solar)) when battery is the dominant source, matching the Battery → Inverter flow color
+
+Sparkline Charts
+- Increased chart height from 40px to 55px for better readability
+
 ## v1.1.7
 
 Weather Widget
