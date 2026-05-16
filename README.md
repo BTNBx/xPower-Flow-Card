@@ -164,7 +164,15 @@ LEDs blink when active, dim gray when inactive.
 
 ## Changelog
 
-v1.1.6
+## v1.1.7
+
+### Weather Widget
+- Widened border box from 82 to 86 and shifted divider/humidity icon +2px right for proper centering
+
+### Battery Flow Line
+- Battery → Inverter discharge flow color changed from purple (var(--battery)) to yellow (var(--solar)) to match the battery watts display
+
+## v1.1.6
 
 Synchronized Flow Animation
 - Flow dots now animate **in sequence**: energy arrives at the inverter first, then exits to home or battery
