@@ -164,6 +164,32 @@ LEDs blink when active, dim gray when inactive.
 
 ## Changelog
 
+## v1.1.9
+
+### Sun Icon
+- Rotates slowly (60s full rotation) while generating solar power (>10W)
+- Dims to 25% opacity when not producing, full opacity when active
+
+### Icon Dim States
+- Solar, Grid, Home, and Battery icons dim to 25% opacity when inactive (<10W)
+- Full opacity when active, providing clear visual feedback of energy flow status
+
+### Battery Charging Animation
+- When charging (>10W), battery fill turns Apple green (#4CD964) with pulsing animation (1.5s cycle)
+- When idle/discharging, reverts to default purple fill
+
+### Flow Line Colors
+- Inverter → Home flow now uses yellow (var(--solar)) when battery is the dominant source, matching the Battery → Inverter flow color
+
+### Inverter Bolt
+- Reverted to original static style (no glow, no animation)
+
+### Daily Stats Text
+- Unified font size across all sections (Solar, Grid, Home, Battery) to 12px (vd class)
+
+### Sparkline Charts
+- Increased chart height from 40px to 55px for better readability
+
 ## v1.1.8
 
 Inverter Bolt
