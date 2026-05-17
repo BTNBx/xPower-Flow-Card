@@ -165,6 +165,32 @@ LEDs blink when active, dim gray when inactive.
 ## Changelog
 
 ## v1.2.0
+
+Dynamic Ambient Glow
+- Card border emits a subtle colored glow based on the dominant energy source
+- Solar dominant: green-mint halo
+- Battery dominant: golden/amber aura
+- Grid dominant: soft red pulse
+- Smooth 1.5s transition between glow states
+
+Inverter LCD Display
+- Mini monospace LCD screen added to the inverter body
+- Shows total power throughput in real-time
+- When exporting to grid: ⚡ icon blinks alongside the power value
+- Dark background with green LCD border for realistic appearance
+
+Aurora Effect (Autarky ≥ 90%)
+- Flowing aurora borealis gradient (green → blue → purple) appears behind the card
+- 8s animation cycle at very low opacity to avoid interfering with readability
+- Autarky pill gains a golden pulsing glow as visual reward
+- Both effects activate above 90% self-sufficiency and fade out below
+
+Flow Line Morphing
+- Color transitions on flow lines now cross-fade over 800ms instead of switching instantly
+- Opacity changes also smoothly transition
+- Eliminates visual "flicker" when energy source shifts (e.g. grid → battery)
+
+## v1.2.0
 - Bug fixing
 
 ## v1.1.9
