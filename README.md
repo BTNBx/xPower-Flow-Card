@@ -164,7 +164,7 @@ LEDs blink when active, dim gray when inactive.
 
 ## Changelog
 
-## v1.2.0
+## v1.2.1
 
 Dynamic Ambient Glow
 - Card border emits a subtle colored glow based on the dominant energy source
