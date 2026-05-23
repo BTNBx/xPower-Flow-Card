@@ -1,7 +1,7 @@
 // xPower Flow Card — Modern power flow card for solar hybrid inverters
 // Copyright (C) 2025 BTNBx
 // Licensed under GPL-3.0 — see LICENSE file
-const V='1.2.1';
+const V='1.2.2';
 
 /* ═══════════════════════════════════════
    xPower Flow Card — i18n
@@ -427,11 +427,8 @@ _render(){const L=this._lang;const INV=this._c.inverter_name||'';const s=this.sh
 :host(.light) .ib{fill:rgba(0,0,0,0.03);stroke:rgba(0,0,0,0.08)}
 :host(.light) .sb{background:rgba(0,0,0,0.02);border-color:rgba(0,0,0,0.06)}
 :host(.light) .sl{opacity:0.4}
-ha-card{background:rgba(12,14,24,0.92);border:1px solid rgba(255,255,255,0.06);border-radius:20px;box-shadow:0 2px 40px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.04);padding:6px 8px 14px;position:relative;overflow:hidden;font-family:-apple-system,sans-serif;--ha-card-background:transparent;--ha-card-border-width:0;--ha-card-border-radius:20px;--ha-card-box-shadow:none;transition:box-shadow 1.5s ease}
+ha-card{background:rgba(12,14,24,0.92);border:1px solid rgba(255,255,255,0.06);border-radius:20px;box-shadow:0 2px 40px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.04);padding:6px 8px 14px;position:relative;overflow:hidden;font-family:-apple-system,sans-serif;--ha-card-background:transparent;--ha-card-border-width:0;--ha-card-border-radius:20px;--ha-card-box-shadow:none;transition:border-color 1.5s ease}
 ha-card::before{content:'';position:absolute;top:-1px;left:20%;right:20%;height:1px;background:linear-gradient(90deg,transparent,rgba(124,77,255,0.25),transparent)}
-ha-card::after{content:'';position:absolute;top:0;left:0;right:0;bottom:0;border-radius:20px;pointer-events:none;opacity:0;transition:opacity 1.5s ease;z-index:0}
-@keyframes auroraFlow{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
-.aurora::after{opacity:1;background:linear-gradient(135deg,rgba(102,187,106,0.08),rgba(66,165,245,0.06),rgba(124,77,255,0.08),rgba(102,187,106,0.06));background-size:300% 300%;animation:auroraFlow 8s ease infinite}
 @keyframes pillGlow{0%,100%{box-shadow:0 0 8px rgba(255,215,0,0.4)}50%{box-shadow:0 0 20px rgba(255,215,0,0.8)}}
 .au-glow{animation:pillGlow 2s ease-in-out infinite;border-radius:8px}
 svg{width:100%;height:auto;display:block}
@@ -455,9 +452,8 @@ svg{width:100%;height:auto;display:block}
 .il{fill:rgba(255,255,255,0.35);font-size:12px;font-weight:600;letter-spacing:0.05em;text-anchor:middle;dominant-baseline:middle}
 .au{fill:white;font-size:9px;font-weight:600;letter-spacing:0.04em;text-anchor:middle;dominant-baseline:middle}
 .au-pill{rx:8;ry:8;transition:fill 0.5s ease}
-.lcd{fill:rgba(102,187,106,0.9);font-size:7px;font-weight:700;font-family:'Courier New',monospace;text-anchor:middle;dominant-baseline:middle;letter-spacing:0.08em}
-@keyframes lcdBlink{0%,100%{opacity:1}50%{opacity:0.3}}
-.lcd-export{animation:lcdBlink 1s ease-in-out infinite}
+.lcd{fill:rgba(255,255,255,0.95);font-size:8px;font-weight:700;font-family:'Courier New',monospace;text-anchor:middle;dominant-baseline:middle;letter-spacing:0.06em}
+
 .wt{fill:var(--t3);font-size:11px;font-weight:500;text-anchor:start;dominant-baseline:middle;font-family:-apple-system,sans-serif}
 .wb{fill:none;stroke:var(--t3);stroke-width:0.5;rx:4;ry:4;opacity:0.4}
 .sr{display:flex;gap:6px;margin-top:16px}
@@ -488,7 +484,7 @@ svg{width:100%;height:auto;display:block}
 <path class="fl" d="M250,96 L250,178"/><path class="fl" d="M250,272 L250,364"/><path class="fl" d="M90,225 L215,225"/><path class="fl" d="M285,225 L395,225"/>
 <path id="fs" class="fa" d="M250,96 L250,178" pathLength="100" opacity="0"/><path id="fb" class="fa" d="M250,272 L250,364" pathLength="100" opacity="0"/><path id="fg" class="fa" d="M90,225 L215,225" pathLength="100" opacity="0"/><path id="fh" class="fa" d="M285,225 L395,225" pathLength="100" opacity="0"/>
 <g><g id="sunG"><g transform="translate(250,38) scale(1.65) translate(-250,-38)"><circle cx="250" cy="38" r="9" fill="var(--solar)" opacity="0.85"/><line x1="250" y1="25" x2="250" y2="21" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.6"/><line x1="250" y1="51" x2="250" y2="55" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.6"/><line x1="237" y1="38" x2="233" y2="38" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.6"/><line x1="263" y1="38" x2="267" y2="38" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.6"/><line x1="240.8" y1="28.8" x2="238" y2="26" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.5"/><line x1="259.2" y1="47.2" x2="262" y2="50" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.5"/><line x1="259.2" y1="28.8" x2="262" y2="26" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.5"/><line x1="240.8" y1="47.2" x2="238" y2="50" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.5"/></g></g><text x="250" y="82" class="vm" style="fill:var(--green)" id="vs"></text><text x="250" y="-2" class="vl">${L.solar}</text><text x="310" y="30" class="vd" id="ds" text-anchor="start"></text><text x="320" y="44" class="vc" id="pv" text-anchor="start"></text></g>
-<g><g transform="translate(250,225) scale(1.65)"><rect x="-18" y="-24" width="36" height="48" rx="2" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.25)" stroke-width="1"/><rect x="-18" y="-24" width="36" height="5" rx="2" fill="rgba(255,255,255,0.12)"/><rect x="-12" y="-15" width="24" height="12" rx="1.5" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.2)" stroke-width="0.7"/><rect x="-8" y="-12" width="16" height="6" rx="1" fill="rgba(102,187,106,0.4)"/><circle id="led1" cx="-6" cy="2" r="1.2" fill="rgba(255,255,255,0.12)"/><circle id="led2" cx="-2" cy="2" r="1.2" fill="rgba(255,255,255,0.12)"/><circle id="led3" cx="2" cy="2" r="1.2" fill="rgba(255,255,255,0.12)"/><circle id="led4" cx="6" cy="2" r="1.2" fill="rgba(255,255,255,0.12)"/><path id="bolt" d="M-6,9 L-8,15 L-4,15 L-6,21" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.3)" stroke-width="0.5"/><rect x="2" y="12" width="10" height="3" rx="0.5" fill="rgba(255,255,255,0.1)"/><rect x="2" y="17" width="10" height="3" rx="0.5" fill="rgba(255,255,255,0.1)"/><rect x="-11" y="-14" width="22" height="10" rx="1" fill="rgba(0,0,0,0.5)" stroke="rgba(102,187,106,0.3)" stroke-width="0.4"/><text id="lcd" x="0" y="-9" class="lcd">0 W</text></g>${INV?'<text x="250" y="272" class="il">'+INV+'</text>':''}<text x="296" y="264" class="vc" id="tp" text-anchor="start"></text></g>
+<g><g transform="translate(250,225) scale(1.65)"><rect x="-18" y="-24" width="36" height="48" rx="2" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.25)" stroke-width="1"/><rect x="-18" y="-24" width="36" height="5" rx="2" fill="rgba(255,255,255,0.12)"/><rect x="-12" y="-15" width="24" height="12" rx="1.5" fill="rgba(102,187,106,0.15)" stroke="rgba(102,187,106,0.4)" stroke-width="0.7"/><circle id="led1" cx="-6" cy="2" r="1.2" fill="rgba(255,255,255,0.12)"/><circle id="led2" cx="-2" cy="2" r="1.2" fill="rgba(255,255,255,0.12)"/><circle id="led3" cx="2" cy="2" r="1.2" fill="rgba(255,255,255,0.12)"/><circle id="led4" cx="6" cy="2" r="1.2" fill="rgba(255,255,255,0.12)"/><path id="bolt" d="M-6,9 L-8,15 L-4,15 L-6,21" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.3)" stroke-width="0.5"/><rect x="2" y="12" width="10" height="3" rx="0.5" fill="rgba(255,255,255,0.1)"/><rect x="2" y="17" width="10" height="3" rx="0.5" fill="rgba(255,255,255,0.1)"/><text id="lcd" x="0" y="-9" class="lcd">0W</text></g>${INV?'<text x="250" y="272" class="il">'+INV+'</text>':''}<text x="296" y="264" class="vc" id="tp" text-anchor="start"></text></g>
 <g><g id="gridIcon" transform="translate(66,225) scale(1.65) translate(-66,-196)"><rect x="64" y="181" width="4" height="30" rx="1" fill="var(--red)" opacity="0.7"/><rect x="54" y="183" width="24" height="3" rx="1" fill="var(--red)" opacity="0.6"/><rect x="57" y="192" width="18" height="2.5" rx="1" fill="var(--red)" opacity="0.5"/><path d="M60,211 L64,199 L68,199 L72,211" fill="var(--red)" opacity="0.4"/><circle cx="56" cy="184" r="1.5" fill="var(--red)" opacity="0.8"/><circle cx="76" cy="184" r="1.5" fill="var(--red)" opacity="0.8"/><circle cx="58" cy="193" r="1.2" fill="var(--red)" opacity="0.7"/><circle cx="74" cy="193" r="1.2" fill="var(--red)" opacity="0.7"/><line x1="54" y1="184" x2="46" y2="181" stroke="var(--red)" stroke-width="0.8" opacity="0.3"/><line x1="78" y1="184" x2="86" y2="181" stroke="var(--red)" stroke-width="0.8" opacity="0.3"/></g><text x="66" y="268" class="vm" style="fill:var(--red)" id="vg"></text><text x="66" y="190" class="vl">${L.grid}</text><text x="66" y="286" class="vc" id="gv"></text><text x="66" y="300" class="vd" id="dg"></text></g>
 <g><g id="loadIcon" transform="translate(434,225) scale(1.65) translate(-434,-188)"><path d="M416,188 L434,174 L452,188 Z" fill="var(--load)" opacity="0.8"/><rect x="420" y="187" width="28" height="18" rx="1" fill="var(--load)" opacity="0.6"/><rect x="430" y="195" width="8" height="10" rx="1" fill="rgba(0,0,0,0.3)"/><rect x="422" y="190" width="6" height="5" rx="0.5" fill="rgba(255,255,255,0.15)"/><rect x="440" y="190" width="6" height="5" rx="0.5" fill="rgba(255,255,255,0.15)"/><rect x="441" y="176" width="5" height="8" rx="1" fill="var(--load)" opacity="0.5"/></g><text x="434" y="268" class="vm" style="fill:var(--load)" id="vl"></text><text x="434" y="190" class="vl">${L.load}</text><text x="434" y="288" class="vd" id="dl"></text></g>
 <g><g id="batIcon" transform="translate(250,400) scale(1.70) translate(-250,-351)"><rect x="232" y="341" width="32" height="20" rx="3" fill="var(--battery)" opacity="0.75"/><rect x="264" y="345.5" width="6" height="11" rx="2" fill="var(--battery)" opacity="0.9"/><rect x="235" y="344" width="26" height="14" rx="1.5" fill="rgba(0,0,0,0.35)"/><rect id="bl" x="235" y="344" width="26" height="14" rx="1.5" fill="var(--battery)" opacity="0.45"/></g><text x="250" y="440" class="vm" style="fill:var(--solar)" id="vb"></text><text x="250" y="462" class="vs" id="vc"></text><text x="250" y="372" class="vl">${L.battery}</text><text x="310" y="394" class="vc" id="bv" text-anchor="start"></text><text x="310" y="406" class="vc" id="bt" text-anchor="start"></text><text x="250" y="483" class="vd" id="db"></text><text x="250" y="498" class="vc" id="br" style="fill:var(--t1)"></text></g>
@@ -634,23 +630,20 @@ this._$('hv').textContent=this._fmt(sol)+' / '+this._fmtE(dS);
 this._$('hx').textContent=this._fmt(load)+' / '+this._fmtE(dL);
 this._$('hz').textContent=this._fmt(grid!==null?Math.abs(grid):null)+' / '+this._fmtE(dI+dE);
 
-// #1 Dynamic Glow — box-shadow based on dominant source
+// #1 Dynamic Border — thin border color based on dominant source
 const card=this.shadowRoot.querySelector('ha-card');
 if(card){const sC=solF>0?solF:0;const bC=batF>0?batF:0;const gC=gridF>0?gridF:0;
-let glowColor='rgba(0,0,0,0)';
-if(sC>=bC&&sC>=gC&&sC>10)glowColor='rgba(102,187,106,0.12)';
-else if(bC>=sC&&bC>=gC&&bC>10)glowColor='rgba(255,179,0,0.12)';
-else if(gC>10)glowColor='rgba(239,83,80,0.10)';
-card.style.boxShadow='0 2px 40px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.04),0 0 30px '+glowColor+',0 0 60px '+glowColor;}
+let borderColor='rgba(255,255,255,0.06)';
+if(sC>=bC&&sC>=gC&&sC>10)borderColor='rgba(102,187,106,0.55)';
+else if(bC>=sC&&bC>=gC&&bC>10)borderColor='rgba(255,179,0,0.55)';
+else if(gC>10)borderColor='rgba(239,83,80,0.45)';
+card.style.borderColor=borderColor;}
 
 // #2 LCD — total power throughput on inverter display
 const lcd=this._$('lcd');if(lcd){const total=solF+Math.abs(batF)+Math.abs(gridF);
-const isExport=gridF<-10;
-lcd.textContent=isExport?'\u26A1 '+this._fmt(total):this._fmt(total);
-lcd.setAttribute('class',isExport?'lcd lcd-export':'lcd');}
+const a=Math.abs(total);lcd.textContent=a>=1000?(a/1000).toFixed(1)+'kW':a.toFixed(0)+'W';}
 
-// #3 Aurora — autarky >90% background effect + pill glow
-if(card){if(au>=90){card.classList.add('aurora');}else{card.classList.remove('aurora');}}
+// #3 Pill glow — autarky >90%
 const apEl=this._$('ap');if(apEl){if(au>=90){apEl.style.filter='drop-shadow(0 0 6px rgba(255,215,0,0.6))';apEl.setAttribute('class','au-pill au-glow');}else{apEl.style.filter='';apEl.setAttribute('class','au-pill');}}
 }
 
