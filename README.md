@@ -1,8 +1,6 @@
-# xPower Flow Card ⚡
+# xPower Flow Card
 
-A modern, lightweight power flow card for **solar hybrid inverters** in Home Assistant.
-
-Animated pulse flows, smooth 24h sparkline charts with tooltips, battery runtime estimation, dynamic inverter LEDs, and a dark glassmorphism aesthetic, all in a single file with zero dependencies.
+A power flow visualization card for solar hybrid inverters in Home Assistant. Single file, no dependencies.
 
 ![xPower Flow Card](demo.gif)
 
@@ -19,36 +17,36 @@ Animated pulse flows, smooth 24h sparkline charts with tooltips, battery runtime
 | **SolarEdge** | Modbus / SunSpec | Preset |
 | **Any other** | Custom | Custom preset |
 
-Select your brand in the visual editor — entities and polarity are auto-configured.
+Select your brand in the visual editor. Entities and polarity are configured automatically.
 
 ## Features
 
-- 8 inverter presets: Deye, Sunsynk, Huawei, Fronius, Growatt, Victron, SolarEdge, and Custom  
-- Supports 8 languages: Portuguese, English, German, French, Spanish, Italian, Dutch, and Polish  
-- Polarity normalization lets you set battery and grid sign conventions  
-- Pulse flow animation shows a smooth, snake-like energy flow with speed based on power  
-- Values are color-coded—solar (green), grid (red), home (cyan), battery (yellow)  
-- Four inverter LEDs blink to show active flows: solar, battery, grid, or home  
-- Inverter icon looks realistic, complete with a display, LEDs, and status bars  
-- Estimated battery runtime displays shutdown SOC and ETA clock  
-- Battery gauge shows SOC level right inside the battery icon  
-- Optional weather in the top-left corner shows temperature and humidity  
-- 24-hour sparkline charts update every five minutes with smooth, Catmull-Rom areas  
-- Hover over sparklines for tooltips with power value and time — for example, 330 W · 14:30  
-- Sparklines autoscale the Y-axis to fit your actual data  
-- Autarky pill changes color — green, orange, or red — based on self-sufficiency  
-- Daily totals show import/export in kWh  
-- Trend arrows indicate rising, falling, or stable values: ▴ ▾ ▸  
-- If sensors are offline, see -- instead of numbers  
-- Visual editor lets you pick a preset, set polarity, and edit all entity fields  
-- You can hide the inverter name — just leave it blank  
-- Super lightweight: a single file, no build step, no dependencies
+- 8 inverter presets with auto-configured entities and polarity
+- 8 languages: Portuguese, English, German, French, Spanish, Italian, Dutch, Polish
+- Configurable battery and grid polarity sign conventions
+- Animated pulse flow lines with speed proportional to power output
+- Color-coded values: solar (green), grid (red), home (cyan), battery (yellow)
+- Inverter icon with 4 status LEDs indicating active energy flows
+- LCD display showing total power throughput
+- Battery runtime estimation with shutdown SOC and ETA
+- Battery gauge with SOC level indicator
+- Optional weather display (temperature and humidity)
+- 24-hour sparkline charts with Catmull-Rom interpolation, updated every 5 minutes
+- Sparkline tooltips showing power and timestamp on hover
+- Auto-scaling Y-axis on all sparklines
+- Autarky indicator with color-coded self-sufficiency percentage
+- Daily totals for import, export, and production in kWh
+- Trend arrows for rising, falling, or stable values
+- Graceful handling of unavailable sensors (`--`)
+- Dynamic card border color reflecting the dominant energy source
+- Visual editor for all configuration options
+- Light and dark theme support with automatic detection
 
 ## Installation
 
 ### HACS (Recommended)
 
-1. Open HACS → Frontend → **⋮** → Custom repositories
+1. Open HACS, go to Frontend, click the menu, then Custom repositories
 2. Add `https://github.com/BTNBx/xPower-Flow-Card` as **Dashboard**
 3. Search for "xPower Flow Card" and install
 4. Refresh your browser (Ctrl+Shift+R)
@@ -57,7 +55,7 @@ Select your brand in the visual editor — entities and polarity are auto-config
 
 1. Download `xpower-flow-card.js` from the [latest release](https://github.com/BTNBx/xPower-Flow-Card/releases)
 2. Copy to `/config/www/xpower-flow-card.js`
-3. Add resource in **Settings → Dashboards → ⋮ → Resources**:
+3. Add resource in **Settings > Dashboards > Resources**:
    - URL: `/local/xpower-flow-card.js`
    - Type: JavaScript Module
 4. Refresh your browser
@@ -66,7 +64,7 @@ Select your brand in the visual editor — entities and polarity are auto-config
 
 ### Visual Editor
 
-Add the card via the UI and use the built-in visual editor. Select your inverter brand from the **Preset** dropdown — all entities and polarity settings are auto-filled.
+Add the card through the UI and use the built-in visual editor. Select your inverter brand from the **Preset** dropdown to auto-fill all entity and polarity fields.
 
 ### YAML (Deye example)
 
@@ -136,8 +134,8 @@ weather_humidity: sensor.my_outdoor_humidity
 | `grid_polarity` | `positive` | `positive` = import (Deye) or `negative` = import (SolarEdge) |
 | `shutdown_soc` | `20` | Battery shutdown SOC percentage |
 | `battery_capacity` | `5120` | Battery capacity in Wh |
-| `weather_temp` | | Optional temperature sensor for top-left display |
-| `weather_humidity` | | Optional humidity sensor for top-left display |
+| `weather_temp` | | Temperature sensor for weather display |
+| `weather_humidity` | | Humidity sensor for weather display |
 
 ### Polarity Guide
 
@@ -151,221 +149,176 @@ weather_humidity: sensor.my_outdoor_humidity
 
 ### Inverter LEDs
 
-The 4 LEDs on the inverter icon indicate active power flows:
+The 4 LEDs on the inverter icon reflect active power flows:
 
-| LED | Color | Meaning |
-|-----|-------|---------|
-| 1st | 🟢 Green | Solar producing (>10W) |
-| 2nd | 🟠 Orange | Battery discharging (>10W) |
-| 3rd | 🔴 Red | Grid importing (>10W) |
-| 4th | 🔵 Cyan | Home consuming (>10W) |
+| LED | Color | Condition |
+|-----|-------|-----------|
+| 1st | Green | Solar producing (>10 W) |
+| 2nd | Orange | Battery discharging (>10 W) |
+| 3rd | Red | Grid importing (>10 W) |
+| 4th | Cyan | Home consuming (>10 W) |
 
-LEDs blink when active, dim gray when inactive.
+LEDs blink when active and remain dim when inactive.
 
 ## Changelog
 
-## v1.2.1
+### v1.2.2
 
-Dynamic Ambient Glow
-- Card border emits a subtle colored glow based on the dominant energy source
-- Solar dominant: green-mint halo
-- Battery dominant: golden/amber aura
-- Grid dominant: soft red pulse
-- Smooth 1.5s transition between glow states
+**Dynamic border**
+- Card border color now reflects the dominant energy source: green (solar), amber (battery), red (grid). Transitions over 1.5 s. Replaces the previous outer glow effect.
 
-Inverter LCD Display
-- Mini monospace LCD screen added to the inverter body
-- Shows total power throughput in real-time
-- When exporting to grid: ⚡ icon blinks alongside the power value
-- Dark background with green LCD border for realistic appearance
+**Inverter LCD redesign**
+- Removed the dark overlay from the LCD area. The display now uses a unified green fill.
+- LCD text changed to white for improved contrast.
+- Font size increased from 7 px to 8 px.
+- Unit label placed adjacent to the value without spacing (e.g. `1.3kW` instead of `1.3 kW`).
+- Removed the lightning icon that appeared during grid export.
+- Removed the blinking animation on grid export.
 
-Aurora Effect (Autarky ≥ 90%)
-- Flowing aurora borealis gradient (green → blue → purple) appears behind the card
-- 8s animation cycle at very low opacity to avoid interfering with readability
-- Autarky pill gains a golden pulsing glow as visual reward
-- Both effects activate above 90% self-sufficiency and fade out below
+**Aurora effect removed**
+- Removed the animated gradient background that activated above 90% autarky.
+- The autarky pill golden glow at 90%+ is retained.
 
-Flow Line Morphing
-- Color transitions on flow lines now cross-fade over 800ms instead of switching instantly
-- Opacity changes also smoothly transition
-- Eliminates visual "flicker" when energy source shifts (e.g. grid → battery)
+### v1.2.1
 
-## v1.2.0
-- Bug fixing
+**Ambient glow**
+- Card border emitted a colored glow based on the dominant energy source with 1.5 s transitions. Replaced by the border effect in v1.2.2.
 
-## v1.1.9
+**Inverter LCD display**
+- Added a monospace LCD screen to the inverter body showing total power throughput. Redesigned in v1.2.2.
 
-Sun Icon
-- Rotates slowly (60s full rotation) while generating solar power (>10W)
-- Dims to 25% opacity when not producing, full opacity when active
+**Aurora effect**
+- Gradient background (green, blue, purple) appeared behind the card above 90% autarky. Autarky pill gained a golden glow. Removed in v1.2.2.
 
-Icon Dim States
-- Solar, Grid, Home, and Battery icons dim to 25% opacity when inactive (<10W)
-- Full opacity when active, providing clear visual feedback of energy flow status
+**Flow line transitions**
+- Color and opacity changes on flow lines now cross-fade over 800 ms instead of switching instantly.
 
-Battery Charging Animation
-- When charging (>10W), battery fill turns Apple green (#4CD964) with pulsing animation (1.5s cycle)
-- When idle/discharging, reverts to default purple fill
+### v1.2.0
 
-## v1.1.8
+- Bug fixes.
 
-Inverter Bolt
-- Bolt is now stroke-only (no fill) with solar yellow color
-- Breathing glow animation (2s cycle, opacity 0.3↔1) runs continuously
+### v1.1.9
 
-Battery Charging Animation
-- When charging (>10W), battery fill turns Apple green (#4CD964) with pulsing animation (1.5s cycle)
-- When idle/discharging, reverts to default purple fill
+- Sun icon rotates (60 s period) while solar power exceeds 10 W; dims to 25% opacity when inactive.
+- Solar, grid, home, and battery icons dim to 25% opacity when their respective power is below 10 W.
+- Battery fill turns green with a pulse animation while charging above 10 W.
 
-Sun Icon Rotation
-- Sun icon rotates slowly (20s full rotation) while generating solar power (>10W)
-- Stops when solar output drops to zero
+### v1.1.8
 
-Flow Line Colors
-- Inverter → Home flow now uses yellow (var(--solar)) when battery is the dominant source, matching the Battery → Inverter flow color
+- Inverter bolt changed to stroke-only with a breathing glow animation (2 s cycle).
+- Battery charging animation added (green fill with pulse).
+- Sun icon rotation speed set to 20 s per full rotation.
+- Inverter-to-home flow uses yellow when battery is the dominant source.
+- Sparkline chart height increased from 40 px to 55 px.
 
-Sparkline Charts
-- Increased chart height from 40px to 55px for better readability
+### v1.1.7
 
-## v1.1.7
+- Weather widget border box widened and divider repositioned for proper centering.
+- Battery discharge flow color changed from purple to yellow to match the battery value display.
 
-Weather Widget
-- Widened border box from 82 to 86 and shifted divider/humidity icon +2px right for proper centering
+### v1.1.6
 
-Battery Flow Line
-- Battery → Inverter discharge flow color changed from purple (var(--battery)) to yellow (var(--solar)) to match the battery watts display
-
-## v1.1.6
-
-Synchronized Flow Animation
-- Flow dots now animate **in sequence**: energy arrives at the inverter first, then exits to home or battery
-- Outgoing flows (inverter → home, inverter → battery charging) have a calculated delay based on the fastest incoming flow speed
-- Creates a realistic "energy flowing through the inverter" visual effect
-
-Inverter Lightning Bolt
-- Bolt glow now **only activates when receiving solar energy**
-- When solar is off, the bolt reverts to a dim neutral appearance
-- Glow uses solar yellow color with soft blur filter
-
-Weather Widget
-- Widened the border box to prevent humidity text from being clipped
+- Flow animations now run in sequence: incoming flow completes before outgoing flow starts. Outgoing flows have a calculated delay based on the fastest incoming flow speed.
+- Inverter bolt glow activates only when receiving solar energy.
+- Weather widget border box widened to prevent text clipping.
 
 ### v1.1.5
 
-Flow Line Colors
-- Solar → Inverter flow line now uses green instead of amber, matching the solar power value color
-- Inverter → Home flow line is now dynamic based on the dominant energy source:
-  - Green when solar is the primary source
-  - Red when grid import is dominant
-  - Purple when battery discharge is dominant
-- Battery flow remains green when charging, purple when discharging
-Flow Speed Boost
-- Flow dot animation now has stepped speed increases based on power:
-  - ≥1000 W → 20% faster
-  - ≥2000 W → 40% faster
-  - ≥3000 W → 60% faster
-Inverter Lightning Bolt Glow
-- The lightning bolt icon inside the inverter now glows in solar yellow with a soft blur effect
-Weather Widget
-- Shifted the temperature/humidity widget slightly to the left
-- Added a subtle rounded border box around the weather indicators
+- Solar-to-inverter flow line changed from amber to green.
+- Inverter-to-home flow line color is now dynamic: green (solar dominant), red (grid dominant), purple (battery dominant).
+- Flow animation speed increases in steps at 1000 W, 2000 W, and 3000 W thresholds.
+- Inverter bolt glow added in solar yellow.
+- Weather widget shifted left with a rounded border box.
 
 ### v1.1.4
 
-- Minor bug fixing
+- Minor bug fixes.
 
 ### v1.1.3
 
-- Grid tower icon changed to dark red
-- Solar voltage aligned with kWh numbers (arrow removed)
-- Inverter temperature repositioned with small gap
-- Weather: humidity closer, divider line between temp and humidity
-- Light theme support — auto-detects HA theme or manual dark/light/auto option
-- Animation stutter fix — flow speed cached with 10% threshold
-- Adaptive history sampling for large datasets (>10k points)
+- Grid tower icon changed to dark red.
+- Solar voltage aligned with kWh values.
+- Inverter temperature repositioned.
+- Weather display: humidity icon moved closer, divider added between temperature and humidity.
+- Light theme support with automatic detection.
+- Flow animation stutter fix: speed cached with 10% change threshold.
+- Adaptive history sampling for datasets exceeding 10,000 points.
 
 ### v1.1.2
 
-- Animation stutter fix — flow speed only updates on >10% change, prevents CSS restart
-- Adaptive history sampling — pre-samples >10k points for better performance on low-power devices
+- Flow animation stutter fix: speed updates only on changes exceeding 10%.
+- Adaptive history sampling for improved performance on low-power devices.
 
- ### v1.1.1
+### v1.1.1
 
-- Minor update
+- Minor update.
 
 ### v1.1.0
 
-- Zero-value sensors now display correctly (0°C, 0V no longer hidden)
-- XSS protection in editor via input sanitization
-- History request deduplication guard
-- URL-encoded history API parameters
-- Removed dead grid status code
-- Snake flow refined — head reaches end before tail follows, slower animation (1.5s–3.5s)
-- Solar side values aligned with arrows (▸ 13.0 kWh / ▸ 363V)
-- Inverter temperature repositioned closer to icon
-- Weather display with thermometer and droplet icons
-- 8 languages: PT, EN, DE, FR, ES, IT, NL, PL
-- GPL-3.0 license
-- Reduced bottom spacing below autarky pill
+- Zero-value sensors now display correctly (0 C, 0 V no longer hidden).
+- XSS protection in editor via input sanitization.
+- History request deduplication.
+- URL-encoded history API parameters.
+- Removed unused grid status code.
+- Flow animation refined: head reaches the end before tail follows, slower animation range (1.5 s to 3.5 s).
+- Solar side values aligned with arrows.
+- Inverter temperature repositioned closer to icon.
+- Weather display added with thermometer and droplet icons.
+- 8 languages added.
+- GPL-3.0 license.
+- Reduced bottom spacing below autarky pill.
 
 ### v1.0.9
 
-- Flow animation changed from dots to pulse/snake style
-- Middle section repositioned for balanced flow lines
-- Grid/Home icons aligned with values
-- Battery spacing from icon matched to other entities
-- Inverter icon redesigned with dynamic LEDs (green=solar, orange=battery, red=grid, cyan=home)
-- Inverter name optional — empty field shows nothing
-- Inverter temperature positioned next to icon
-- Solar side values aligned by numbers with arrow
-- Solar value green, Battery value yellow, SOC white
-- Weather display in top-left — configurable temperature and humidity sensors
-- 8 languages: PT, EN, DE, FR, ES, IT, NL, PL
-- Reduced bottom spacing below autarky pill
-- Snake flow refined — head reaches end before tail follows, slower animation (1.5s–3.5s)
-- Solar side values (kWh, voltage) moved further from icon and aligned
+- Flow animation changed from dots to pulse/snake style.
+- Middle section repositioned for balanced flow lines.
+- Grid and home icons aligned with their values.
+- Battery spacing adjusted to match other entities.
+- Inverter icon redesigned with 4 dynamic LEDs.
+- Inverter name field made optional.
+- Color-coded power values introduced.
+- Weather display added (configurable temperature and humidity sensors).
 
 ### v1.0.8
 
-- Flow lines aligned with inverter icon edges
-- Battery SOC and runtime text changed to white
-- Reduced bottom spacing below autarky pill
+- Flow lines aligned with inverter icon edges.
+- Battery SOC and runtime text changed to white.
 
 ### v1.0.7
 
-- Flow lines realigned with inverter icon
-- Inverter name optional
-- Solar values green, Battery values yellow
-- Sparkline colors updated
+- Flow lines realigned with inverter icon.
+- Inverter name made optional.
+- Solar values green, battery values yellow.
+- Sparkline colors updated.
 
 ### v1.0.6
 
-- Inverter icon redesigned — realistic device with display, LEDs, and status bars
+- Inverter icon redesigned with display, LEDs, and status bars.
 
 ### v1.0.5
 
-- Colored power values — Solar (green), Grid (red), Home (cyan), Battery (yellow)
+- Color-coded power values: solar (green), grid (red), home (cyan), battery (yellow).
 
 ### v1.0.4
 
-- Grid status dot removed
-- Label alignment improved
-- Flow lines no longer overlap icons
-- Sparkline tooltips with actual time
-- Editor SOC field ID conflict fixed
+- Grid status dot removed.
+- Label alignment improved.
+- Flow lines no longer overlap icons.
+- Sparkline tooltips show actual time.
+- Editor SOC field ID conflict fixed.
 
 ### v1.0.3
 
-- Multi-inverter support — 8 presets
-- Polarity normalization
-- Sparkline auto-refresh every 5 minutes
-- Battery gauge fix
-- Unavailable sensors show `--`
-- Editor memory leak fix
+- Multi-inverter support with 8 presets.
+- Polarity normalization.
+- Sparkline auto-refresh every 5 minutes.
+- Battery gauge fix.
+- Unavailable sensors display `--`.
+- Editor memory leak fix.
 
 ### v1.0.2
 
-- Initial public release
+- Initial public release.
 
 ## Credits
 
@@ -373,4 +326,4 @@ Designed and built by [@BTNBx](https://github.com/BTNBx).
 
 ## License
 
-// Licensed under GPL-3.0 — see LICENSE file
+Licensed under GPL-3.0. See [LICENSE](LICENSE) for details.
