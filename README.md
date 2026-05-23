@@ -162,6 +162,11 @@ LEDs blink when active and remain dim when inactive.
 
 ## Changelog
 
+### v1.2.3
+
+**Inverter LCD redesign**
+Font size reduced from 7 px to 6.5 px with tighter letter-spacing to fit within the display bounds.
+
 ### v1.2.2
 
 **Dynamic border**
