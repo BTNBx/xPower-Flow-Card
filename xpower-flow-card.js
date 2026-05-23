@@ -1,7 +1,7 @@
 // xPower Flow Card — Modern power flow card for solar hybrid inverters
 // Copyright (C) 2025 BTNBx
 // Licensed under GPL-3.0 — see LICENSE file
-const V='1.2.2';
+const V='1.2.3';
 
 /* ═══════════════════════════════════════
    xPower Flow Card — i18n
@@ -452,7 +452,7 @@ svg{width:100%;height:auto;display:block}
 .il{fill:rgba(255,255,255,0.35);font-size:12px;font-weight:600;letter-spacing:0.05em;text-anchor:middle;dominant-baseline:middle}
 .au{fill:white;font-size:9px;font-weight:600;letter-spacing:0.04em;text-anchor:middle;dominant-baseline:middle}
 .au-pill{rx:8;ry:8;transition:fill 0.5s ease}
-.lcd{fill:rgba(255,255,255,0.95);font-size:8px;font-weight:700;font-family:'Courier New',monospace;text-anchor:middle;dominant-baseline:middle;letter-spacing:0.06em}
+.lcd{fill:rgba(255,255,255,0.95);font-size:6.5px;font-weight:700;font-family:'Courier New',monospace;text-anchor:middle;dominant-baseline:middle;letter-spacing:0.04em}
 
 .wt{fill:var(--t3);font-size:11px;font-weight:500;text-anchor:start;dominant-baseline:middle;font-family:-apple-system,sans-serif}
 .wb{fill:none;stroke:var(--t3);stroke-width:0.5;rx:4;ry:4;opacity:0.4}
