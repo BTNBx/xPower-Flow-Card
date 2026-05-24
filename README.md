@@ -2,7 +2,7 @@
 
 A power flow visualization card for solar hybrid inverters in Home Assistant. Single file, no dependencies.
 
-![xPower Flow Card](demo.gif)
+![xPower Flow Card](card.png)
 
 ## Supported Inverters
 
@@ -162,6 +162,24 @@ LEDs blink when active and remain dim when inactive.
 
 ## Changelog
 
+### v1.2.4
+
+**Bug fixes**
+- Grid status dot restored — green (online) / red (offline) indicator next to the grid label, reads from `grid_status` entity.
+- Fixed copyright header to match MIT license.
+- Tooltip time calculation corrected (was rounding to minutes, now uses fractional hours for accurate timestamps).
+- History loading guard: `_loadHistory` now checks `this._h` exists before proceeding.
+
+**Visual improvements**
+- Smooth icon fade transitions (0.8 s) when power goes on/off — icons and values no longer snap instantly to dim/bright.
+- Flow snake lines fade in/out smoothly instead of appearing/disappearing instantly.
+- All flow animations synchronized — single shared speed based on the highest active power, all lines pulse in phase.
+- Removed animation delay staggering for cleaner coordinated flow.
+
+**Performance**
+- Sparkline max values cached on history load — tooltips no longer recalculate `Math.max(...data)` on every mousemove.
+- `downsample` extracted to class method — no longer recreated as a closure on every history refresh.
+
 ### v1.2.3
 
 **Inverter LCD redesign**
@@ -270,7 +288,7 @@ LEDs blink when active and remain dim when inactive.
 - Inverter temperature repositioned closer to icon.
 - Weather display added with thermometer and droplet icons.
 - 8 languages added.
-- GPL-3.0 license.
+- MIT license.
 - Reduced bottom spacing below autarky pill.
 
 ### v1.0.9
@@ -331,4 +349,4 @@ Designed and built by [@BTNBx](https://github.com/BTNBx).
 
 ## License
 
-Licensed under GPL-3.0. See [LICENSE](LICENSE) for details.
+Licensed under MIT. See [LICENSE](LICENSE) for details.
