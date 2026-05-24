@@ -1,7 +1,6 @@
 // xPower Flow Card — Modern power flow card for solar hybrid inverters
-// Copyright (C) 2025 BTNBx
-// Licensed under GPL-3.0 — see LICENSE file
-const V='1.2.3';
+// Copyright (C) 2025 BTNBx — MIT License
+const V='1.2.4';
 
 /* ═══════════════════════════════════════
    xPower Flow Card — i18n
@@ -367,7 +366,7 @@ class XPowerFlowCardEditor extends HTMLElement{
 customElements.define('xpower-flow-card-editor',XPowerFlowCardEditor);
 
 class XPowerFlowCard extends HTMLElement{
-constructor(){super();this.attachShadow({mode:'open'});this._c={};this._h=null;this._prev={solar:0,bat:0,grid:0,load:0};this._hist={solar:[],load:[],grid:[]};this._fs={};this._spds={};this._histTimer=null;this._histLastLoad=0;this._histLoading=false;}
+constructor(){super();this.attachShadow({mode:'open'});this._c={};this._h=null;this._prev={solar:0,bat:0,grid:0,load:0};this._hist={solar:[],load:[],grid:[]};this._histMax={solar:1,load:1,grid:1};this._fs={};this._histTimer=null;this._histLastLoad=0;this._histLoading=false;this._syncSpd=0;}
 
 static getConfigElement(){return document.createElement('xpower-flow-card-editor');}
 static getStubConfig(){return{...DEFAULTS};}
@@ -416,7 +415,9 @@ _norm(raw,type){
   return raw;
 }
 
-async _loadHistory(){if(this._histLoading)return;this._histLoading=true;try{const now=new Date();const start=new Date(now.getTime()-24*60*60*1000);const iso=encodeURIComponent(start.toISOString());const entities=encodeURIComponent([this._c.solar,this._c.load,this._c.grid].filter(Boolean).join(','));if(!entities)return;const url='history/period/'+iso+'?filter_entity_id='+entities+'&minimal_response&no_attributes&significant_changes_only';const res=await this._h.callApi('GET',url);if(!res||!res.length)return;const downsample=(arr,n)=>{if(!arr||!arr.length)return[];let src=arr;if(src.length>10000){const step=Math.ceil(src.length/5000);src=src.filter((_,i)=>i%step===0);}const out=[];for(let i=0;i<n;i++){const s=Math.floor(i*src.length/n);const e=Math.floor((i+1)*src.length/n);let sum=0,cnt=0;for(let j=s;j<e;j++){const v=parseFloat(src[j].state);if(!isNaN(v)){sum+=Math.abs(v);cnt++;}}if(cnt>0)out.push(sum/cnt);else out.push(0);}const sm=[];for(let i=0;i<out.length;i++){const p=i>0?out[i-1]:out[i];const nx=i<out.length-1?out[i+1]:out[i];sm.push((p+out[i]*2+nx)/4);}return sm;};for(const series of res){if(!series.length)continue;const eid=series[0].entity_id;const pts=downsample(series,HIST_POINTS);if(eid===this._c.solar)this._hist.solar=pts;else if(eid===this._c.load)this._hist.load=pts;else if(eid===this._c.grid)this._hist.grid=pts;}this._drawSparks();}catch(e){console.warn('xPower history:',e);}finally{this._histLoading=false;}}
+_downsample(arr,n){if(!arr||!arr.length)return[];let src=arr;if(src.length>10000){const step=Math.ceil(src.length/5000);src=src.filter((_,i)=>i%step===0);}const out=[];for(let i=0;i<n;i++){const s=Math.floor(i*src.length/n);const e=Math.floor((i+1)*src.length/n);let sum=0,cnt=0;for(let j=s;j<e;j++){const v=parseFloat(src[j].state);if(!isNaN(v)){sum+=Math.abs(v);cnt++;}}if(cnt>0)out.push(sum/cnt);else out.push(0);}const sm=[];for(let i=0;i<out.length;i++){const p=i>0?out[i-1]:out[i];const nx=i<out.length-1?out[i+1]:out[i];sm.push((p+out[i]*2+nx)/4);}return sm;}
+
+async _loadHistory(){if(this._histLoading||!this._h)return;this._histLoading=true;try{const now=new Date();const start=new Date(now.getTime()-24*60*60*1000);const iso=encodeURIComponent(start.toISOString());const entities=encodeURIComponent([this._c.solar,this._c.load,this._c.grid].filter(Boolean).join(','));if(!entities)return;const url='history/period/'+iso+'?filter_entity_id='+entities+'&minimal_response&no_attributes&significant_changes_only';const res=await this._h.callApi('GET',url);if(!res||!res.length)return;for(const series of res){if(!series.length)continue;const eid=series[0].entity_id;const pts=this._downsample(series,HIST_POINTS);const mx=pts.length?Math.max(...pts)||1:1;if(eid===this._c.solar){this._hist.solar=pts;this._histMax.solar=mx;}else if(eid===this._c.load){this._hist.load=pts;this._histMax.load=mx;}else if(eid===this._c.grid){this._hist.grid=pts;this._histMax.grid=mx;}}this._drawSparks();}catch(e){console.warn('xPower history:',e);}finally{this._histLoading=false;}}
 
 _render(){const L=this._lang;const INV=this._c.inverter_name||'';const s=this.shadowRoot;s.innerHTML=`<style>
 :host{--solar:#FFB300;--battery:#7C4DFF;--grid:#42A5F5;--load:#26C6DA;--green:#66BB6A;--red:#EF5350;--orange:#FFA726;--t1:rgba(255,255,255,0.92);--t3:rgba(255,255,255,0.45)}
@@ -440,7 +441,9 @@ svg{width:100%;height:auto;display:block}
 @keyframes batPulse{0%,100%{opacity:0.5}50%{opacity:0.85}}
 .bat-charge{animation:batPulse 1.5s ease-in-out infinite}
 @keyframes sunSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-#sunG{transform-origin:250px 38px}
+#sunG{transform-origin:250px 38px;transition:opacity 0.8s ease}
+#gridIcon,#loadIcon,#batIcon{transition:opacity 0.8s ease}
+#vs,#vg,#vl,#vb{transition:opacity 0.8s ease}
 .sun-spin{animation:sunSpin 60s linear infinite}
 @keyframes fR{from{stroke-dashoffset:200}to{stroke-dashoffset:0}}@keyframes fL{from{stroke-dashoffset:0}to{stroke-dashoffset:200}}@keyframes fD{from{stroke-dashoffset:200}to{stroke-dashoffset:0}}@keyframes fU{from{stroke-dashoffset:0}to{stroke-dashoffset:200}}
 .vm{fill:var(--t1);font-size:24px;font-weight:600;text-anchor:middle;dominant-baseline:middle}
@@ -485,7 +488,7 @@ svg{width:100%;height:auto;display:block}
 <path id="fs" class="fa" d="M250,96 L250,178" pathLength="100" opacity="0"/><path id="fb" class="fa" d="M250,272 L250,364" pathLength="100" opacity="0"/><path id="fg" class="fa" d="M90,225 L215,225" pathLength="100" opacity="0"/><path id="fh" class="fa" d="M285,225 L395,225" pathLength="100" opacity="0"/>
 <g><g id="sunG"><g transform="translate(250,38) scale(1.65) translate(-250,-38)"><circle cx="250" cy="38" r="9" fill="var(--solar)" opacity="0.85"/><line x1="250" y1="25" x2="250" y2="21" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.6"/><line x1="250" y1="51" x2="250" y2="55" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.6"/><line x1="237" y1="38" x2="233" y2="38" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.6"/><line x1="263" y1="38" x2="267" y2="38" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.6"/><line x1="240.8" y1="28.8" x2="238" y2="26" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.5"/><line x1="259.2" y1="47.2" x2="262" y2="50" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.5"/><line x1="259.2" y1="28.8" x2="262" y2="26" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.5"/><line x1="240.8" y1="47.2" x2="238" y2="50" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.5"/></g></g><text x="250" y="82" class="vm" style="fill:var(--green)" id="vs"></text><text x="250" y="-2" class="vl">${L.solar}</text><text x="310" y="30" class="vd" id="ds" text-anchor="start"></text><text x="320" y="44" class="vc" id="pv" text-anchor="start"></text></g>
 <g><g transform="translate(250,225) scale(1.65)"><rect x="-18" y="-24" width="36" height="48" rx="2" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.25)" stroke-width="1"/><rect x="-18" y="-24" width="36" height="5" rx="2" fill="rgba(255,255,255,0.12)"/><rect x="-12" y="-15" width="24" height="12" rx="1.5" fill="rgba(102,187,106,0.15)" stroke="rgba(102,187,106,0.4)" stroke-width="0.7"/><circle id="led1" cx="-6" cy="2" r="1.2" fill="rgba(255,255,255,0.12)"/><circle id="led2" cx="-2" cy="2" r="1.2" fill="rgba(255,255,255,0.12)"/><circle id="led3" cx="2" cy="2" r="1.2" fill="rgba(255,255,255,0.12)"/><circle id="led4" cx="6" cy="2" r="1.2" fill="rgba(255,255,255,0.12)"/><path id="bolt" d="M-6,9 L-8,15 L-4,15 L-6,21" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.3)" stroke-width="0.5"/><rect x="2" y="12" width="10" height="3" rx="0.5" fill="rgba(255,255,255,0.1)"/><rect x="2" y="17" width="10" height="3" rx="0.5" fill="rgba(255,255,255,0.1)"/><text id="lcd" x="0" y="-9" class="lcd">0W</text></g>${INV?'<text x="250" y="272" class="il">'+INV+'</text>':''}<text x="296" y="264" class="vc" id="tp" text-anchor="start"></text></g>
-<g><g id="gridIcon" transform="translate(66,225) scale(1.65) translate(-66,-196)"><rect x="64" y="181" width="4" height="30" rx="1" fill="var(--red)" opacity="0.7"/><rect x="54" y="183" width="24" height="3" rx="1" fill="var(--red)" opacity="0.6"/><rect x="57" y="192" width="18" height="2.5" rx="1" fill="var(--red)" opacity="0.5"/><path d="M60,211 L64,199 L68,199 L72,211" fill="var(--red)" opacity="0.4"/><circle cx="56" cy="184" r="1.5" fill="var(--red)" opacity="0.8"/><circle cx="76" cy="184" r="1.5" fill="var(--red)" opacity="0.8"/><circle cx="58" cy="193" r="1.2" fill="var(--red)" opacity="0.7"/><circle cx="74" cy="193" r="1.2" fill="var(--red)" opacity="0.7"/><line x1="54" y1="184" x2="46" y2="181" stroke="var(--red)" stroke-width="0.8" opacity="0.3"/><line x1="78" y1="184" x2="86" y2="181" stroke="var(--red)" stroke-width="0.8" opacity="0.3"/></g><text x="66" y="268" class="vm" style="fill:var(--red)" id="vg"></text><text x="66" y="190" class="vl">${L.grid}</text><text x="66" y="286" class="vc" id="gv"></text><text x="66" y="300" class="vd" id="dg"></text></g>
+<g><g id="gridIcon" transform="translate(66,225) scale(1.65) translate(-66,-196)"><rect x="64" y="181" width="4" height="30" rx="1" fill="var(--red)" opacity="0.7"/><rect x="54" y="183" width="24" height="3" rx="1" fill="var(--red)" opacity="0.6"/><rect x="57" y="192" width="18" height="2.5" rx="1" fill="var(--red)" opacity="0.5"/><path d="M60,211 L64,199 L68,199 L72,211" fill="var(--red)" opacity="0.4"/><circle cx="56" cy="184" r="1.5" fill="var(--red)" opacity="0.8"/><circle cx="76" cy="184" r="1.5" fill="var(--red)" opacity="0.8"/><circle cx="58" cy="193" r="1.2" fill="var(--red)" opacity="0.7"/><circle cx="74" cy="193" r="1.2" fill="var(--red)" opacity="0.7"/><line x1="54" y1="184" x2="46" y2="181" stroke="var(--red)" stroke-width="0.8" opacity="0.3"/><line x1="78" y1="184" x2="86" y2="181" stroke="var(--red)" stroke-width="0.8" opacity="0.3"/></g><text x="66" y="268" class="vm" style="fill:var(--red)" id="vg"></text><text x="66" y="190" class="vl">${L.grid}</text><text x="66" y="286" class="vc" id="gv"></text><circle id="gsd" cx="92" cy="189" r="4" fill="rgba(255,255,255,0.12)"/><text x="66" y="300" class="vd" id="dg"></text></g>
 <g><g id="loadIcon" transform="translate(434,225) scale(1.65) translate(-434,-188)"><path d="M416,188 L434,174 L452,188 Z" fill="var(--load)" opacity="0.8"/><rect x="420" y="187" width="28" height="18" rx="1" fill="var(--load)" opacity="0.6"/><rect x="430" y="195" width="8" height="10" rx="1" fill="rgba(0,0,0,0.3)"/><rect x="422" y="190" width="6" height="5" rx="0.5" fill="rgba(255,255,255,0.15)"/><rect x="440" y="190" width="6" height="5" rx="0.5" fill="rgba(255,255,255,0.15)"/><rect x="441" y="176" width="5" height="8" rx="1" fill="var(--load)" opacity="0.5"/></g><text x="434" y="268" class="vm" style="fill:var(--load)" id="vl"></text><text x="434" y="190" class="vl">${L.load}</text><text x="434" y="288" class="vd" id="dl"></text></g>
 <g><g id="batIcon" transform="translate(250,400) scale(1.70) translate(-250,-351)"><rect x="232" y="341" width="32" height="20" rx="3" fill="var(--battery)" opacity="0.75"/><rect x="264" y="345.5" width="6" height="11" rx="2" fill="var(--battery)" opacity="0.9"/><rect x="235" y="344" width="26" height="14" rx="1.5" fill="rgba(0,0,0,0.35)"/><rect id="bl" x="235" y="344" width="26" height="14" rx="1.5" fill="var(--battery)" opacity="0.45"/></g><text x="250" y="440" class="vm" style="fill:var(--solar)" id="vb"></text><text x="250" y="462" class="vs" id="vc"></text><text x="250" y="372" class="vl">${L.battery}</text><text x="310" y="394" class="vc" id="bv" text-anchor="start"></text><text x="310" y="406" class="vc" id="bt" text-anchor="start"></text><text x="250" y="483" class="vd" id="db"></text><text x="250" y="498" class="vc" id="br" style="fill:var(--t1)"></text></g>
 <rect id="ap" x="185" y="512" width="130" height="16" class="au-pill" fill="var(--green)"/><text x="250" y="521" class="au" id="va"></text>
@@ -510,11 +513,11 @@ _setupTooltips(){
       const x=(e.clientX-rect.left)/rect.width;
       const idx=Math.min(Math.max(Math.round(x*(data.length-1)),0),data.length-1);
       const val=data[idx];const svgX=x*200;
-      const max=Math.max(...data)||1;const svgY=2+(1-val/max)*51;
+      const max=self._histMax[dataKey]||1;const svgY=2+(1-val/max)*51;
       cursor.setAttribute('x1',svgX);cursor.setAttribute('x2',svgX);cursor.style.display='';
       dot.setAttribute('cx',svgX);dot.setAttribute('cy',svgY);dot.style.display='';dot.setAttribute('fill',color);
-      const minsAgo=Math.round((1-idx/(data.length-1))*24*60);
-      const when=new Date(Date.now()-minsAgo*60000);
+      const hoursAgo=(1-idx/(data.length-1))*24;
+      const when=new Date(Date.now()-hoursAgo*3600000);
       const hh=String(when.getHours()).padStart(2,'0');const mm=String(when.getMinutes()).padStart(2,'0');
       tip.textContent=(val>=1000?(val/1000).toFixed(1)+' kW':val.toFixed(0)+' W')+' · '+hh+':'+mm;
       tip.style.color=color;tip.classList.add('show');
@@ -528,7 +531,7 @@ _setupTooltips(){
   setup(null,'cl','dl2','tl','load','#26C6DA');
 }
 _spd(p){const a=Math.abs(p);if(a<10)return 0;let s=Math.max(ANIM_MIN_SPD,ANIM_MAX_SPD-(a/ANIM_MAX_W)*(ANIM_MAX_SPD-ANIM_MIN_SPD));if(a>=3000)s*=0.4;else if(a>=2000)s*=0.6;else if(a>=1000)s*=0.8;return s;}
-_sf(el,id,p,d,c,o){if(Math.abs(p)<10){el.style.display='none';this._fs[id]=null;return;}el.style.display='';el.setAttribute('stroke',c);el.setAttribute('opacity',o);const newSpd=this._spd(p).toFixed(1);const oldSpd=this._spds[id];if(!oldSpd||Math.abs(parseFloat(newSpd)-parseFloat(oldSpd))/parseFloat(oldSpd)>0.1){this._spds[id]=newSpd;el.style.setProperty('--spd',newSpd+'s');}if(this._fs[id]!==d){this._fs[id]=d;el.setAttribute('class','fa '+d);}}
+_sf(el,id,p,d,c,o){if(Math.abs(p)<10){el.setAttribute('opacity','0');return;}el.setAttribute('stroke',c);el.setAttribute('opacity',o);if(this._fs[id]!==d){this._fs[id]=d;el.setAttribute('class','fa '+d);}}
 _spark(id,aid,data){const el=this._$(id);const af=this._$(aid);if(!el||!data.length)return;const w=200,h=55,py=2,max=Math.max(...data)||1;const pts=data.map((v,i)=>[(i/(data.length-1))*w,py+(1-v/max)*(h-py*2)]);if(pts.length<2)return;const tension=0.3;const cp=(p0,p1,p2,t)=>[p1[0]+(p2[0]-p0[0])*t,p1[1]+(p2[1]-p0[1])*t];let d='M'+pts[0][0].toFixed(1)+','+pts[0][1].toFixed(1);for(let i=0;i<pts.length-1;i++){const p0=pts[Math.max(0,i-1)];const p1=pts[i];const p2=pts[i+1];const p3=pts[Math.min(pts.length-1,i+2)];const c1=cp(p0,p1,p2,tension);const c2=[p2[0]-(p3[0]-p1[0])*tension,p2[1]-(p3[1]-p1[1])*tension];d+=' C'+c1[0].toFixed(1)+','+c1[1].toFixed(1)+' '+c2[0].toFixed(1)+','+c2[1].toFixed(1)+' '+p2[0].toFixed(1)+','+p2[1].toFixed(1);}el.setAttribute('d',d);if(af){af.setAttribute('d',d+'L'+w+','+h+'L0,'+h+'Z');}}
 _drawSparks(){this._spark('hs','hsa',this._hist.solar);this._spark('hl','hla',this._hist.load);this._spark('hg','hga',this._hist.grid);}
 
@@ -571,18 +574,16 @@ this._$('dl').textContent=L.daily+' '+this._fmtE(dL);
 this._$('db').textContent=L.charge+' '+this._fmtE(dC)+' '+L.discharge+' '+this._fmtE(dD);
 
 const solF=sol??0,batF=bat??0,gridF=grid??0,loadF=load??0;
+const maxP=Math.max(solF,Math.abs(batF),Math.abs(gridF),loadF);
+const syncSpd=maxP>10?this._spd(maxP):3;
+if(Math.abs(syncSpd-this._syncSpd)/this._syncSpd>0.1){this._syncSpd=syncSpd;['fs','fg','fb','fh'].forEach(id=>{const el=this._$(id);if(el)el.style.setProperty('--spd',syncSpd.toFixed(1)+'s');});}
 this._sf(this._$('fs'),'s',solF,'fd','var(--green)','0.8');
-if(Math.abs(gridF)>10)this._sf(this._$('fg'),'g',gridF,gridF>0?'fr':'fL',gridF>0?'var(--red)':'var(--green)','0.7');else this._$('fg').style.display='none';
-const inSpds=[];if(solF>10)inSpds.push(this._spd(solF));if(gridF>10)inSpds.push(this._spd(Math.abs(gridF)));if(batF>10)inSpds.push(this._spd(batF));
-const syncDelay=inSpds.length>0?Math.min(...inSpds)/2:0;
-if(Math.abs(batF)>10){this._sf(this._$('fb'),'b',batF,batF<0?'fd':'fu',batF<0?'var(--green)':'var(--solar)','0.75');this._$('fb').style.animationDelay=batF<0?syncDelay.toFixed(2)+'s':'0s';}else{this._$('fb').style.display='none';}
+this._sf(this._$('fg'),'g',gridF,gridF>0?'fr':'fL',gridF>0?'var(--red)':'var(--green)','0.7');
+this._sf(this._$('fb'),'b',batF,batF<0?'fd':'fu',batF<0?'var(--green)':'var(--solar)','0.75');
 const solContrib=solF>0?solF:0;const batContrib=batF>0?batF:0;const gridContrib=gridF>0?gridF:0;
 let homeColor='var(--green)';
 if(loadF>10){if(gridContrib>=solContrib&&gridContrib>=batContrib&&gridContrib>0)homeColor='var(--red)';else if(batContrib>=solContrib&&batContrib>0)homeColor='var(--solar)';else homeColor='var(--green)';}
 this._sf(this._$('fh'),'h',loadF,'fr',homeColor,'0.75');
-this._$('fh').style.animationDelay=syncDelay>0?syncDelay.toFixed(2)+'s':'0s';
-this._$('fs').style.animationDelay='0s';
-this._$('fg').style.animationDelay='0s';
 
 const batCap=c.battery_capacity??5120;const shuSoc=c.shutdown_soc??20;
 if(batF>RUNTIME_MIN_W&&socVal>shuSoc){
@@ -615,6 +616,9 @@ _led('led1',solF>10,'#66BB6A');
 _led('led2',batF>10,'#FFA726');
 _led('led3',gridF>10,'#EF5350');
 _led('led4',loadF>10,'#26C6DA');
+
+// Grid status dot
+const gsd=this._$('gsd');if(gsd){const gsE=this._gs(c.grid_status);const online=gsE==='on'||gsE==='1'||gsE==='true';if(c.grid_status&&gsE){gsd.setAttribute('fill',online?'#66BB6A':'#EF5350');gsd.style.display='';}else{gsd.style.display='none';}}
 
 // Sun spin when generating
 const sunG=this._$('sunG');if(sunG){if(solF>10){sunG.classList.add('sun-spin');sunG.style.opacity='1';}else{sunG.classList.remove('sun-spin');sunG.style.opacity='0.25';}}
