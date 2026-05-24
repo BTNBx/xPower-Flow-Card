@@ -2,7 +2,7 @@
 
 A power flow visualization card for solar hybrid inverters in Home Assistant. Single file, no dependencies.
 
-![xPower Flow Card](card.png)
+![xPower Flow Card](demo.gif)
 
 ## Supported Inverters
 
