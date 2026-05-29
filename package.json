@@ -1,0 +1,33 @@
+{
+  "name": "xpower-flow-card",
+  "version": "1.2.4",
+  "description": "Universal power flow card for solar hybrid inverters in Home Assistant",
+  "author": "BTNBx",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/BTNBx/xPower-Flow-Card"
+  },
+  "keywords": [
+    "home-assistant",
+    "lovelace",
+    "custom-card",
+    "solar",
+    "inverter",
+    "energy",
+    "deye",
+    "sunsynk",
+    "huawei",
+    "fronius",
+    "growatt",
+    "victron",
+    "solaredge"
+  ],
+  "scripts": {
+    "build": "node build.mjs",
+    "watch": "node build.mjs --watch"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0"
+  }
+}
