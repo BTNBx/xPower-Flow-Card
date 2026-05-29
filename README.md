@@ -162,6 +162,43 @@ LEDs blink when active and remain dim when inactive.
 
 ## Changelog
 
+## v1.3.0
+
+### New Features
+
+- Entity click to open more-info dialog on all power nodes (solar, grid, load, battery)
+- Battery sparkline with 24-hour history, tooltip, and charge/discharge daily summary
+- Touch support for sparkline tooltips on mobile and tablet devices
+- Energy cost overlay with configurable import cost and export earnings sensors
+- Compact mode to hide sparklines for sidebar and popup use
+- 15 CSS custom properties (--xpf-*) for theme and style customization
+
+### Performance
+
+- requestAnimationFrame throttle on hass updates to reduce unnecessary redraws
+- History loading and timer disabled in compact mode to eliminate redundant API calls
+
+### Build
+
+- Added esbuild build pipeline with minification
+- Added GitHub Actions workflow for automated releases on tag push
+- Updated hacs.json with minimum Home Assistant version requirement
+- Added package.json with build and watch scripts
+
+### CSS Custom Properties
+
+- --xpf-bg, --xpf-radius, --xpf-shadow, --xpf-padding
+- --xpf-solar, --xpf-battery, --xpf-grid, --xpf-load
+- --xpf-green, --xpf-red, --xpf-orange
+- --xpf-text, --xpf-text-secondary, --xpf-font-size
+- --xpf-sparkline-bg, --xpf-sparkline-radius
+
+### Configuration
+
+- New options: compact, import_cost, export_cost
+- Layout selector in visual editor (Full / Compact)
+- Import Cost and Export Earnings entity fields in visual editor
+
 ### v1.2.4
 
 **Bug fixes**
