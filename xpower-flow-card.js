@@ -1,6 +1,6 @@
 // xPower Flow Card — Modern power flow card for solar hybrid inverters
 // Copyright (C) 2025 BTNBx — MIT License
-const V='1.3.1';
+const V='1.3.2';
 
 /* ═══════════════════════════════════════
    xPower Flow Card — i18n
@@ -489,7 +489,7 @@ svg{width:100%;height:auto;display:block}
 
 .wt{fill:var(--t3);font-size:11px;font-weight:500;text-anchor:start;dominant-baseline:middle;font-family:-apple-system,sans-serif}
 .wb{fill:none;stroke:var(--t3);stroke-width:0.5;rx:4;ry:4;opacity:0.4}
-.sr{display:flex;gap:6px;margin-top:16px}
+.sr{display:flex;gap:6px;margin-top:4px}
 :host(.compact) .sr{display:none}
 :host(.compact) ha-card{padding:6px 8px 6px}
 .sb{flex:1;background:var(--xpf-sparkline-bg,rgba(255,255,255,0.02));border:1px solid rgba(255,255,255,0.04);border-radius:var(--xpf-sparkline-radius,12px);padding:10px 10px 8px;display:flex;flex-direction:column;gap:2px;overflow:hidden}
@@ -690,7 +690,7 @@ const lcd=this._$('lcd');if(lcd){const total=solF+Math.abs(batF)+Math.abs(gridF)
 const a=Math.abs(total);lcd.textContent=a>=1000?(a/1000).toFixed(1)+'kW':a.toFixed(0)+'W';}
 
 // #3 Pill glow — autarky >90%
-const auBorderEl=this._$('au-border');if(auBorderEl&&au>=90){auBorderEl.style.filter='drop-shadow(0 0 4px rgba(255,215,0,0.6))';}else if(auBorderEl){auBorderEl.style.filter='';}
+
 }
 
 getCardSize(){return this._c.compact?4:6;}
