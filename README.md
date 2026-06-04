@@ -172,7 +172,7 @@ LEDs blink when active and remain dim when inactive.
 ### Added
 - **Dual MPPT support** — new `Solar Power (MPPT2)` and `PV Voltage (MPPT2)` entity fields; when both are set, total solar power is the sum of both strings and voltages display as e.g. `48V / 52V`
 - **Solis preset** - dedicated preset for Solis (SolisCloud) inverters with correct default entities and polarity
-- **Autarky badge** - replaced the flat pill with a bold badge (inspired by 80 PLUS) showing the percentage in large type and "AUTOSSUFICIÊNCIA" in a colour-coded band; positioned bottom-right of the card
+- **Autarky badge** - replaced the flat pill with a bold badge showing the percentage in large type and "AUTOSSUFICIÊNCIA" in a colour-coded band; positioned bottom-right of the card
 
 ## v1.2.5
 
