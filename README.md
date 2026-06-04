@@ -162,7 +162,7 @@ LEDs blink when active and remain dim when inactive.
 
 ## Changelog
 
-## [1.2.6]
+## v1.2.6
 
 ### Fixed
 - **Grid Voltage** now displays independently of Grid Frequency — each field renders on its own when only one is configured
