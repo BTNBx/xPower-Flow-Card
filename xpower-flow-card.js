@@ -1,6 +1,6 @@
 // xPower Flow Card — Modern power flow card for solar hybrid inverters
 // Copyright (C) 2025 BTNBx — MIT License
-const V='1.3.2';
+const V='1.3.3';
 
 /* ═══════════════════════════════════════
    xPower Flow Card — i18n
@@ -457,7 +457,7 @@ _render(){const L=this._lang;const INV=this._c.inverter_name||'';const s=this.sh
 :host(.light) .ib{fill:rgba(0,0,0,0.03);stroke:rgba(0,0,0,0.08)}
 :host(.light) .sb{background:var(--xpf-sparkline-bg,rgba(0,0,0,0.02));border-color:rgba(0,0,0,0.06)}
 :host(.light) .sl{opacity:0.4}
-ha-card{background:var(--xpf-bg,rgba(12,14,24,0.92));border:1px solid rgba(255,255,255,0.06);border-radius:var(--xpf-r);box-shadow:var(--xpf-shadow,0 2px 40px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.04));padding:var(--xpf-padding,6px 8px 14px);position:relative;overflow:hidden;font-family:-apple-system,sans-serif;--ha-card-background:transparent;--ha-card-border-width:0;--ha-card-border-radius:var(--xpf-r);--ha-card-box-shadow:none;transition:border-color 1.5s ease}
+ha-card{background:var(--xpf-bg,rgba(12,14,24,0.92));border:1px solid rgba(255,255,255,0.06);border-radius:var(--xpf-r);box-shadow:var(--xpf-shadow,0 2px 40px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.04));padding:var(--xpf-padding,6px 8px 6px);position:relative;overflow:hidden;font-family:-apple-system,sans-serif;--ha-card-background:transparent;--ha-card-border-width:0;--ha-card-border-radius:var(--xpf-r);--ha-card-box-shadow:none;transition:border-color 1.5s ease}
 ha-card::before{content:'';position:absolute;top:-1px;left:20%;right:20%;height:1px;background:linear-gradient(90deg,transparent,rgba(124,77,255,0.25),transparent)}
 @keyframes pillGlow{0%,100%{box-shadow:0 0 8px rgba(255,215,0,0.4)}50%{box-shadow:0 0 20px rgba(255,215,0,0.8)}}
 .au-glow{animation:pillGlow 2s ease-in-out infinite;border-radius:8px}
@@ -489,7 +489,7 @@ svg{width:100%;height:auto;display:block}
 
 .wt{fill:var(--t3);font-size:11px;font-weight:500;text-anchor:start;dominant-baseline:middle;font-family:-apple-system,sans-serif}
 .wb{fill:none;stroke:var(--t3);stroke-width:0.5;rx:4;ry:4;opacity:0.4}
-.sr{display:flex;gap:6px;margin-top:4px}
+.sr{display:flex;gap:6px;margin-top:0}
 :host(.compact) .sr{display:none}
 :host(.compact) ha-card{padding:6px 8px 6px}
 .sb{flex:1;background:var(--xpf-sparkline-bg,rgba(255,255,255,0.02));border:1px solid rgba(255,255,255,0.04);border-radius:var(--xpf-sparkline-radius,12px);padding:10px 10px 8px;display:flex;flex-direction:column;gap:2px;overflow:hidden}
@@ -507,7 +507,7 @@ svg{width:100%;height:auto;display:block}
 .ss #hs{fill:none;stroke:rgba(102,187,106,0.7);stroke-width:1.2}.sc #hl{fill:none;stroke:rgba(38,198,218,0.7);stroke-width:1.2}.sg #hg{fill:none;stroke:rgba(66,165,245,0.7);stroke-width:1.2}.sbt #hb2{fill:none;stroke:rgba(124,77,255,0.7);stroke-width:1.2}
 .ss #hsa{fill:rgba(102,187,106,0.12);stroke:none}.sc #hla{fill:rgba(38,198,218,0.12);stroke:none}.sg #hga{fill:rgba(66,165,245,0.12);stroke:none}.sbt #hb2a{fill:rgba(124,77,255,0.12);stroke:none}
 </style>
-<ha-card><svg viewBox="0 0 526 502"><defs><filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><g transform="translate(25.5,10) scale(0.95)">
+<ha-card><svg viewBox="0 0 526 484"><defs><filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><g transform="translate(25.5,10) scale(0.95)">
 <g id="wicons" style="display:none" transform="translate(-20,0)">
 <rect class="wb" x="-2" y="-4" width="86" height="20"/>
 <g transform="translate(0,1)"><rect x="6" y="0" width="2.5" height="7" rx="1.2" fill="none" stroke="var(--t3)" stroke-width="0.7"/><circle cx="7.2" cy="9" r="2.5" fill="none" stroke="var(--t3)" stroke-width="0.7"/><line x1="7.2" y1="3" x2="7.2" y2="7" stroke="var(--red)" stroke-width="1" stroke-linecap="round"/><circle cx="7.2" cy="9" r="1.2" fill="var(--red)"/></g>
