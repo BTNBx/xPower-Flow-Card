@@ -177,6 +177,10 @@ LEDs blink when active and remain dim when inactive.
 
 ## Changelog
 
+### v1.2.9
+
+- **Autarky badge** - more compact dimensions (44×56), smaller font to keep number inside bounds, right-aligned to match weather widget margin
+
 ## v1.2.8
 - **Bug fixing**
 
