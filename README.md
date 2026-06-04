@@ -177,6 +177,10 @@ LEDs blink when active and remain dim when inactive.
 
 ## Changelog
 
+### v1.3.2
+- **Autarky badge** - removed glow effect at 100% autarky
+- **Layout** - reduced spacing between card and sparkline charts
+
 ### v1.3.1
 - **2nd Bug fixing**
 
