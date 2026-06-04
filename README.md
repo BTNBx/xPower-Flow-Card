@@ -177,6 +177,11 @@ LEDs blink when active and remain dim when inactive.
 
 ## Changelog
 
+## v1.2.7
+
+### Fixed
+- **Autarky badge** — número maior e melhor centrado na secção superior do badge
+
 ### v1.2.6
 
 **Fixed**
