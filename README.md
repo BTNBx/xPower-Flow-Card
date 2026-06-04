@@ -177,6 +177,9 @@ LEDs blink when active and remain dim when inactive.
 
 ## Changelog
 
+### v1.3.4
+- **Autarky badge** - vertically aligned with battery runtime text
+
 ### v1.3.3
 - **Layout** - removed empty space between main card and sparkline charts
 
