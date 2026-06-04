@@ -1,5 +1,3 @@
-# xPower Flow Card
-
 A power flow visualization card for solar hybrid inverters in Home Assistant. Single file, no dependencies.
 
 ![xPower Flow Card](demo.gif)
@@ -15,15 +13,17 @@ A power flow visualization card for solar hybrid inverters in Home Assistant. Si
 | **Growatt** | Growatt / modbus | Preset |
 | **Victron** | Venus OS / GX | Preset |
 | **SolarEdge** | Modbus / SunSpec | Preset |
+| **Solis** | SolisCloud | Preset |
 | **Any other** | Custom | Custom preset |
 
 Select your brand in the visual editor. Entities and polarity are configured automatically.
 
 ## Features
 
-- 8 inverter presets with auto-configured entities and polarity
+- 9 inverter presets with auto-configured entities and polarity
 - 8 languages: Portuguese, English, German, French, Spanish, Italian, Dutch, Polish
 - Configurable battery and grid polarity sign conventions
+- Dual MPPT support — configure two solar strings independently
 - Animated pulse flow lines with speed proportional to power output
 - Color-coded values: solar (green), grid (red), home (cyan), battery (yellow)
 - Inverter icon with 4 status LEDs indicating active energy flows
@@ -34,7 +34,7 @@ Select your brand in the visual editor. Entities and polarity are configured aut
 - 24-hour sparkline charts with Catmull-Rom interpolation, updated every 5 minutes
 - Sparkline tooltips showing power and timestamp on hover
 - Auto-scaling Y-axis on all sparklines
-- Autarky indicator with color-coded self-sufficiency percentage
+- Autarky badge with color-coded self-sufficiency percentage
 - Daily totals for import, export, and production in kWh
 - Trend arrows for rising, falling, or stable values
 - Graceful handling of unavailable sensors (`--`)
@@ -79,6 +79,17 @@ weather_temp: sensor.outdoor_temperature
 weather_humidity: sensor.outdoor_humidity
 ```
 
+### YAML (Dual MPPT example)
+
+```yaml
+type: custom:xpower-flow-card
+preset: deye
+solar: sensor.deye_pv1_power
+solar2: sensor.deye_pv2_power
+pv_voltage: sensor.deye_pv1_voltage
+pv_voltage2: sensor.deye_pv2_voltage
+```
+
 ### YAML (Huawei example)
 
 ```yaml
@@ -102,6 +113,7 @@ grid_polarity: positive
 shutdown_soc: 15
 battery_capacity: 10240
 solar: sensor.my_pv_power
+solar2: sensor.my_pv2_power
 battery: sensor.my_battery_power
 soc: sensor.my_battery_soc
 grid: sensor.my_grid_power
@@ -109,6 +121,7 @@ load: sensor.my_load_power
 grid_voltage: sensor.my_grid_voltage
 battery_voltage: sensor.my_battery_voltage
 pv_voltage: sensor.my_pv_voltage
+pv_voltage2: sensor.my_pv2_voltage
 temperature: sensor.my_inverter_temp
 frequency: sensor.my_grid_frequency
 grid_status: binary_sensor.my_grid_connected
@@ -134,17 +147,19 @@ weather_humidity: sensor.my_outdoor_humidity
 | `grid_polarity` | `positive` | `positive` = import (Deye) or `negative` = import (SolarEdge) |
 | `shutdown_soc` | `20` | Battery shutdown SOC percentage |
 | `battery_capacity` | `5120` | Battery capacity in Wh |
+| `solar2` | | Second MPPT solar power sensor (optional) |
+| `pv_voltage2` | | Second MPPT PV voltage sensor (optional) |
 | `weather_temp` | | Temperature sensor for weather display |
 | `weather_humidity` | | Humidity sensor for weather display |
 
 ### Polarity Guide
 
 **Battery power:**
-- `negative` = charging: Deye, Sunsynk, Growatt, Victron
-- `positive` = charging: Huawei, Fronius, SolarEdge
+- `negative` = charging: Deye, Sunsynk, Growatt
+- `positive` = charging: Huawei, Fronius, SolarEdge, Victron, Solis
 
 **Grid power:**
-- `positive` = importing: Deye, Sunsynk, Huawei, Fronius, Growatt, Victron
+- `positive` = importing: Deye, Sunsynk, Huawei, Fronius, Growatt, Victron, Solis
 - `negative` = importing: SolarEdge
 
 ### Inverter LEDs
@@ -162,21 +177,21 @@ LEDs blink when active and remain dim when inactive.
 
 ## Changelog
 
-## v1.2.6
+### v1.2.6
 
-### Fixed
-- **Grid Voltage** now displays independently of Grid Frequency - each field renders on its own when only one is configured
+**Fixed**
+- **Grid Voltage** now displays independently of Grid Frequency — each field renders on its own when only one is configured
 - **Victron polarity** preset corrected to `positive` (Venus OS / SmartShunt reports discharge as positive, charge as negative); update your card if you were using the Huawei preset as a workaround
-- **Solis** battery polarity no longer reverses regardless of selection - dedicated Solis preset added with correct polarity (`positive`)
+- **Solis** battery polarity no longer reverses regardless of selection — dedicated Solis preset added with correct polarity (`positive`)
 
-### Added
-- **Dual MPPT support** - new `Solar Power (MPPT2)` and `PV Voltage (MPPT2)` entity fields; when both are set, total solar power is the sum of both strings and voltages display as e.g. `48V / 52V`
-- **Solis preset** - dedicated preset for Solis (SolisCloud) inverters with correct default entities and polarity
-- **Autarky badge** - replaced the flat pill with a bold badge showing the percentage in large type and "AUTOSSUFICIÊNCIA" in a colour-coded band; positioned bottom-right of the card
+**Added**
+- **Dual MPPT support** — new `Solar Power (MPPT2)` and `PV Voltage (MPPT2)` entity fields; when both are set, total solar power is the sum of both strings and voltages display as e.g. `48V / 52V`
+- **Solis preset** — dedicated preset for Solis (SolisCloud) inverters with correct default entities and polarity
+- **Autarky badge** — replaced the flat pill with a bold badge showing the percentage in large type and a colour-coded band; positioned bottom-right of the card
 
-## v1.2.5
+### v1.2.5
 
-### New Features
+**New Features**
 
 - Entity click to open more-info dialog on all power nodes (solar, grid, load, battery)
 - Battery sparkline with 24-hour history, tooltip, and charge/discharge daily summary
@@ -185,19 +200,19 @@ LEDs blink when active and remain dim when inactive.
 - Compact mode to hide sparklines for sidebar and popup use
 - 15 CSS custom properties (--xpf-*) for theme and style customization
 
-### Performance
+**Performance**
 
 - requestAnimationFrame throttle on hass updates to reduce unnecessary redraws
 - History loading and timer disabled in compact mode to eliminate redundant API calls
 
-### Build
+**Build**
 
 - Added esbuild build pipeline with minification
 - Added GitHub Actions workflow for automated releases on tag push
 - Updated hacs.json with minimum Home Assistant version requirement
 - Added package.json with build and watch scripts
 
-### CSS Custom Properties
+**CSS Custom Properties**
 
 - --xpf-bg, --xpf-radius, --xpf-shadow, --xpf-padding
 - --xpf-solar, --xpf-battery, --xpf-grid, --xpf-load
@@ -205,7 +220,7 @@ LEDs blink when active and remain dim when inactive.
 - --xpf-text, --xpf-text-secondary, --xpf-font-size
 - --xpf-sparkline-bg, --xpf-sparkline-radius
 
-### Configuration
+**Configuration**
 
 - New options: compact, import_cost, export_cost
 - Layout selector in visual editor (Full / Compact)
@@ -231,39 +246,20 @@ LEDs blink when active and remain dim when inactive.
 
 ### v1.2.3
 
-**Inverter LCD redesign**
-- Font size reduced from 7 px to 6.5 px with tighter letter-spacing to fit within the display bounds.
+- Inverter LCD font size reduced to 6.5 px with tighter letter-spacing to fit within display bounds.
 
 ### v1.2.2
 
-**Dynamic border**
-- Card border color now reflects the dominant energy source: green (solar), amber (battery), red (grid). Transitions over 1.5 s. Replaces the previous outer glow effect.
-
-**Inverter LCD redesign**
-- Removed the dark overlay from the LCD area. The display now uses a unified green fill.
-- LCD text changed to white for improved contrast.
-- Font size increased from 7 px to 8 px.
-- Unit label placed adjacent to the value without spacing (e.g. `1.3kW` instead of `1.3 kW`).
-- Removed the lightning icon that appeared during grid export.
-- Removed the blinking animation on grid export.
-
-**Aurora effect removed**
-- Removed the animated gradient background that activated above 90% autarky.
-- The autarky pill golden glow at 90%+ is retained.
+- Card border color now reflects the dominant energy source: green (solar), amber (battery), red (grid). Transitions over 1.5 s.
+- LCD display redesigned: white text, unified green fill, no lightning icon or blink animation.
+- Aurora effect removed; autarky pill golden glow at 90%+ retained.
 
 ### v1.2.1
 
-**Ambient glow**
-- Card border emitted a colored glow based on the dominant energy source with 1.5 s transitions. Replaced by the border effect in v1.2.2.
-
-**Inverter LCD display**
-- Added a monospace LCD screen to the inverter body showing total power throughput. Redesigned in v1.2.2.
-
-**Aurora effect**
-- Gradient background (green, blue, purple) appeared behind the card above 90% autarky. Autarky pill gained a golden glow. Removed in v1.2.2.
-
-**Flow line transitions**
-- Color and opacity changes on flow lines now cross-fade over 800 ms instead of switching instantly.
+- Ambient glow on card border based on dominant energy source.
+- Inverter LCD display added showing total power throughput.
+- Aurora gradient background above 90% autarky.
+- Flow line color and opacity cross-fade over 800 ms.
 
 ### v1.2.0
 
@@ -271,36 +267,33 @@ LEDs blink when active and remain dim when inactive.
 
 ### v1.1.9
 
-- Sun icon rotates (60 s period) while solar power exceeds 10 W; dims to 25% opacity when inactive.
-- Solar, grid, home, and battery icons dim to 25% opacity when their respective power is below 10 W.
-- Battery fill turns green with a pulse animation while charging above 10 W.
+- Sun icon rotates while solar power exceeds 10 W; dims to 25% opacity when inactive.
+- Solar, grid, home, and battery icons dim to 25% opacity when power is below 10 W.
+- Battery fill turns green with pulse animation while charging above 10 W.
 
 ### v1.1.8
 
-- Inverter bolt changed to stroke-only with a breathing glow animation (2 s cycle).
-- Battery charging animation added (green fill with pulse).
-- Sun icon rotation speed set to 20 s per full rotation.
-- Inverter-to-home flow uses yellow when battery is the dominant source.
-- Sparkline chart height increased from 40 px to 55 px.
+- Inverter bolt breathing glow animation.
+- Battery charging animation.
+- Sun rotation speed set to 20 s.
+- Inverter-to-home flow uses yellow when battery is dominant source.
+- Sparkline height increased to 55 px.
 
 ### v1.1.7
 
-- Weather widget border box widened and divider repositioned for proper centering.
-- Battery discharge flow color changed from purple to yellow to match the battery value display.
+- Weather widget border and divider repositioned.
+- Battery discharge flow color changed to yellow.
 
 ### v1.1.6
 
-- Flow animations now run in sequence: incoming flow completes before outgoing flow starts. Outgoing flows have a calculated delay based on the fastest incoming flow speed.
-- Inverter bolt glow activates only when receiving solar energy.
-- Weather widget border box widened to prevent text clipping.
+- Flow animations sequenced: incoming completes before outgoing starts.
+- Weather widget border widened.
 
 ### v1.1.5
 
-- Solar-to-inverter flow line changed from amber to green.
-- Inverter-to-home flow line color is now dynamic: green (solar dominant), red (grid dominant), purple (battery dominant).
-- Flow animation speed increases in steps at 1000 W, 2000 W, and 3000 W thresholds.
-- Inverter bolt glow added in solar yellow.
-- Weather widget shifted left with a rounded border box.
+- Solar-to-inverter flow changed to green.
+- Inverter-to-home flow color dynamic based on dominant source.
+- Flow speed increases at 1000 W, 2000 W, 3000 W thresholds.
 
 ### v1.1.4
 
@@ -309,17 +302,12 @@ LEDs blink when active and remain dim when inactive.
 ### v1.1.3
 
 - Grid tower icon changed to dark red.
-- Solar voltage aligned with kWh values.
-- Inverter temperature repositioned.
-- Weather display: humidity icon moved closer, divider added between temperature and humidity.
 - Light theme support with automatic detection.
-- Flow animation stutter fix: speed cached with 10% change threshold.
 - Adaptive history sampling for datasets exceeding 10,000 points.
 
 ### v1.1.2
 
 - Flow animation stutter fix: speed updates only on changes exceeding 10%.
-- Adaptive history sampling for improved performance on low-power devices.
 
 ### v1.1.1
 
@@ -327,66 +315,19 @@ LEDs blink when active and remain dim when inactive.
 
 ### v1.1.0
 
-- Zero-value sensors now display correctly (0 C, 0 V no longer hidden).
+- Zero-value sensors display correctly.
 - XSS protection in editor via input sanitization.
 - History request deduplication.
-- URL-encoded history API parameters.
-- Removed unused grid status code.
-- Flow animation refined: head reaches the end before tail follows, slower animation range (1.5 s to 3.5 s).
-- Solar side values aligned with arrows.
-- Inverter temperature repositioned closer to icon.
-- Weather display added with thermometer and droplet icons.
+- Flow animation refined.
+- Weather display added.
 - 8 languages added.
 - MIT license.
-- Reduced bottom spacing below autarky pill.
 
 ### v1.0.9
 
 - Flow animation changed from dots to pulse/snake style.
-- Middle section repositioned for balanced flow lines.
-- Grid and home icons aligned with their values.
-- Battery spacing adjusted to match other entities.
 - Inverter icon redesigned with 4 dynamic LEDs.
-- Inverter name field made optional.
 - Color-coded power values introduced.
-- Weather display added (configurable temperature and humidity sensors).
-
-### v1.0.8
-
-- Flow lines aligned with inverter icon edges.
-- Battery SOC and runtime text changed to white.
-
-### v1.0.7
-
-- Flow lines realigned with inverter icon.
-- Inverter name made optional.
-- Solar values green, battery values yellow.
-- Sparkline colors updated.
-
-### v1.0.6
-
-- Inverter icon redesigned with display, LEDs, and status bars.
-
-### v1.0.5
-
-- Color-coded power values: solar (green), grid (red), home (cyan), battery (yellow).
-
-### v1.0.4
-
-- Grid status dot removed.
-- Label alignment improved.
-- Flow lines no longer overlap icons.
-- Sparkline tooltips show actual time.
-- Editor SOC field ID conflict fixed.
-
-### v1.0.3
-
-- Multi-inverter support with 8 presets.
-- Polarity normalization.
-- Sparkline auto-refresh every 5 minutes.
-- Battery gauge fix.
-- Unavailable sensors display `--`.
-- Editor memory leak fix.
 
 ### v1.0.2
 
