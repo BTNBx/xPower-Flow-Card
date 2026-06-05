@@ -193,8 +193,8 @@ LEDs blink when active and remain dim when inactive.
 
 **CSS Custom Properties**
 
---xpf-flow-width — flow line stroke width (default: 3)
---xpf-dash-size — dash segment size (default: 100; low value e.g. 8 = dot effect)
+- --xpf-flow-width — flow line stroke width (default: 3)
+- --xpf-dash-size — dash segment size (default: 100; low value e.g. 8 = dot effect)
 
 ### v1.3.4
 - **Autarky badge** - vertically aligned with battery runtime text
