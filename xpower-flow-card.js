@@ -1,6 +1,6 @@
 // xPower Flow Card — Modern power flow card for solar hybrid inverters
 // Copyright (C) 2025 BTNBx — MIT License
-const V='1.3.4';
+const V='1.3.5';
 
 /* ═══════════════════════════════════════
    xPower Flow Card — i18n
@@ -449,7 +449,7 @@ _downsample(arr,n){if(!arr||!arr.length)return[];let src=arr;if(src.length>10000
 async _loadHistory(){if(this._histLoading||!this._h)return;this._histLoading=true;try{const now=new Date();const start=new Date(now.getTime()-24*60*60*1000);const iso=encodeURIComponent(start.toISOString());const entities=encodeURIComponent([this._c.solar,this._c.load,this._c.grid,this._c.battery].filter(Boolean).join(','));if(!entities)return;const url='history/period/'+iso+'?filter_entity_id='+entities+'&minimal_response&no_attributes&significant_changes_only';const res=await this._h.callApi('GET',url);if(!res||!res.length)return;for(const series of res){if(!series.length)continue;const eid=series[0].entity_id;const pts=this._downsample(series,HIST_POINTS);const mx=pts.length?Math.max(...pts)||1:1;if(eid===this._c.solar){this._hist.solar=pts;this._histMax.solar=mx;}else if(eid===this._c.load){this._hist.load=pts;this._histMax.load=mx;}else if(eid===this._c.grid){this._hist.grid=pts;this._histMax.grid=mx;}else if(eid===this._c.battery){this._hist.battery=pts;this._histMax.battery=mx;}}this._drawSparks();}catch(e){console.warn('xPower history:',e);}finally{this._histLoading=false;}}
 
 _render(){const L=this._lang;const INV=this._c.inverter_name||'';const s=this.shadowRoot;s.innerHTML=`<style>
-:host{--solar:var(--xpf-solar,#FFB300);--battery:var(--xpf-battery,#7C4DFF);--grid:var(--xpf-grid,#42A5F5);--load:var(--xpf-load,#26C6DA);--green:var(--xpf-green,#66BB6A);--red:var(--xpf-red,#EF5350);--orange:var(--xpf-orange,#FFA726);--t1:var(--xpf-text,rgba(255,255,255,0.92));--t3:var(--xpf-text-secondary,rgba(255,255,255,0.45));--xpf-r:var(--xpf-radius,20px);--xpf-vm-size:var(--xpf-font-size,24px)}
+:host{--solar:var(--xpf-solar,#FFB300);--battery:var(--xpf-battery,#7C4DFF);--grid:var(--xpf-grid,#42A5F5);--load:var(--xpf-load,#26C6DA);--green:var(--xpf-green,#66BB6A);--red:var(--xpf-red,#EF5350);--orange:var(--xpf-orange,#FFA726);--t1:var(--xpf-text,rgba(255,255,255,0.92));--t3:var(--xpf-text-secondary,rgba(255,255,255,0.45));--xpf-r:var(--xpf-radius,20px);--xpf-vm-size:var(--xpf-font-size,24px);--flow-w:var(--xpf-flow-width,3);--flow-dash:var(--xpf-dash-size,100)}
 :host(.light){--t1:var(--xpf-text,rgba(0,0,0,0.85));--t3:var(--xpf-text-secondary,rgba(0,0,0,0.45))}
 :host(.light) ha-card{background:var(--xpf-bg,rgba(255,255,255,0.92));border-color:rgba(0,0,0,0.08)}
 :host(.light) ha-card::before{background:linear-gradient(90deg,transparent,rgba(124,77,255,0.12),transparent)}
@@ -459,11 +459,11 @@ _render(){const L=this._lang;const INV=this._c.inverter_name||'';const s=this.sh
 :host(.light) .sl{opacity:0.4}
 ha-card{background:var(--xpf-bg,rgba(12,14,24,0.92));border:1px solid rgba(255,255,255,0.06);border-radius:var(--xpf-r);box-shadow:var(--xpf-shadow,0 2px 40px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.04));padding:var(--xpf-padding,6px 8px 6px);position:relative;overflow:hidden;font-family:-apple-system,sans-serif;--ha-card-background:transparent;--ha-card-border-width:0;--ha-card-border-radius:var(--xpf-r);--ha-card-box-shadow:none;transition:border-color 1.5s ease}
 ha-card::before{content:'';position:absolute;top:-1px;left:20%;right:20%;height:1px;background:linear-gradient(90deg,transparent,rgba(124,77,255,0.25),transparent)}
-@keyframes pillGlow{0%,100%{box-shadow:0 0 8px rgba(255,215,0,0.4)}50%{box-shadow:0 0 20px rgba(255,215,0,0.8)}}
+@keyframes pillGlow{0%,100%{box-shadow:0 0 4px rgba(100,150,105,0.3)}50%{box-shadow:0 0 10px rgba(100,150,105,0.5)}}
 .au-glow{animation:pillGlow 2s ease-in-out infinite;border-radius:8px}
 svg{width:100%;height:auto;display:block}
 .fl{fill:none;stroke:rgba(255,255,255,0.04);stroke-width:2;stroke-linecap:round}
-.fa{fill:none;stroke-width:3;stroke-linecap:round;stroke-dasharray:100 100;transition:stroke 0.8s ease,opacity 0.8s ease}
+.fa{fill:none;stroke-width:var(--flow-w);stroke-linecap:round;stroke-dasharray:var(--flow-dash) var(--flow-dash);transition:stroke 0.8s ease,opacity 0.8s ease}
 .fd{animation:fD var(--spd,3s) linear infinite}.fu{animation:fU var(--spd,3s) linear infinite}.fr{animation:fR var(--spd,3s) linear infinite}.fL{animation:fL var(--spd,3s) linear infinite}
 @keyframes ledBlink{0%,100%{opacity:1}50%{opacity:0.2}}
 .led-on{animation:ledBlink 1.5s ease-in-out infinite}
@@ -489,7 +489,7 @@ svg{width:100%;height:auto;display:block}
 
 .wt{fill:var(--t3);font-size:11px;font-weight:500;text-anchor:start;dominant-baseline:middle;font-family:-apple-system,sans-serif}
 .wb{fill:none;stroke:var(--t3);stroke-width:0.5;rx:4;ry:4;opacity:0.4}
-.sr{display:flex;gap:6px;margin-top:4px}
+.sr{display:flex;gap:6px;margin-top:8mm}
 :host(.compact) .sr{display:none}
 :host(.compact) ha-card{padding:6px 8px 6px}
 .sb{flex:1;background:var(--xpf-sparkline-bg,rgba(255,255,255,0.02));border:1px solid rgba(255,255,255,0.04);border-radius:var(--xpf-sparkline-radius,12px);padding:10px 10px 8px;display:flex;flex-direction:column;gap:2px;overflow:hidden}
@@ -523,7 +523,7 @@ svg{width:100%;height:auto;display:block}
 <g id="nGrid" class="ct"><g id="gridIcon" transform="translate(66,225) scale(1.65) translate(-66,-196)"><rect x="64" y="181" width="4" height="30" rx="1" fill="var(--red)" opacity="0.7"/><rect x="54" y="183" width="24" height="3" rx="1" fill="var(--red)" opacity="0.6"/><rect x="57" y="192" width="18" height="2.5" rx="1" fill="var(--red)" opacity="0.5"/><path d="M60,211 L64,199 L68,199 L72,211" fill="var(--red)" opacity="0.4"/><circle cx="56" cy="184" r="1.5" fill="var(--red)" opacity="0.8"/><circle cx="76" cy="184" r="1.5" fill="var(--red)" opacity="0.8"/><circle cx="58" cy="193" r="1.2" fill="var(--red)" opacity="0.7"/><circle cx="74" cy="193" r="1.2" fill="var(--red)" opacity="0.7"/><line x1="54" y1="184" x2="46" y2="181" stroke="var(--red)" stroke-width="0.8" opacity="0.3"/><line x1="78" y1="184" x2="86" y2="181" stroke="var(--red)" stroke-width="0.8" opacity="0.3"/></g><text x="66" y="268" class="vm" style="fill:var(--red)" id="vg"></text><text x="66" y="190" class="vl">${L.grid}</text><text x="66" y="286" class="vc" id="gv"></text><circle id="gsd" cx="92" cy="189" r="4" fill="rgba(255,255,255,0.12)"/><text x="66" y="300" class="vd" id="dg"></text></g>
 <g id="nLoad" class="ct"><g id="loadIcon" transform="translate(434,225) scale(1.65) translate(-434,-188)"><path d="M416,188 L434,174 L452,188 Z" fill="var(--load)" opacity="0.8"/><rect x="420" y="187" width="28" height="18" rx="1" fill="var(--load)" opacity="0.6"/><rect x="430" y="195" width="8" height="10" rx="1" fill="rgba(0,0,0,0.3)"/><rect x="422" y="190" width="6" height="5" rx="0.5" fill="rgba(255,255,255,0.15)"/><rect x="440" y="190" width="6" height="5" rx="0.5" fill="rgba(255,255,255,0.15)"/><rect x="441" y="176" width="5" height="8" rx="1" fill="var(--load)" opacity="0.5"/></g><text x="434" y="268" class="vm" style="fill:var(--load)" id="vl"></text><text x="434" y="190" class="vl">${L.load}</text><text x="434" y="288" class="vd" id="dl"></text></g>
 <g id="nBat" class="ct"><g id="batIcon" transform="translate(250,400) scale(1.70) translate(-250,-351)"><rect x="232" y="341" width="32" height="20" rx="3" fill="var(--battery)" opacity="0.75"/><rect x="264" y="345.5" width="6" height="11" rx="2" fill="var(--battery)" opacity="0.9"/><rect x="235" y="344" width="26" height="14" rx="1.5" fill="rgba(0,0,0,0.35)"/><rect id="bl" x="235" y="344" width="26" height="14" rx="1.5" fill="var(--battery)" opacity="0.45"/></g><text x="250" y="440" class="vm" style="fill:var(--solar)" id="vb"></text><text x="250" y="462" class="vs" id="vc"></text><text x="250" y="372" class="vl">${L.battery}</text><text x="310" y="394" class="vc" id="bv" text-anchor="start"></text><text x="310" y="406" class="vc" id="bt" text-anchor="start"></text><text x="250" y="483" class="vd" id="db"></text><text x="250" y="498" class="vc" id="br" style="fill:var(--t1)"></text></g>
-<defs><clipPath id="au-clip"><rect x="467" y="458" width="55" height="40" rx="6"/></clipPath></defs><rect x="467" y="458" width="55" height="40" rx="6" fill="rgba(12,14,24,0.92)"/><rect x="467" y="458" width="55" height="40" rx="6" fill="none" id="au-border" stroke="var(--green)" stroke-width="2"/><text x="494" y="473" id="va" font-family="-apple-system,sans-serif" font-size="16" font-weight="800" fill="white" text-anchor="middle" dominant-baseline="middle"></text><g clip-path="url(#au-clip)"><rect x="467" y="485" width="55" height="13" id="au-bar" fill="var(--green)"/><text x="494" y="492" font-family="-apple-system,sans-serif" font-size="4.8" font-weight="700" fill="white" text-anchor="middle" dominant-baseline="middle">AUTOSSUFICIÊNCIA</text></g>
+<defs><clipPath id="au-clip"><rect x="421" y="2" width="47" height="34" rx="6"/></clipPath></defs><rect x="421" y="2" width="47" height="34" rx="6" fill="rgba(12,14,24,0.92)"/><rect x="421" y="2" width="47" height="34" rx="6" fill="none" id="au-border" stroke="rgba(100,150,105,0.5)" stroke-width="1.5"/><text x="444" y="15" id="va" font-family="-apple-system,sans-serif" font-size="13.6" font-weight="800" fill="white" text-anchor="middle" dominant-baseline="middle"></text><g clip-path="url(#au-clip)"><rect x="421" y="25" width="47" height="11" id="au-bar" fill="rgba(100,150,105,0.5)"/><text x="444" y="31" font-family="-apple-system,sans-serif" font-size="4.1" font-weight="700" fill="white" text-anchor="middle" dominant-baseline="middle">AUTOSSUFICIÊNCIA</text></g>
 </g></svg>
 <div class="sr">
 <div class="sb sg"><div class="sb-header"><span class="sl">${L.grid24}</span><span class="sv" id="hz"></span></div><svg viewBox="0 0 200 55" preserveAspectRatio="none"><path id="hga"/><path id="hg"/><line class="cursor" id="cg" x1="0" y1="0" x2="0" y2="55"/><circle class="cursor-dot" id="dg2" cx="0" cy="0" r="3"/></svg><span class="sb-tip" id="tg"></span></div>
@@ -617,7 +617,7 @@ this._$('db').textContent=L.charge+' '+this._fmtE(dC)+' '+L.discharge+' '+this._
 const solF=sol??0,batF=bat??0,gridF=grid??0,loadF=load??0;
 const maxP=Math.max(solF,Math.abs(batF),Math.abs(gridF),loadF);
 const syncSpd=maxP>10?this._spd(maxP):3;
-if(Math.abs(syncSpd-this._syncSpd)/this._syncSpd>0.1){this._syncSpd=syncSpd;['fs','fg','fb','fh'].forEach(id=>{const el=this._$(id);if(el)el.style.setProperty('--spd',syncSpd.toFixed(1)+'s');});}
+if(Math.abs(syncSpd-this._syncSpd)/this._syncSpd>0.1){this._syncSpd=syncSpd;const spdIn=(syncSpd*0.75).toFixed(1)+'s';const spdOut=syncSpd.toFixed(1)+'s';['fs','fg','fb'].forEach(id=>{const el=this._$(id);if(el)el.style.setProperty('--spd',spdIn);});const fh=this._$('fh');if(fh)fh.style.setProperty('--spd',spdOut);}
 this._sf(this._$('fs'),'s',solF,'fd','var(--green)','0.8');
 this._sf(this._$('fg'),'g',gridF,gridF>0?'fr':'fL',gridF>0?'var(--red)':'var(--green)','0.7');
 this._sf(this._$('fb'),'b',batF,batF<0?'fd':'fu',batF<0?'var(--green)':'var(--solar)','0.75');
@@ -637,7 +637,7 @@ if(batF>RUNTIME_MIN_W&&socVal>shuSoc){
 const gridImp=gridF>0?gridF:0;
 const au=loadF>0?Math.max(0,Math.min(100,((loadF-gridImp)/loadF)*100)):0;
 this._$('va').textContent=au.toFixed(0)+'%';
-let auC;if(au>=80)auC='#66BB6A';else if(au>=50)auC='#FFA726';else if(au>=25)auC='#FF7043';else auC='#EF5350';const auBar=this._$('au-bar');if(auBar)auBar.setAttribute('fill',auC);const auBorder=this._$('au-border');if(auBorder)auBorder.setAttribute('stroke',auC);
+let auC;if(au>=80)auC='rgba(100,150,105,0.55)';else if(au>=50)auC='rgba(180,140,60,0.55)';else if(au>=25)auC='rgba(180,100,60,0.55)';else auC='rgba(180,70,70,0.55)';const auBar=this._$('au-bar');if(auBar)auBar.setAttribute('fill',auC);const auBorder=this._$('au-border');if(auBorder)auBorder.setAttribute('stroke',auC);
 
 const wtv=this._gv(c.weather_temp);const whv=this._gv(c.weather_humidity);
 const wicons=this._$('wicons');const wdrop=this._$('wdrop');const wdiv=this._$('wdiv');
