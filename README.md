@@ -177,6 +177,26 @@ LEDs blink when active and remain dim when inactive.
 
 ## Changelog
 
+### v1.3.5
+
+**Visual**
+
+Autarky badge moved to top-right corner
+Badge size reduced 15% (55×40 → 47×34)
+Badge green softened — border/fill use low-alpha rgba instead of solid #66BB6A; status threshold colors (≥80/50/25%) also toned down
+Added 8mm spacing between battery data and sparklines row
+
+**Animation**
+
+Inlet flows (solar/grid/battery → inverter) run at 75% of base speed — faster
+Outlet flow (inverter → home) runs at base speed — slower
+Visual effect of energy accumulating at the inverter before flowing out to home
+
+**CSS Custom Properties**
+
+--xpf-flow-width — flow line stroke width (default: 3)
+--xpf-dash-size — dash segment size (default: 100; low value e.g. 8 = dot effect)
+
 ### v1.3.4
 - **Autarky badge** - vertically aligned with battery runtime text
 
