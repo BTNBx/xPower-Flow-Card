@@ -5,7 +5,21 @@ const V='1.3.6';
 /* ═══════════════════════════════════════
    CHANGELOG
    ═══════════════════════════════════════
-   v1.3.5
+v1.3.6
+    Visual:
+        - Autarky badge moved to top-right corner, aligned with weather widget top edge and right margin
+            - Badge color reworked — deep teal green background #0d2b22 / border+bar #1a4a36; status threshold colors (>=50/25%) toned down with low-alpha rgba
+                Animation:
+                    - Inlet flows (solar/grid/battery -> inverter) run at 75% of base speed — faster
+                        - Outlet flow (inverter -> home) runs at base speed — slower
+                            - Visual effect of energy accumulating at the inverter before flowing out to home
+                                CSS Custom Properties:
+                                    - --xpf-flow-width  flow line stroke width (default: 3)
+                                        - --xpf-dash-size   dash segment size (default: 100; low value e.g. 8 = dot effect)
+                                            ──────────────────────────────────────────────────────── */
+
+/* ────────────────────────────────────────────────────────
+    v1.3.5
    Visual:
    - Autarky badge moved to top-right corner
    - Badge size reduced 15% (55x40 -> 47x34)
