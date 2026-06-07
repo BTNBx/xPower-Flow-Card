@@ -1,6 +1,6 @@
 // xPower Flow Card — Modern power flow card for solar hybrid inverters
 // Copyright (C) 2025 BTNBx — MIT License
-const V='1.3.6';
+const V='1.3.7';
 
 /* ═══════════════════════════════════════
    CHANGELOG
@@ -17,6 +17,19 @@ v1.3.6
                                     - --xpf-flow-width  flow line stroke width (default: 3)
                                         - --xpf-dash-size   dash segment size (default: 100; low value e.g. 8 = dot effect)
                                             ──────────────────────────────────────────────────────── */
+
+/* ════════════════════════════════════════════════════════
+    v1.3.7
+   Fixes:
+   - Solis polarity: bat_polarity changed to 'negative' (modbus reports charging as positive,
+     same convention as Deye/Sunsynk — no inversion needed)
+   - LCD inverter display: now shows load power (home consumption) instead of sum of all flows
+   Features:
+   - Victron dual MPPT: added pv1_power + pv2_power entity fields in preset;
+     Solar node shows per-MPPT power breakdown when both sensors configured
+   Visual:
+   - Sub-labels font sizes increased: .vc 9.5px→11px, .vd 12px→13px, .vc battery 9.5px→11px
+   ════════════════════════════════════════════════════════ */
 
 /* ────────────────────────────────────────────────────────
     v1.3.5
@@ -197,9 +210,9 @@ const PRESETS={
   victron:{
     label:'Victron (Venus OS)',inverter_name:'VICTRON',
     bat_polarity:'positive',grid_polarity:'positive',
-    e:{solar:'sensor.pv_power',battery:'sensor.battery_power',soc:'sensor.battery_soc',
+    e:{solar:'sensor.pv_power',solar2:'',battery:'sensor.battery_power',soc:'sensor.battery_soc',
        grid:'sensor.grid_power',load:'sensor.ac_consumption',grid_voltage:'sensor.grid_voltage',
-       battery_voltage:'sensor.battery_voltage',pv_voltage:'sensor.pv_voltage',
+       battery_voltage:'sensor.battery_voltage',pv_voltage:'sensor.pv_voltage',pv_voltage2:'',
        temperature:'sensor.inverter_temperature',frequency:'sensor.grid_frequency',
        grid_status:'',daily_solar:'sensor.daily_solar_yield',daily_import:'sensor.daily_grid_import',
        daily_export:'sensor.daily_grid_export',daily_load:'sensor.daily_consumption',
@@ -220,7 +233,7 @@ const PRESETS={
   },
   solis:{
     label:'Solis (SolisCloud)',inverter_name:'SOLIS',
-    bat_polarity:'positive',grid_polarity:'positive',
+    bat_polarity:'negative',grid_polarity:'positive',
     e:{solar:'sensor.solis_pv_power',battery:'sensor.solis_battery_power',soc:'sensor.solis_battery_soc',
        grid:'sensor.solis_grid_power',load:'sensor.solis_house_load',grid_voltage:'sensor.solis_grid_voltage',
        battery_voltage:'sensor.solis_battery_voltage',pv_voltage:'sensor.solis_pv_voltage',
@@ -511,8 +524,8 @@ svg{width:100%;height:auto;display:block}
 .vm{fill:var(--t1);font-size:var(--xpf-vm-size);font-weight:600;text-anchor:middle;dominant-baseline:middle}
 .vl{fill:var(--t3);font-size:10px;font-weight:600;letter-spacing:0.14em;text-anchor:middle;dominant-baseline:middle}
 .vs{fill:var(--t1);font-size:22px;font-weight:700;text-anchor:middle;dominant-baseline:middle}
-.vd{fill:var(--t3);font-size:12px;font-weight:500;text-anchor:middle;dominant-baseline:middle}
-.vc{fill:var(--t3);font-size:9.5px;font-weight:600;text-anchor:middle;dominant-baseline:middle}
+.vd{fill:var(--t3);font-size:13px;font-weight:500;text-anchor:middle;dominant-baseline:middle}
+.vc{fill:var(--t3);font-size:11px;font-weight:600;text-anchor:middle;dominant-baseline:middle}
 .ib{fill:rgba(255,255,255,0.02);stroke:rgba(255,255,255,0.06);stroke-width:1}
 .il{fill:rgba(255,255,255,0.35);font-size:12px;font-weight:600;letter-spacing:0.05em;text-anchor:middle;dominant-baseline:middle}
 .au{fill:white;font-size:9px;font-weight:600;letter-spacing:0.04em;text-anchor:middle;dominant-baseline:middle}
@@ -636,13 +649,18 @@ this._$('bl').setAttribute('width',(26*(socVal/100)).toFixed(1));
 const blEl=this._$('bl');if(blEl){if(bat!==null&&bat<-10){blEl.setAttribute('fill','#4CD964');blEl.setAttribute('class','bat-charge');}else{blEl.setAttribute('fill','var(--battery)');blEl.removeAttribute('class');}}
 
 if(temp!==null)this._$('tp').textContent=temp.toFixed(0)+'\u00B0C';else this._$('tp').textContent='';
-if(pvv!==null&&pvv2!==null)this._$('pv').textContent=pvv.toFixed(0)+'V / '+pvv2.toFixed(0)+'V';else if(pvv!==null)this._$('pv').textContent=pvv.toFixed(0)+'V';else if(pvv2!==null)this._$('pv').textContent=pvv2.toFixed(0)+'V';else this._$('pv').textContent='';
+if(pvv!==null&&pvv2!==null)this._$('pv').textContent=pvv.toFixed(0)+'V / '+pvv2.toFixed(0)+'V';else if(pvv!==null)this._$('pv').textContent=pvv.toFixed(0)+'V';else if(pvv2!==null)this._$('pv').textContent=pvv2.toFixed(0)+'V';else if(c.solar2&&sol1!==null&&sol2!==null)this._$('pv').textContent=L.daily+' '+this._fmtE(dS);else this._$('pv').textContent='';
 if(gv!==null&&freq!==null)this._$('gv').textContent=gv.toFixed(0)+'V \u00B7 '+freq.toFixed(1)+'Hz';else if(gv!==null)this._$('gv').textContent=gv.toFixed(0)+'V';else if(freq!==null)this._$('gv').textContent=freq.toFixed(1)+'Hz';else this._$('gv').textContent='';
 if(bv!==null)this._$('bv').textContent=bv.toFixed(1)+'V';else this._$('bv').textContent='';
 const bt=this._gv(c.battery_temperature);if(bt!==null)this._$('bt').textContent=bt.toFixed(0)+'\u00B0C';else this._$('bt').textContent='';
 
 const dS=this._gv(c.daily_solar)??0,dI=this._gv(c.daily_import)??0,dE=this._gv(c.daily_export)??0,dL=this._gv(c.daily_load)??0,dC=this._gv(c.daily_charge)??0,dD=this._gv(c.daily_discharge)??0;
-this._$('ds').textContent=L.daily+' '+this._fmtE(dS);
+// Solar node: if dual MPPT, show per-MPPT power above daily kWh
+if(c.solar2&&sol1!==null&&sol2!==null){
+  this._$('ds').textContent='PV1:'+this._fmt(sol1)+' PV2:'+this._fmt(sol2);
+}else{
+  this._$('ds').textContent=L.daily+' '+this._fmtE(dS);
+}
 this._$('dg').textContent=L.import_+' '+this._fmtE(dI)+(this._fmtC(c.import_cost)?' · '+this._fmtC(c.import_cost):'')+' '+L.export_+' '+this._fmtE(dE)+(this._fmtC(c.export_cost)?' · '+this._fmtC(c.export_cost):'');
 this._$('dl').textContent=L.daily+' '+this._fmtE(dL);
 this._$('db').textContent=L.charge+' '+this._fmtE(dC)+' '+L.discharge+' '+this._fmtE(dD);
@@ -718,9 +736,8 @@ else if(bC>=sC&&bC>=gC&&bC>10)borderColor='rgba(255,179,0,0.55)';
 else if(gC>10)borderColor='rgba(239,83,80,0.45)';
 card.style.borderColor=borderColor;}
 
-// #2 LCD — total power throughput on inverter display
-const lcd=this._$('lcd');if(lcd){const total=solF+Math.abs(batF)+Math.abs(gridF);
-const a=Math.abs(total);lcd.textContent=a>=1000?(a/1000).toFixed(1)+'kW':a.toFixed(0)+'W';}
+// #2 LCD — home consumption on inverter display
+const lcd=this._$('lcd');if(lcd){const a=Math.abs(loadF??0);lcd.textContent=a>=1000?(a/1000).toFixed(1)+'kW':a.toFixed(0)+'W';}
 
 // #3 Pill glow — autarky >90%
 
