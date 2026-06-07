@@ -180,14 +180,17 @@ LEDs blink when active and remain dim when inactive.
 ## v1.3.7
 
 **Fixes**
-- Solis polarity — corrected for Modbus integrations. The preset now uses negative convention (same as Deye/Sunsynk), which means charging will show the correct direction without any manual override. If it still behaves oddly with your specific integration, try toggling the Battery: negative = option in the editor and let me know.
-- Inverter LCD value — it was incorrectly showing the sum of all power flows, which made no sense. It now shows home consumption, matching the HOME node value.
+
+- Solis polarity - corrected for Modbus integrations. The preset now uses negative convention (same as Deye/Sunsynk), which means charging will show the correct direction without any manual override.
+- Inverter LCD value - it was incorrectly showing the sum of all power flows, which made no sense. It now shows home consumption, matching the HOME node value.
 
 **New**
-- Victron dual MPPT — the Victron preset now includes solar2 and pv_voltage2 fields. When both MPPT sensors are configured, the Solar node displays a per-string breakdown: PV1: 180W  PV2: 151W, with the daily total on the line below.
+
+- Victron dual MPPT - the Victron preset now includes solar2 and pv_voltage2 fields. When both MPPT sensors are configured, the Solar node displays a per-string breakdown: PV1: 180W  PV2: 151W, with the daily total on the line below.
 
 **Visual**
-- Font sizes increased — the smaller sub-labels (voltage, frequency, daily kWh) bumped from 9.5px/12px to 11px/13px.
+
+- Font sizes increased - the smaller sub-labels (voltage, frequency, daily kWh) bumped from 9.5px/12px to 11px/13px.
 
 ## v1.3.6
 
