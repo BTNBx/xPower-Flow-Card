@@ -179,6 +179,10 @@ LEDs blink when active and remain dim when inactive.
 
 ## v1.3.8
 
+- Bug fixing
+
+## v1.3.8
+
 ### Fixed
 - **Solar node text overlap** - PV1/PV2 power and PV voltage text no longer overlap the sun icon. Root cause: the `.vd` CSS class (`text-anchor:middle`) was overriding the SVG `text-anchor="start"` presentation attribute; now set via inline style.
 
