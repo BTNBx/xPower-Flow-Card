@@ -1,6 +1,6 @@
 // xPower Flow Card — Modern power flow card for solar hybrid inverters
 // Copyright (C) 2025 BTNBx — MIT License
-const V='1.3.7';
+const V='1.3.8';
 
 /* ═══════════════════════════════════════
    CHANGELOG
@@ -25,6 +25,12 @@ v1.3.6
      same convention as Deye/Sunsynk — no inversion needed)
    - LCD inverter display: now shows load power (home consumption) instead of sum of all flows
    Features:
+   v1.3.8:
+   - Fix: PV1/PV2 + voltage text overlapped sun icon (CSS .vd text-anchor:middle
+     overrides SVG presentation attribute; now inline style)
+   - Solis/modbus: optional split battery_charge + battery_discharge sensors
+     (both positive); card computes discharge-charge, bypasses polarity flag
+   - Three-phase grid voltage: optional grid_voltage_l2/l3, shown as L1/L2/L3 V
    - Victron dual MPPT: added pv1_power + pv2_power entity fields in preset;
      Solar node shows per-MPPT power breakdown when both sensors configured
    Visual:
@@ -256,6 +262,8 @@ const DEFAULTS={
   preset:'deye',
   ...PRESETS.deye.e,
   solar2:'',pv_voltage2:'',
+  battery_charge:'',battery_discharge:'',
+  grid_voltage_l2:'',grid_voltage_l3:'',
   bat_polarity:'negative',grid_polarity:'positive',
   shutdown_soc:20,battery_capacity:5120,language:'pt',
   inverter_name:'DEYE',
@@ -268,8 +276,11 @@ const DEFAULTS={
 const ENTITY_FIELDS=[
   {key:'solar',label:'Solar Power (MPPT1)'},{key:'solar2',label:'Solar Power (MPPT2)'},
   {key:'battery',label:'Battery Power'},
+  {key:'battery_charge',label:'Battery Charge Power (split, optional)'},
+  {key:'battery_discharge',label:'Battery Discharge Power (split, optional)'},
   {key:'soc',label:'Battery SOC'},{key:'grid',label:'Grid Power'},
-  {key:'load',label:'Load Power'},{key:'grid_voltage',label:'Grid Voltage'},
+  {key:'load',label:'Load Power'},{key:'grid_voltage',label:'Grid Voltage (L1)'},
+  {key:'grid_voltage_l2',label:'Grid Voltage L2 (optional)'},{key:'grid_voltage_l3',label:'Grid Voltage L3 (optional)'},
   {key:'battery_voltage',label:'Battery Voltage'},
   {key:'temperature',label:'Inverter Temp.'},{key:'battery_temperature',label:'Battery Temp.'},
   {key:'frequency',label:'Grid Frequency'},{key:'grid_status',label:'Grid Status'},
@@ -564,7 +575,7 @@ svg{width:100%;height:auto;display:block}
 </g>
 <path class="fl" d="M250,96 L250,178"/><path class="fl" d="M250,272 L250,364"/><path class="fl" d="M90,225 L215,225"/><path class="fl" d="M285,225 L395,225"/>
 <path id="fs" class="fa" d="M250,96 L250,178" pathLength="100" opacity="0"/><path id="fb" class="fa" d="M250,272 L250,364" pathLength="100" opacity="0"/><path id="fg" class="fa" d="M90,225 L215,225" pathLength="100" opacity="0"/><path id="fh" class="fa" d="M285,225 L395,225" pathLength="100" opacity="0"/>
-<g id="nSolar" class="ct"><g id="sunG"><g transform="translate(250,38) scale(1.65) translate(-250,-38)"><circle cx="250" cy="38" r="9" fill="var(--solar)" opacity="0.85"/><line x1="250" y1="25" x2="250" y2="21" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.6"/><line x1="250" y1="51" x2="250" y2="55" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.6"/><line x1="237" y1="38" x2="233" y2="38" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.6"/><line x1="263" y1="38" x2="267" y2="38" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.6"/><line x1="240.8" y1="28.8" x2="238" y2="26" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.5"/><line x1="259.2" y1="47.2" x2="262" y2="50" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.5"/><line x1="259.2" y1="28.8" x2="262" y2="26" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.5"/><line x1="240.8" y1="47.2" x2="238" y2="50" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.5"/></g></g><text x="250" y="82" class="vm" style="fill:var(--green)" id="vs"></text><text x="250" y="-2" class="vl">${L.solar}</text><text x="310" y="30" class="vd" id="ds" text-anchor="start"></text><text x="320" y="44" class="vc" id="pv" text-anchor="start"></text></g>
+<g id="nSolar" class="ct"><g id="sunG"><g transform="translate(250,38) scale(1.65) translate(-250,-38)"><circle cx="250" cy="38" r="9" fill="var(--solar)" opacity="0.85"/><line x1="250" y1="25" x2="250" y2="21" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.6"/><line x1="250" y1="51" x2="250" y2="55" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.6"/><line x1="237" y1="38" x2="233" y2="38" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.6"/><line x1="263" y1="38" x2="267" y2="38" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.6"/><line x1="240.8" y1="28.8" x2="238" y2="26" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.5"/><line x1="259.2" y1="47.2" x2="262" y2="50" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.5"/><line x1="259.2" y1="28.8" x2="262" y2="26" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.5"/><line x1="240.8" y1="47.2" x2="238" y2="50" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.5"/></g></g><text x="250" y="82" class="vm" style="fill:var(--green)" id="vs"></text><text x="250" y="-2" class="vl">${L.solar}</text><text x="310" y="30" class="vd" id="ds" style="text-anchor:start"></text><text x="310" y="44" class="vc" id="pv" style="text-anchor:start"></text></g>
 <g><g transform="translate(250,225) scale(1.65)"><rect x="-18" y="-24" width="36" height="48" rx="2" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.25)" stroke-width="1"/><rect x="-18" y="-24" width="36" height="5" rx="2" fill="rgba(255,255,255,0.12)"/><rect x="-12" y="-15" width="24" height="12" rx="1.5" fill="rgba(102,187,106,0.15)" stroke="rgba(102,187,106,0.4)" stroke-width="0.7"/><circle id="led1" cx="-6" cy="2" r="1.2" fill="rgba(255,255,255,0.12)"/><circle id="led2" cx="-2" cy="2" r="1.2" fill="rgba(255,255,255,0.12)"/><circle id="led3" cx="2" cy="2" r="1.2" fill="rgba(255,255,255,0.12)"/><circle id="led4" cx="6" cy="2" r="1.2" fill="rgba(255,255,255,0.12)"/><path id="bolt" d="M-6,9 L-8,15 L-4,15 L-6,21" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.3)" stroke-width="0.5"/><rect x="2" y="12" width="10" height="3" rx="0.5" fill="rgba(255,255,255,0.1)"/><rect x="2" y="17" width="10" height="3" rx="0.5" fill="rgba(255,255,255,0.1)"/><text id="lcd" x="0" y="-9" class="lcd">0W</text></g>${INV?'<text x="250" y="272" class="il">'+INV+'</text>':''}<text x="296" y="264" class="vc" id="tp" text-anchor="start"></text></g>
 <g id="nGrid" class="ct"><g id="gridIcon" transform="translate(66,225) scale(1.65) translate(-66,-196)"><rect x="64" y="181" width="4" height="30" rx="1" fill="var(--red)" opacity="0.7"/><rect x="54" y="183" width="24" height="3" rx="1" fill="var(--red)" opacity="0.6"/><rect x="57" y="192" width="18" height="2.5" rx="1" fill="var(--red)" opacity="0.5"/><path d="M60,211 L64,199 L68,199 L72,211" fill="var(--red)" opacity="0.4"/><circle cx="56" cy="184" r="1.5" fill="var(--red)" opacity="0.8"/><circle cx="76" cy="184" r="1.5" fill="var(--red)" opacity="0.8"/><circle cx="58" cy="193" r="1.2" fill="var(--red)" opacity="0.7"/><circle cx="74" cy="193" r="1.2" fill="var(--red)" opacity="0.7"/><line x1="54" y1="184" x2="46" y2="181" stroke="var(--red)" stroke-width="0.8" opacity="0.3"/><line x1="78" y1="184" x2="86" y2="181" stroke="var(--red)" stroke-width="0.8" opacity="0.3"/></g><text x="66" y="268" class="vm" style="fill:var(--red)" id="vg"></text><text x="66" y="190" class="vl">${L.grid}</text><text x="66" y="286" class="vc" id="gv"></text><circle id="gsd" cx="92" cy="189" r="4" fill="rgba(255,255,255,0.12)"/><text x="66" y="300" class="vd" id="dg"></text></g>
 <g id="nLoad" class="ct"><g id="loadIcon" transform="translate(434,225) scale(1.65) translate(-434,-188)"><path d="M416,188 L434,174 L452,188 Z" fill="var(--load)" opacity="0.8"/><rect x="420" y="187" width="28" height="18" rx="1" fill="var(--load)" opacity="0.6"/><rect x="430" y="195" width="8" height="10" rx="1" fill="rgba(0,0,0,0.3)"/><rect x="422" y="190" width="6" height="5" rx="0.5" fill="rgba(255,255,255,0.15)"/><rect x="440" y="190" width="6" height="5" rx="0.5" fill="rgba(255,255,255,0.15)"/><rect x="441" y="176" width="5" height="8" rx="1" fill="var(--load)" opacity="0.5"/></g><text x="434" y="268" class="vm" style="fill:var(--load)" id="vl"></text><text x="434" y="190" class="vl">${L.load}</text><text x="434" y="288" class="vd" id="dl"></text></g>
@@ -625,12 +636,16 @@ const c=this._c,L=this._lang;
 const sol1=this._gv(c.solar);
 const sol2=this._gv(c.solar2);
 const sol=sol1!==null&&sol2!==null?sol1+sol2:sol1!==null?sol1:sol2;
-const bat=this._norm(this._gv(c.battery),'bat');
+const batCh=this._gv(c.battery_charge);
+const batDis=this._gv(c.battery_discharge);
+const bat=(batCh!==null||batDis!==null)?(batDis??0)-(batCh??0):this._norm(this._gv(c.battery),'bat');
 const soc=this._gv(c.soc);
 const grid=this._norm(this._gv(c.grid),'grid');
 const load=this._gv(c.load);
 const temp=this._gv(c.temperature);
 const gv=this._gv(c.grid_voltage);
+const gv2=this._gv(c.grid_voltage_l2);
+const gv3=this._gv(c.grid_voltage_l3);
 const bv=this._gv(c.battery_voltage);
 const pvv=this._gv(c.pv_voltage);
 const pvv2=this._gv(c.pv_voltage2);
@@ -650,7 +665,8 @@ const blEl=this._$('bl');if(blEl){if(bat!==null&&bat<-10){blEl.setAttribute('fil
 
 if(temp!==null)this._$('tp').textContent=temp.toFixed(0)+'\u00B0C';else this._$('tp').textContent='';
 if(pvv!==null&&pvv2!==null)this._$('pv').textContent=pvv.toFixed(0)+'V / '+pvv2.toFixed(0)+'V';else if(pvv!==null)this._$('pv').textContent=pvv.toFixed(0)+'V';else if(pvv2!==null)this._$('pv').textContent=pvv2.toFixed(0)+'V';else if(c.solar2&&sol1!==null&&sol2!==null)this._$('pv').textContent=L.daily+' '+this._fmtE(dS);else this._$('pv').textContent='';
-if(gv!==null&&freq!==null)this._$('gv').textContent=gv.toFixed(0)+'V \u00B7 '+freq.toFixed(1)+'Hz';else if(gv!==null)this._$('gv').textContent=gv.toFixed(0)+'V';else if(freq!==null)this._$('gv').textContent=freq.toFixed(1)+'Hz';else this._$('gv').textContent='';
+const gvTxt=gv!==null?(gv2!==null&&gv3!==null?gv.toFixed(0)+'/'+gv2.toFixed(0)+'/'+gv3.toFixed(0)+'V':gv.toFixed(0)+'V'):null;
+if(gvTxt!==null&&freq!==null)this._$('gv').textContent=gvTxt+' \u00B7 '+freq.toFixed(1)+'Hz';else if(gvTxt!==null)this._$('gv').textContent=gvTxt;else if(freq!==null)this._$('gv').textContent=freq.toFixed(1)+'Hz';else this._$('gv').textContent='';
 if(bv!==null)this._$('bv').textContent=bv.toFixed(1)+'V';else this._$('bv').textContent='';
 const bt=this._gv(c.battery_temperature);if(bt!==null)this._$('bt').textContent=bt.toFixed(0)+'\u00B0C';else this._$('bt').textContent='';
 
