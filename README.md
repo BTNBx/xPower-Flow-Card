@@ -180,11 +180,11 @@ LEDs blink when active and remain dim when inactive.
 ## v1.3.8
 
 ### Fixed
-- **Solar node text overlap** - PV1/PV2 power and PV voltage text no longer overlap the sun icon. Root cause: the `.vd` CSS class (`text-anchor:middle`) was overriding the SVG `text-anchor="start"` presentation attribute; now set via inline style. (#4)
+- **Solar node text overlap** - PV1/PV2 power and PV voltage text no longer overlap the sun icon. Root cause: the `.vd` CSS class (`text-anchor:middle`) was overriding the SVG `text-anchor="start"` presentation attribute; now set via inline style.
 
 ### Added
-- **Split battery sensors (Solis/Modbus)** - new optional `battery_charge` and `battery_discharge` entity fields for integrations that expose separate positive-only sensors. The card computes `discharge − charge` internally and ignores the polarity flag when these are set. (#4)
-- **Three-phase grid voltage** - new optional `grid_voltage_l2` and `grid_voltage_l3` fields. When set, the grid node shows all three phases: `240/241/239V · 50.0Hz`. (#4)
+- **Split battery sensors (Solis/Modbus)** - new optional `battery_charge` and `battery_discharge` entity fields for integrations that expose separate positive-only sensors. The card computes `discharge − charge` internally and ignores the polarity flag when these are set.
+- **Three-phase grid voltage** - new optional `grid_voltage_l2` and `grid_voltage_l3` fields. When set, the grid node shows all three phases: `240/241/239V · 50.0Hz`.
 
 ## v1.3.7
 
