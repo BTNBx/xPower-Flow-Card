@@ -177,7 +177,7 @@ LEDs blink when active and remain dim when inactive.
 
 ## Changelog
 
-## v1.3.8
+## v1.3.9
 
 - Bug fixing
 
