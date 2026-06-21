@@ -13,7 +13,7 @@ A power flow visualization card for solar hybrid inverters in Home Assistant. Si
 | **Growatt** | Growatt / modbus | Preset |
 | **Victron** | Venus OS / GX | Tested |
 | **SolarEdge** | Modbus / SunSpec | Preset |
-| **Solis** | SolisCloud | Preset |
+| **Solis** | SolisCloud / modbus  | Preset / Tested |
 | **Any other** | Custom | Custom preset |
 
 Select your brand in the visual editor. Entities and polarity are configured automatically.
