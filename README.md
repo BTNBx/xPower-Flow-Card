@@ -7,13 +7,13 @@ A power flow visualization card for solar hybrid inverters in Home Assistant. Si
 | Brand | Integration | Status |
 |-------|-------------|--------|
 | **Deye** | Solarman / deye_inverter | Tested |
-| **Sunsynk** | Sunsynk / modbus | Preset |
+| **Sunsynk** | Sunsynk / Modbus | Preset |
 | **Huawei** | FusionSolar | Preset |
 | **Fronius** | Gen24 / Modbus | Preset |
-| **Growatt** | Growatt / modbus | Preset |
+| **Growatt** | Growatt / Modbus | Preset |
 | **Victron** | Venus OS / GX | Tested |
 | **SolarEdge** | Modbus / SunSpec | Preset |
-| **Solis** | SolisCloud / modbus  | Preset / Tested |
+| **Solis** | SolisCloud / Modbus  | Preset / Tested |
 | **Any other** | Custom | Custom preset |
 
 Select your brand in the visual editor. Entities and polarity are configured automatically.
