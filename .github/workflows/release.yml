@@ -19,7 +19,7 @@ jobs:
           node-version: '20'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install --no-audit --no-fund
 
       - name: Build
         run: npm run build
@@ -32,7 +32,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: xPower Flow Card ${{ steps.version.outputs.tag }}
-          files: xpower-flow-card.js
+          files: dist/xpower-flow-card.js
           generate_release_notes: true
           draft: false
           prerelease: false
