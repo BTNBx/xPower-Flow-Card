@@ -1,14 +1,18 @@
 import { build, context } from 'esbuild';
-import { readFileSync } from 'fs';
+import { readFileSync, mkdirSync } from 'fs';
 
-const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
+const src = 'xpower-flow-card.js';
+const code = readFileSync(src, 'utf8');
+const version = (code.match(/const V\s*=\s*['"]([^'"]+)['"]/) || [, '0.0.0'])[1];
 const watch = process.argv.includes('--watch');
 
-const banner = `// xPower Flow Card v${pkg.version}\n// Copyright (C) 2025 BTNBx — MIT License\n`;
+const banner = `// xPower Flow Card v${version}\n// Copyright (C) 2025 BTNBx — MIT License\n`;
+
+mkdirSync('dist', { recursive: true });
 
 const opts = {
-    entryPoints: ['xpower-flow-card.js'],
-    outfile: 'xpower-flow-card.js',
+    entryPoints: [src],
+    outfile: 'dist/xpower-flow-card.js',
     bundle: false,
     minify: true,
     sourcemap: false,
@@ -24,6 +28,6 @@ if (watch) {
 } else {
     await build(opts);
     const { statSync } = await import('fs');
-    const s = statSync('xpower-flow-card.js');
-    console.log(`Output: xpower-flow-card.js (${(s.size / 1024).toFixed(1)} KB)`);
+    const s = statSync('dist/xpower-flow-card.js');
+    console.log(`Output: dist/xpower-flow-card.js v${version} (${(s.size / 1024).toFixed(1)} KB)`);
 }
