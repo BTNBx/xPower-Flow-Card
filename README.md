@@ -27,7 +27,7 @@ Select your brand in the visual editor. Entities and polarity are configured aut
 - Animated pulse flow lines with speed proportional to power output
 - Color-coded values: solar (green), grid (red), home (cyan), battery (yellow)
 - Inverter icon with 4 status LEDs indicating active energy flows
-- LCD display showing total power throughput
+- LCD display on the inverter showing home consumption
 - Battery runtime estimation with shutdown SOC and ETA
 - Battery gauge with SOC level indicator
 - Optional weather display (temperature and humidity)
@@ -176,6 +176,17 @@ The 4 LEDs on the inverter icon reflect active power flows:
 LEDs blink when active and remain dim when inactive.
 
 ## Changelog
+
+## v1.3.10
+
+### Fixed
+- **Card crash with dual MPPT** - removed a dead code branch that referenced a variable before its declaration, throwing a `ReferenceError` and blanking the whole card when a second solar string was configured without PV voltage sensors.
+- **Autarky badge language** - the badge label is now translated instead of being hard-coded in Portuguese.
+- **Release pipeline** - the GitHub Action no longer fails on `npm ci` (no lockfile); the build now outputs to `dist/` instead of overwriting the source file, and the release uploads the minified `dist/` artifact.
+
+### Changed
+- Inverter name is now HTML-escaped before being rendered into the SVG.
+- `hass-more-info` now dispatched as a proper `CustomEvent`.
 
 ## v1.3.9
 
