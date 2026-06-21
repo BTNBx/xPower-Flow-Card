@@ -23,7 +23,7 @@ Select your brand in the visual editor. Entities and polarity are configured aut
 - 9 inverter presets with auto-configured entities and polarity
 - 8 languages: Portuguese, English, German, French, Spanish, Italian, Dutch, Polish
 - Configurable battery and grid polarity sign conventions
-- Dual MPPT support — configure two solar strings independently
+- Dual MPPT support - configure two solar strings independently
 - Animated pulse flow lines with speed proportional to power output
 - Color-coded values: solar (green), grid (red), home (cyan), battery (yellow)
 - Inverter icon with 4 status LEDs indicating active energy flows
