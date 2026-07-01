@@ -177,6 +177,25 @@ LEDs blink when active and remain dim when inactive.
 
 ## Changelog
 
+## v1.3.11
+
+### Performance
+- `hass` setter now diffs configured entity states, full DOM update is skipped when nothing relevant changed (previously ran on every state change of *any* HA entity)
+- Updates and history polling pause while the tab is hidden (`visibilitychange`); instant refresh on return
+
+### Fixed
+- **Sparklines**: 24h history is now bucketed by timestamp into 48 uniform 30-min slots with forward-fill — fixes time-axis distortion and wrong tooltip times caused by `significant_changes_only` irregular sampling
+- **Editor**: identical config echo from HA no longer re-renders the form, so input focus is preserved while editing
+- **Autarky badge**: ≥90% glow now works via SVG filter (previous CSS `box-shadow` was dead code on SVG elements)
+- Consistent null guards on battery level bar and flow line updates; `parseInt` with explicit radix in editor
+
+### Added
+- **Battery runtime**: while charging, shows estimated time to 100% with ETA (mirrors the existing discharge estimate)
+- `getGridOptions()` for proper default sizing in HA sections view
+
+### Internal
+- Removed duplicated/corrupted v1.3.6 changelog block and dead CSS
+
 ## v1.3.10
 
 ### Fixed
