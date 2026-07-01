@@ -1,10 +1,22 @@
 // xPower Flow Card — Modern power flow card for solar hybrid inverters
 // Copyright (C) 2025 BTNBx — MIT License
-const V='1.3.10';
+const V='1.3.11';
 
 /* ═══════════════════════════════════════
    CHANGELOG
    ═══════════════════════════════════════
+v1.3.11
+    Performance:
+        - hass setter now diffs configured entity states — DOM update skipped when nothing relevant changed
+        - Updates + history polling paused while tab hidden; instant refresh on return (visibilitychange)
+    Fixes:
+        - Sparklines: history bucketed by timestamp into 48 uniform 30-min slots — fixes time-axis distortion
+          and wrong tooltip times caused by significant_changes_only irregular sampling
+        - Editor: identical config echo from HA no longer re-renders (input focus preserved)
+        - Autarky >=90% glow implemented via SVG filter (previous CSS box-shadow was dead code on SVG)
+    Features:
+        - Battery runtime: charging now shows time-to-100% ETA (mirrors discharge estimate)
+        - getGridOptions() for HA sections view sizing
 v1.3.10
     Fixes:
         - Dual-MPPT crash: removed dead branch referencing dS before declaration (ReferenceError blanked the card)
@@ -14,22 +26,6 @@ v1.3.10
         - inverter_name HTML-escaped before SVG injection
         - hass-more-info dispatched as CustomEvent
             ──────────────────────────────────────────────────────── */
-
-/* ═══════════════════════════════════════
-   CHANGELOG
-   ═══════════════════════════════════════
-v1.3.6
-    Visual:
-        - Autarky badge moved to top-right corner, aligned with weather widget top edge and right margin
-            - Badge color reworked — deep teal green background #0d2b22 / border+bar #1a4a36; status threshold colors (>=50/25%) toned down with low-alpha rgba
-                Animation:
-                    - Inlet flows (solar/grid/battery -> inverter) run at 75% of base speed — faster
-                        - Outlet flow (inverter -> home) runs at base speed — slower
-                            - Visual effect of energy accumulating at the inverter before flowing out to home
-                                CSS Custom Properties:
-                                    - --xpf-flow-width  flow line stroke width (default: 3)
-                                        - --xpf-dash-size   dash segment size (default: 100; low value e.g. 8 = dot effect)
-                                            ──────────────────────────────────────────────────────── */
 
 /* ════════════════════════════════════════════════════════
     v1.3.7
@@ -308,6 +304,7 @@ const ENTITY_FIELDS=[
   {key:'weather_temp',label:'Weather Temp.'},{key:'weather_humidity',label:'Weather Humidity'},
   {key:'import_cost',label:'Daily Import Cost'},{key:'export_cost',label:'Daily Export Earnings'}
 ];
+const ENT_KEYS=ENTITY_FIELDS.map(f=>f.key);
 
 const HIST_POINTS=48;
 const HIST_INTERVAL=5*60*1000;
@@ -319,7 +316,7 @@ const ANIM_MAX_SPD=3.5;
 class XPowerFlowCardEditor extends HTMLElement{
   constructor(){super();this._config={};this._hass=null;this._onchange=this._fire.bind(this);}
   _esc(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
-  setConfig(config){this._config={...DEFAULTS,...config};this._render();}
+  setConfig(config){const merged={...DEFAULTS,...config};if(this._ready&&JSON.stringify(merged)===JSON.stringify(this._config))return;this._config=merged;this._render();this._ready=true;}
   set hass(hass){this._hass=hass;}
   disconnectedCallback(){const el=this.querySelector('.editor');if(el)el.removeEventListener('change',this._onchange);}
 
@@ -332,9 +329,9 @@ class XPowerFlowCardEditor extends HTMLElement{
     cfg.compact=this.querySelector('#ed-compact').value==='true';
     cfg.bat_polarity=this.querySelector('#ed-bpol').value;
     cfg.grid_polarity=this.querySelector('#ed-gpol').value;
-    const socVal=parseInt(this.querySelector('#ed-ssoc').value);
+    const socVal=parseInt(this.querySelector('#ed-ssoc').value,10);
     cfg.shutdown_soc=isNaN(socVal)?20:socVal;
-    const capVal=parseInt(this.querySelector('#ed-cap').value);
+    const capVal=parseInt(this.querySelector('#ed-cap').value,10);
     cfg.battery_capacity=isNaN(capVal)?5120:capVal;
     const newPreset=this.querySelector('#ed-preset').value;
     if(newPreset!==cfg.preset&&PRESETS[newPreset]){
@@ -466,7 +463,7 @@ class XPowerFlowCardEditor extends HTMLElement{
 customElements.define('xpower-flow-card-editor',XPowerFlowCardEditor);
 
 class XPowerFlowCard extends HTMLElement{
-constructor(){super();this.attachShadow({mode:'open'});this._c={};this._h=null;this._prev={solar:0,bat:0,grid:0,load:0};this._hist={solar:[],load:[],grid:[],battery:[]};this._histMax={solar:1,load:1,grid:1,battery:1};this._fs={};this._histTimer=null;this._histLastLoad=0;this._histLoading=false;this._syncSpd=0;this._rafId=null;}
+constructor(){super();this.attachShadow({mode:'open'});this._c={};this._h=null;this._prev={solar:0,bat:0,grid:0,load:0};this._hist={solar:[],load:[],grid:[],battery:[]};this._histMax={solar:1,load:1,grid:1,battery:1};this._fs={};this._histTimer=null;this._histLastLoad=0;this._histLoading=false;this._syncSpd=0;this._rafId=null;this._onVis=()=>{if(!document.hidden&&this._h){this._histLastLoad=0;this._schedule();}};}
 
 static getConfigElement(){return document.createElement('xpower-flow-card-editor');}
 static getStubConfig(){return{...DEFAULTS};}
@@ -476,26 +473,40 @@ setConfig(c){
   Object.keys(DEFAULTS).forEach(k=>{this._c[k]=c[k]!==undefined?c[k]:DEFAULTS[k];});
   this._lang=LANG[this._c.language]||LANG.pt;
   this._render();
+  if(this._h)this._schedule();
 }
 
 connectedCallback(){
-  if(!this._c.compact)this._histTimer=setInterval(()=>{if(this._h)this._loadHistory();},HIST_INTERVAL);
+  document.addEventListener('visibilitychange',this._onVis);
+  if(!this._c.compact&&!this._histTimer)this._histTimer=setInterval(()=>{if(this._h&&!document.hidden)this._loadHistory();},HIST_INTERVAL);
 }
 
 disconnectedCallback(){
+  document.removeEventListener('visibilitychange',this._onVis);
   if(this._histTimer){clearInterval(this._histTimer);this._histTimer=null;}
   if(this._rafId){cancelAnimationFrame(this._rafId);this._rafId=null;}
 }
 
 set hass(h){
+  const prev=this._h;
   this._h=h;
   const t=this._c.theme||'auto';
   if(t==='auto'){const dark=h.themes?.darkMode!==false;this.classList.toggle('light',!dark);}
   else{this.classList.toggle('light',t==='light');}
   this.classList.toggle('compact',!!this._c.compact);
+  if(document.hidden)return;
   const now=Date.now();
   if(!this._c.compact&&now-this._histLastLoad>HIST_INTERVAL){this._histLastLoad=now;this._loadHistory();}
-  if(!this._rafId){this._rafId=requestAnimationFrame(()=>{this._rafId=null;this._update();});}
+  if(this._dirty(prev,h))this._schedule();
+}
+
+_schedule(){if(!this._rafId)this._rafId=requestAnimationFrame(()=>{this._rafId=null;this._update();});}
+
+_dirty(o,n){
+  if(!o)return true;
+  if(o===n)return false;
+  for(const k of ENT_KEYS){const e=this._c[k];if(e&&o.states[e]!==n.states[e])return true;}
+  return false;
 }
 
 _gv(e){
@@ -510,6 +521,7 @@ _fmt(v){if(v===null)return this._lang.unavailable;const a=Math.abs(v);return a>=
 _fmtE(v){if(v===null)return this._lang.unavailable;return v.toFixed(1)+' kWh';}
 _fmtC(e){if(!e||!this._h||!this._h.states[e])return '';const s=this._h.states[e];const v=parseFloat(s.state);if(isNaN(v))return '';const u=s.attributes?.unit_of_measurement||'€';return u+v.toFixed(2);}
 _arrow(c,p){if(c===null)return '';const d=Math.abs(c)-Math.abs(p);return d>5?'\u25B4 ':d<-5?'\u25BE ':'\u25B8 ';}
+_eta(totalMin,label){const pad=v=>String(v).padStart(2,'0');const h=Math.floor(totalMin/60),m=totalMin%60;const t=new Date(Date.now()+totalMin*60000);return h+'h '+pad(m)+'m \u25B8 '+label+' @'+pad(t.getHours())+':'+pad(t.getMinutes());}
 
 _norm(raw,type){
   if(raw===null)return null;
@@ -518,9 +530,24 @@ _norm(raw,type){
   return raw;
 }
 
-_downsample(arr,n){if(!arr||!arr.length)return[];let src=arr;if(src.length>10000){const step=Math.ceil(src.length/5000);src=src.filter((_,i)=>i%step===0);}const out=[];for(let i=0;i<n;i++){const s=Math.floor(i*src.length/n);const e=Math.floor((i+1)*src.length/n);let sum=0,cnt=0;for(let j=s;j<e;j++){const v=parseFloat(src[j].state);if(!isNaN(v)){sum+=Math.abs(v);cnt++;}}if(cnt>0)out.push(sum/cnt);else out.push(0);}const sm=[];for(let i=0;i<out.length;i++){const p=i>0?out[i-1]:out[i];const nx=i<out.length-1?out[i+1]:out[i];sm.push((p+out[i]*2+nx)/4);}return sm;}
+_bucket(arr,t0,t1,n){
+  if(!arr||!arr.length)return[];
+  const sum=new Array(n).fill(0),cnt=new Array(n).fill(0);
+  const span=(t1-t0)||1;
+  for(const p of arr){
+    const v=parseFloat(p.state);if(isNaN(v))continue;
+    const ts=new Date(p.last_changed||p.last_updated||t0).getTime();
+    let i=Math.floor((ts-t0)/span*n);if(i<0)i=0;else if(i>=n)i=n-1;
+    sum[i]+=Math.abs(v);cnt[i]++;
+  }
+  const out=new Array(n);let prev=0;
+  for(let i=0;i<n;i++){out[i]=cnt[i]?sum[i]/cnt[i]:prev;prev=out[i];}
+  const sm=[];
+  for(let i=0;i<n;i++){const a=i>0?out[i-1]:out[i];const b=i<n-1?out[i+1]:out[i];sm.push((a+out[i]*2+b)/4);}
+  return sm;
+}
 
-async _loadHistory(){if(this._histLoading||!this._h)return;this._histLoading=true;try{const now=new Date();const start=new Date(now.getTime()-24*60*60*1000);const iso=encodeURIComponent(start.toISOString());const entities=encodeURIComponent([this._c.solar,this._c.load,this._c.grid,this._c.battery].filter(Boolean).join(','));if(!entities)return;const url='history/period/'+iso+'?filter_entity_id='+entities+'&minimal_response&no_attributes&significant_changes_only';const res=await this._h.callApi('GET',url);if(!res||!res.length)return;for(const series of res){if(!series.length)continue;const eid=series[0].entity_id;const pts=this._downsample(series,HIST_POINTS);const mx=pts.length?Math.max(...pts)||1:1;if(eid===this._c.solar){this._hist.solar=pts;this._histMax.solar=mx;}else if(eid===this._c.load){this._hist.load=pts;this._histMax.load=mx;}else if(eid===this._c.grid){this._hist.grid=pts;this._histMax.grid=mx;}else if(eid===this._c.battery){this._hist.battery=pts;this._histMax.battery=mx;}}this._drawSparks();}catch(e){console.warn('xPower history:',e);}finally{this._histLoading=false;}}
+async _loadHistory(){if(this._histLoading||!this._h)return;this._histLoading=true;try{const now=new Date();const start=new Date(now.getTime()-24*60*60*1000);const iso=encodeURIComponent(start.toISOString());const entities=encodeURIComponent([this._c.solar,this._c.load,this._c.grid,this._c.battery].filter(Boolean).join(','));if(!entities)return;const url='history/period/'+iso+'?filter_entity_id='+entities+'&minimal_response&no_attributes&significant_changes_only';const res=await this._h.callApi('GET',url);if(!res||!res.length)return;for(const series of res){if(!series.length)continue;const eid=series[0].entity_id;const pts=this._bucket(series,start.getTime(),now.getTime(),HIST_POINTS);const mx=pts.length?Math.max(...pts)||1:1;if(eid===this._c.solar){this._hist.solar=pts;this._histMax.solar=mx;}else if(eid===this._c.load){this._hist.load=pts;this._histMax.load=mx;}else if(eid===this._c.grid){this._hist.grid=pts;this._histMax.grid=mx;}else if(eid===this._c.battery){this._hist.battery=pts;this._histMax.battery=mx;}}this._drawSparks();}catch(e){console.warn('xPower history:',e);}finally{this._histLoading=false;}}
 
 _render(){const L=this._lang;const INV=String(this._c.inverter_name||'').replace(/[<>&]/g,m=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[m]));const s=this.shadowRoot;s.innerHTML=`<style>
 :host{--solar:var(--xpf-solar,#FFB300);--battery:var(--xpf-battery,#7C4DFF);--grid:var(--xpf-grid,#42A5F5);--load:var(--xpf-load,#26C6DA);--green:var(--xpf-green,#66BB6A);--red:var(--xpf-red,#EF5350);--orange:var(--xpf-orange,#FFA726);--t1:var(--xpf-text,rgba(255,255,255,0.92));--t3:var(--xpf-text-secondary,rgba(255,255,255,0.45));--xpf-r:var(--xpf-radius,20px);--xpf-vm-size:var(--xpf-font-size,24px);--flow-w:var(--xpf-flow-width,3);--flow-dash:var(--xpf-dash-size,100)}
@@ -533,8 +560,6 @@ _render(){const L=this._lang;const INV=String(this._c.inverter_name||'').replace
 :host(.light) .sl{opacity:0.4}
 ha-card{background:var(--xpf-bg,rgba(12,14,24,0.92));border:1px solid rgba(255,255,255,0.06);border-radius:var(--xpf-r);box-shadow:var(--xpf-shadow,0 2px 40px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.04));padding:var(--xpf-padding,6px 8px 6px);position:relative;overflow:hidden;font-family:-apple-system,sans-serif;--ha-card-background:transparent;--ha-card-border-width:0;--ha-card-border-radius:var(--xpf-r);--ha-card-box-shadow:none;transition:border-color 1.5s ease}
 ha-card::before{content:'';position:absolute;top:-1px;left:20%;right:20%;height:1px;background:linear-gradient(90deg,transparent,rgba(124,77,255,0.25),transparent)}
-@keyframes pillGlow{0%,100%{box-shadow:0 0 4px rgba(100,150,105,0.3)}50%{box-shadow:0 0 10px rgba(100,150,105,0.5)}}
-.au-glow{animation:pillGlow 2s ease-in-out infinite;border-radius:8px}
 svg{width:100%;height:auto;display:block}
 .fl{fill:none;stroke:rgba(255,255,255,0.04);stroke-width:2;stroke-linecap:round}
 .fa{fill:none;stroke-width:var(--flow-w);stroke-linecap:round;stroke-dasharray:var(--flow-dash) var(--flow-dash);transition:stroke 0.8s ease,opacity 0.8s ease}
@@ -643,7 +668,7 @@ _setupTooltips(){
   setup(null,'cb','db2','tb','battery','#7C4DFF');
 }
 _spd(p){const a=Math.abs(p);if(a<10)return 0;let s=Math.max(ANIM_MIN_SPD,ANIM_MAX_SPD-(a/ANIM_MAX_W)*(ANIM_MAX_SPD-ANIM_MIN_SPD));if(a>=3000)s*=0.4;else if(a>=2000)s*=0.6;else if(a>=1000)s*=0.8;return s;}
-_sf(el,id,p,d,c,o){if(Math.abs(p)<10){el.setAttribute('opacity','0');return;}el.setAttribute('stroke',c);el.setAttribute('opacity',o);if(this._fs[id]!==d){this._fs[id]=d;el.setAttribute('class','fa '+d);}}
+_sf(el,id,p,d,c,o){if(!el)return;if(Math.abs(p)<10){el.setAttribute('opacity','0');return;}el.setAttribute('stroke',c);el.setAttribute('opacity',o);if(this._fs[id]!==d){this._fs[id]=d;el.setAttribute('class','fa '+d);}}
 _spark(id,aid,data){const el=this._$(id);const af=this._$(aid);if(!el||!data.length)return;const w=200,h=55,py=2,max=Math.max(...data)||1;const pts=data.map((v,i)=>[(i/(data.length-1))*w,py+(1-v/max)*(h-py*2)]);if(pts.length<2)return;const tension=0.3;const cp=(p0,p1,p2,t)=>[p1[0]+(p2[0]-p0[0])*t,p1[1]+(p2[1]-p0[1])*t];let d='M'+pts[0][0].toFixed(1)+','+pts[0][1].toFixed(1);for(let i=0;i<pts.length-1;i++){const p0=pts[Math.max(0,i-1)];const p1=pts[i];const p2=pts[i+1];const p3=pts[Math.min(pts.length-1,i+2)];const c1=cp(p0,p1,p2,tension);const c2=[p2[0]-(p3[0]-p1[0])*tension,p2[1]-(p3[1]-p1[1])*tension];d+=' C'+c1[0].toFixed(1)+','+c1[1].toFixed(1)+' '+c2[0].toFixed(1)+','+c2[1].toFixed(1)+' '+p2[0].toFixed(1)+','+p2[1].toFixed(1);}el.setAttribute('d',d);if(af){af.setAttribute('d',d+'L'+w+','+h+'L0,'+h+'Z');}}
 _drawSparks(){this._spark('hs','hsa',this._hist.solar);this._spark('hl','hla',this._hist.load);this._spark('hg','hga',this._hist.grid);this._spark('hb2','hb2a',this._hist.battery);}
 
@@ -677,8 +702,7 @@ this._prev={solar:sol??0,bat:bat??0,grid:grid??0,load:load??0};
 
 const socVal=soc??0;
 this._$('vc').textContent=soc!==null?Math.round(soc)+'% | '+c.shutdown_soc+'%':L.unavailable;
-this._$('bl').setAttribute('width',(26*(socVal/100)).toFixed(1));
-const blEl=this._$('bl');if(blEl){if(bat!==null&&bat<-10){blEl.setAttribute('fill','#4CD964');blEl.setAttribute('class','bat-charge');}else{blEl.setAttribute('fill','var(--battery)');blEl.removeAttribute('class');}}
+const blEl=this._$('bl');if(blEl){blEl.setAttribute('width',(26*(socVal/100)).toFixed(1));if(bat!==null&&bat<-10){blEl.setAttribute('fill','#4CD964');blEl.setAttribute('class','bat-charge');}else{blEl.setAttribute('fill','var(--battery)');blEl.removeAttribute('class');}}
 
 if(temp!==null)this._$('tp').textContent=temp.toFixed(0)+'\u00B0C';else this._$('tp').textContent='';
 if(pvv!==null&&pvv2!==null){this._$('pv1').textContent=pvv.toFixed(0)+'V';this._$('pv').textContent=pvv2.toFixed(0)+'V';}else if(pvv!==null){this._$('pv1').textContent='';this._$('pv').textContent=pvv.toFixed(0)+'V';}else if(pvv2!==null){this._$('pv1').textContent='';this._$('pv').textContent=pvv2.toFixed(0)+'V';}else{this._$('pv1').textContent='';this._$('pv').textContent='';}
@@ -713,17 +737,19 @@ if(loadF>10){if(gridContrib>=solContrib&&gridContrib>=batContrib&&gridContrib>0)
 this._sf(this._$('fh'),'h',loadF,'fr',homeColor,'0.75');
 
 const batCap=c.battery_capacity??5120;const shuSoc=c.shutdown_soc??20;
+const brEl=this._$('br');
 if(batF>RUNTIME_MIN_W&&socVal>shuSoc){
-  const remWh=(socVal-shuSoc)/100*batCap;const hrs=remWh/batF;
-  const totalMin=Math.round(hrs*60);const h=Math.floor(totalMin/60);const m=totalMin%60;
-  const eta=new Date(Date.now()+totalMin*60000);const pad=v=>String(v).padStart(2,'0');
-  this._$('br').textContent=h+'h '+pad(m)+'m \u25B8 '+shuSoc+'% @'+pad(eta.getHours())+':'+pad(eta.getMinutes());
-}else{this._$('br').textContent='';}
+  const remWh=(socVal-shuSoc)/100*batCap;
+  brEl.textContent=this._eta(Math.round(remWh/batF*60),shuSoc+'%');
+}else if(batF<-RUNTIME_MIN_W&&socVal>0&&socVal<100){
+  const remWh=(100-socVal)/100*batCap;
+  brEl.textContent=this._eta(Math.round(remWh/-batF*60),'100%');
+}else{brEl.textContent='';}
 
 const gridImp=gridF>0?gridF:0;
 const au=loadF>0?Math.max(0,Math.min(100,((loadF-gridImp)/loadF)*100)):0;
 this._$('va').textContent=au.toFixed(0)+'%';
-let auC;if(au>=80)auC='#1a4a36';else if(au>=50)auC='rgba(180,140,60,0.55)';else if(au>=25)auC='rgba(180,100,60,0.55)';else auC='rgba(180,70,70,0.55)';const auBar=this._$('au-bar');if(auBar)auBar.setAttribute('fill',auC);const auBorder=this._$('au-border');if(auBorder)auBorder.setAttribute('stroke',auC);
+let auC;if(au>=80)auC='#1a4a36';else if(au>=50)auC='rgba(180,140,60,0.55)';else if(au>=25)auC='rgba(180,100,60,0.55)';else auC='rgba(180,70,70,0.55)';const auBar=this._$('au-bar');if(auBar)auBar.setAttribute('fill',auC);const auBorder=this._$('au-border');if(auBorder){auBorder.setAttribute('stroke',auC);auBorder.style.filter=au>=90?'url(#glow)':'';}
 
 const wtv=this._gv(c.weather_temp);const whv=this._gv(c.weather_humidity);
 const wicons=this._$('wicons');const wdrop=this._$('wdrop');const wdiv=this._$('wdiv');
@@ -773,11 +799,9 @@ card.style.borderColor=borderColor;}
 
 // #2 LCD — home consumption on inverter display
 const lcd=this._$('lcd');if(lcd){const a=Math.abs(loadF??0);lcd.textContent=a>=1000?(a/1000).toFixed(1)+'kW':a.toFixed(0)+'W';}
-
-// #3 Pill glow — autarky >90%
-
 }
 
+getGridOptions(){return this._c.compact?{columns:12,rows:8,min_columns:6,min_rows:4}:{columns:12,rows:10,min_columns:6,min_rows:6};}
 getCardSize(){return this._c.compact?4:6;}
 }
 
