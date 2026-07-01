@@ -184,7 +184,7 @@ LEDs blink when active and remain dim when inactive.
 - Updates and history polling pause while the tab is hidden (`visibilitychange`); instant refresh on return
 
 ### Fixed
-- **Sparklines**: 24h history is now bucketed by timestamp into 48 uniform 30-min slots with forward-fill — fixes time-axis distortion and wrong tooltip times caused by `significant_changes_only` irregular sampling
+- **Sparklines**: 24h history is now bucketed by timestamp into 48 uniform 30-min slots with forward-fill, fixes time-axis distortion and wrong tooltip times caused by `significant_changes_only` irregular sampling
 - **Editor**: identical config echo from HA no longer re-renders the form, so input focus is preserved while editing
 - **Autarky badge**: ≥90% glow now works via SVG filter (previous CSS `box-shadow` was dead code on SVG elements)
 - Consistent null guards on battery level bar and flow line updates; `parseInt` with explicit radix in editor
