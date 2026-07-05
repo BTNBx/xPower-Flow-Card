@@ -1,10 +1,36 @@
 // xPower Flow Card — Modern power flow card for solar hybrid inverters
 // Copyright (C) 2025 BTNBx — MIT License
-const V='1.3.13';
+const V='1.3.14';
 
 /* ═══════════════════════════════════════
    CHANGELOG
    ═══════════════════════════════════════
+v1.3.22
+    Visual:
+        - Battery number enlarged 13 -> 15
+v1.3.21
+    Visual:
+        - iOS charging state: white number + white bolt inside the green pill (number shifts left to fit bolt)
+v1.3.20
+    Fixes:
+        - Battery number enlarged (10.5 -> 13) and truly centered — dominant-baseline dropped (Safari/iOS
+          renders it inconsistently), replaced with fixed baseline offset
+v1.3.19
+    Fixes:
+        - Battery nub moved flush against the pill (was 2px gap)
+v1.3.18
+    Visual:
+        - Battery icon now true iOS style: solid pill, level fill clipped by rounded shape, plain number (no %)
+        - Theme-aware: white fill/dark number on dark theme, inverted on light; state colors green/orange/red kept
+v1.3.17
+    Visual:
+        - EV icon replaced with Tesla-style fastback silhouette (single smooth body curve, flush wheels)
+v1.3.16
+    Animation:
+        - Relay-synced flows: all lines share one duration and phase — pulses arrive at the inverter,
+          and only then does the pulse depart toward Home (Home -> EV chained the same way)
+        - Inlet 0.75x speed factor removed (equal duration required for phase sync)
+        - All flow animations restart in the same frame on any direction/speed change (phase lock)
 v1.3.15
     Fixes:
         - Battery node: removed vertical gap between power value and daily charge/discharge row (leftover from removed SOC row)
@@ -481,7 +507,7 @@ class XPowerFlowCardEditor extends HTMLElement{
 customElements.define('xpower-flow-card-editor',XPowerFlowCardEditor);
 
 class XPowerFlowCard extends HTMLElement{
-constructor(){super();this.attachShadow({mode:'open'});this._c={};this._h=null;this._prev={solar:0,bat:0,grid:0,load:0};this._hist={solar:[],load:[],grid:[],battery:[]};this._histMax={solar:1,load:1,grid:1,battery:1};this._fs={};this._histTimer=null;this._histLastLoad=0;this._histLoading=false;this._syncSpd=0;this._rafId=null;this._onVis=()=>{if(!document.hidden&&this._h){this._histLastLoad=0;this._schedule();}};}
+constructor(){super();this.attachShadow({mode:'open'});this._c={};this._h=null;this._prev={solar:0,bat:0,grid:0,load:0};this._hist={solar:[],load:[],grid:[],battery:[]};this._histMax={solar:1,load:1,grid:1,battery:1};this._fs={};this._histTimer=null;this._histLastLoad=0;this._histLoading=false;this._syncSpd=0;this._resync=false;this._rafId=null;this._onVis=()=>{if(!document.hidden&&this._h){this._histLastLoad=0;this._schedule();}};}
 
 static getConfigElement(){return document.createElement('xpower-flow-card-editor');}
 static getStubConfig(){return{...DEFAULTS};}
@@ -568,8 +594,8 @@ _bucket(arr,t0,t1,n){
 async _loadHistory(){if(this._histLoading||!this._h)return;this._histLoading=true;try{const now=new Date();const start=new Date(now.getTime()-24*60*60*1000);const iso=encodeURIComponent(start.toISOString());const entities=encodeURIComponent([this._c.solar,this._c.load,this._c.grid,this._c.battery].filter(Boolean).join(','));if(!entities)return;const url='history/period/'+iso+'?filter_entity_id='+entities+'&minimal_response&no_attributes&significant_changes_only';const res=await this._h.callApi('GET',url);if(!res||!res.length)return;for(const series of res){if(!series.length)continue;const eid=series[0].entity_id;const pts=this._bucket(series,start.getTime(),now.getTime(),HIST_POINTS);const mx=pts.length?Math.max(...pts)||1:1;if(eid===this._c.solar){this._hist.solar=pts;this._histMax.solar=mx;}else if(eid===this._c.load){this._hist.load=pts;this._histMax.load=mx;}else if(eid===this._c.grid){this._hist.grid=pts;this._histMax.grid=mx;}else if(eid===this._c.battery){this._hist.battery=pts;this._histMax.battery=mx;}}this._drawSparks();}catch(e){console.warn('xPower history:',e);}finally{this._histLoading=false;}}
 
 _render(){const L=this._lang;const INV=String(this._c.inverter_name||'').replace(/[<>&]/g,m=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[m]));const s=this.shadowRoot;s.innerHTML=`<style>
-:host{--solar:var(--xpf-solar,#FFB300);--battery:var(--xpf-battery,#7C4DFF);--grid:var(--xpf-grid,#42A5F5);--load:var(--xpf-load,#26C6DA);--green:var(--xpf-green,#66BB6A);--red:var(--xpf-red,#EF5350);--orange:var(--xpf-orange,#FFA726);--t1:var(--xpf-text,rgba(255,255,255,0.92));--t3:var(--xpf-text-secondary,rgba(255,255,255,0.45));--xpf-r:var(--xpf-radius,20px);--xpf-vm-size:var(--xpf-font-size,24px);--flow-w:var(--xpf-flow-width,3);--flow-dash:var(--xpf-dash-size,100)}
-:host(.light){--t1:var(--xpf-text,rgba(0,0,0,0.85));--t3:var(--xpf-text-secondary,rgba(0,0,0,0.45))}
+:host{--solar:var(--xpf-solar,#FFB300);--battery:var(--xpf-battery,#7C4DFF);--grid:var(--xpf-grid,#42A5F5);--load:var(--xpf-load,#26C6DA);--green:var(--xpf-green,#66BB6A);--red:var(--xpf-red,#EF5350);--orange:var(--xpf-orange,#FFA726);--t1:var(--xpf-text,rgba(255,255,255,0.92));--t3:var(--xpf-text-secondary,rgba(255,255,255,0.45));--xpf-r:var(--xpf-radius,20px);--xpf-vm-size:var(--xpf-font-size,24px);--flow-w:var(--xpf-flow-width,3);--flow-dash:var(--xpf-dash-size,100);--batf:#fff;--batn:#111;--batt:rgba(255,255,255,0.22)}
+:host(.light){--t1:var(--xpf-text,rgba(0,0,0,0.85));--t3:var(--xpf-text-secondary,rgba(0,0,0,0.45));--batf:rgba(0,0,0,0.85);--batn:#fff;--batt:rgba(0,0,0,0.12)}
 :host(.light) ha-card{background:var(--xpf-bg,rgba(255,255,255,0.92));border-color:rgba(0,0,0,0.08)}
 :host(.light) ha-card::before{background:linear-gradient(90deg,transparent,rgba(124,77,255,0.12),transparent)}
 :host(.light) .fl{stroke:rgba(0,0,0,0.06)}
@@ -624,7 +650,7 @@ svg{width:100%;height:auto;display:block}
 .ss #hs{fill:none;stroke:rgba(102,187,106,0.7);stroke-width:1.2}.sc #hl{fill:none;stroke:rgba(38,198,218,0.7);stroke-width:1.2}.sg #hg{fill:none;stroke:rgba(66,165,245,0.7);stroke-width:1.2}.sbt #hb2{fill:none;stroke:rgba(124,77,255,0.7);stroke-width:1.2}
 .ss #hsa{fill:rgba(102,187,106,0.12);stroke:none}.sc #hla{fill:rgba(38,198,218,0.12);stroke:none}.sg #hga{fill:rgba(66,165,245,0.12);stroke:none}.sbt #hb2a{fill:rgba(124,77,255,0.12);stroke:none}
 </style>
-<ha-card><svg viewBox="0 0 526 487"><defs><filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><g transform="translate(25.5,10) scale(0.95)">
+<ha-card><svg viewBox="0 0 526 487"><defs><filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter><clipPath id="bat-clip"><rect x="232" y="341" width="32" height="20" rx="6"/></clipPath></defs><g transform="translate(25.5,10) scale(0.95)">
 <g id="wicons" style="display:none" transform="translate(-20,0)">
 <rect class="wb" x="-2" y="-4" width="86" height="20"/>
 <g transform="translate(0,1)"><rect x="6" y="0" width="2.5" height="7" rx="1.2" fill="none" stroke="var(--t3)" stroke-width="0.7"/><circle cx="7.2" cy="9" r="2.5" fill="none" stroke="var(--t3)" stroke-width="0.7"/><line x1="7.2" y1="3" x2="7.2" y2="7" stroke="var(--red)" stroke-width="1" stroke-linecap="round"/><circle cx="7.2" cy="9" r="1.2" fill="var(--red)"/></g>
@@ -639,8 +665,8 @@ svg{width:100%;height:auto;display:block}
 <g><g transform="translate(250,225) scale(1.65)"><rect x="-18" y="-24" width="36" height="48" rx="2" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.25)" stroke-width="1"/><rect x="-18" y="-24" width="36" height="5" rx="2" fill="rgba(255,255,255,0.12)"/><rect x="-12" y="-15" width="24" height="12" rx="1.5" fill="rgba(102,187,106,0.15)" stroke="rgba(102,187,106,0.4)" stroke-width="0.7"/><circle id="led1" cx="-6" cy="2" r="1.2" fill="rgba(255,255,255,0.12)"/><circle id="led2" cx="-2" cy="2" r="1.2" fill="rgba(255,255,255,0.12)"/><circle id="led3" cx="2" cy="2" r="1.2" fill="rgba(255,255,255,0.12)"/><circle id="led4" cx="6" cy="2" r="1.2" fill="rgba(255,255,255,0.12)"/><path id="bolt" d="M-6,9 L-8,15 L-4,15 L-6,21" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.3)" stroke-width="0.5"/><rect x="2" y="12" width="10" height="3" rx="0.5" fill="rgba(255,255,255,0.1)"/><rect x="2" y="17" width="10" height="3" rx="0.5" fill="rgba(255,255,255,0.1)"/><text id="lcd" x="0" y="-9" class="lcd">0W</text></g>${INV?'<text x="250" y="272" class="il">'+INV+'</text>':''}<text x="296" y="264" class="vc" id="tp" text-anchor="start"></text></g>
 <g id="nGrid" class="ct"><g id="gridIcon" transform="translate(66,225) scale(1.65) translate(-66,-196)"><rect x="64" y="181" width="4" height="30" rx="1" fill="var(--red)" opacity="0.7"/><rect x="54" y="183" width="24" height="3" rx="1" fill="var(--red)" opacity="0.6"/><rect x="57" y="192" width="18" height="2.5" rx="1" fill="var(--red)" opacity="0.5"/><path d="M60,211 L64,199 L68,199 L72,211" fill="var(--red)" opacity="0.4"/><circle cx="56" cy="184" r="1.5" fill="var(--red)" opacity="0.8"/><circle cx="76" cy="184" r="1.5" fill="var(--red)" opacity="0.8"/><circle cx="58" cy="193" r="1.2" fill="var(--red)" opacity="0.7"/><circle cx="74" cy="193" r="1.2" fill="var(--red)" opacity="0.7"/><line x1="54" y1="184" x2="46" y2="181" stroke="var(--red)" stroke-width="0.8" opacity="0.3"/><line x1="78" y1="184" x2="86" y2="181" stroke="var(--red)" stroke-width="0.8" opacity="0.3"/></g><text x="66" y="268" class="vm" style="fill:var(--red)" id="vg"></text><text x="66" y="190" class="vl">${L.grid}</text><text x="66" y="286" class="vc" id="gv"></text><circle id="gsd" cx="92" cy="189" r="4" fill="rgba(255,255,255,0.12)"/><text x="66" y="300" class="vd" id="dg"></text></g>
 <g id="nLoad" class="ct"><g id="loadIcon" transform="translate(434,225) scale(1.65) translate(-434,-188)"><path d="M416,188 L434,174 L452,188 Z" fill="var(--load)" opacity="0.8"/><rect x="420" y="187" width="28" height="18" rx="1" fill="var(--load)" opacity="0.6"/><rect x="430" y="195" width="8" height="10" rx="1" fill="rgba(0,0,0,0.3)"/><rect x="422" y="190" width="6" height="5" rx="0.5" fill="rgba(255,255,255,0.15)"/><rect x="440" y="190" width="6" height="5" rx="0.5" fill="rgba(255,255,255,0.15)"/><rect x="441" y="176" width="5" height="8" rx="1" fill="var(--load)" opacity="0.5"/></g><text x="434" y="268" class="vm" style="fill:var(--load)" id="vl"></text><text x="434" y="190" class="vl">${L.load}</text><text x="434" y="288" class="vd" id="dl"></text></g>
-<g id="nBat" class="ct"><g id="batIcon" transform="translate(250,400) scale(2.05) translate(-250,-351)"><rect x="232" y="341" width="32" height="20" rx="3" fill="var(--battery)" opacity="0.75"/><rect x="264" y="345.5" width="6" height="11" rx="2" fill="var(--battery)" opacity="0.9"/><rect x="235" y="344" width="26" height="14" rx="1.5" fill="rgba(0,0,0,0.35)"/><rect id="bl" x="235" y="344" width="26" height="14" rx="1.5" fill="var(--battery)" opacity="0.45"/><text id="bp" x="248" y="351.4" font-family="-apple-system,sans-serif" font-size="7.5" font-weight="800" fill="white" text-anchor="middle" dominant-baseline="middle" style="paint-order:stroke;stroke:rgba(0,0,0,0.45);stroke-width:0.6px">--</text></g><text x="250" y="440" class="vm" style="fill:var(--solar)" id="vb"></text><text x="250" y="372" class="vl">${L.battery}</text><text x="316" y="394" class="vc" id="bv" text-anchor="start"></text><text x="316" y="406" class="vc" id="bt" text-anchor="start"></text><text x="250" y="460" class="vd" id="db"></text><text x="250" y="476" class="vc" id="br" style="fill:var(--t1)"></text></g>
-<g id="nEV" class="ct" style="display:none"><path class="fl" d="M434,302 L434,362"/><path id="fe" class="fa" d="M434,302 L434,362" pathLength="100" opacity="0"/><text x="434" y="372" class="vl">${L.ev}</text><g id="evIcon" transform="translate(434,398) scale(1.65) translate(-434,-398)"><path d="M425,396 Q426,391 430,390.5 L438,390.5 Q442,391 443,396" fill="var(--load)" opacity="0.55"/><rect x="420" y="395.5" width="28" height="7.5" rx="2.5" fill="var(--load)" opacity="0.8"/><rect x="427.5" y="392.5" width="5.5" height="3.5" rx="0.8" fill="rgba(0,0,0,0.35)"/><rect x="434.5" y="392.5" width="5.5" height="3.5" rx="0.8" fill="rgba(0,0,0,0.35)"/><circle cx="426.5" cy="403.5" r="3" fill="rgba(0,0,0,0.55)"/><circle cx="426.5" cy="403.5" r="1.4" fill="rgba(255,255,255,0.35)"/><circle cx="441.5" cy="403.5" r="3" fill="rgba(0,0,0,0.55)"/><circle cx="441.5" cy="403.5" r="1.4" fill="rgba(255,255,255,0.35)"/><path id="evbolt" d="M449.5,391 L447.5,396 L450.5,396 L448.5,401" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.3)" stroke-width="0.5"/></g><text x="434" y="440" class="vm" style="fill:var(--green)" id="ve"></text><text x="434" y="460" class="vc" id="evsoc"></text><text x="434" y="476" class="vd" id="de"></text></g>
+<g id="nBat" class="ct"><g id="batIcon" transform="translate(250,400) scale(2.05) translate(-250,-351)"><rect x="232" y="341" width="32" height="20" rx="6" fill="var(--batt)"/><rect id="bl" x="232" y="341" width="32" height="20" fill="var(--batf)" clip-path="url(#bat-clip)"/><rect x="264.5" y="345.5" width="4" height="11" rx="2" fill="var(--batt)"/><text id="bp" x="248" y="356.3" font-family="-apple-system,sans-serif" font-size="15" font-weight="800" fill="var(--batn)" text-anchor="middle">--</text><path id="bbolt" d="M260.1,345 L255.7,352 L258.9,352 L257.1,357.5 L262.5,349.8 L259.3,349.8 Z" fill="#fff" style="display:none"/></g><text x="250" y="440" class="vm" style="fill:var(--solar)" id="vb"></text><text x="250" y="372" class="vl">${L.battery}</text><text x="316" y="394" class="vc" id="bv" text-anchor="start"></text><text x="316" y="406" class="vc" id="bt" text-anchor="start"></text><text x="250" y="460" class="vd" id="db"></text><text x="250" y="476" class="vc" id="br" style="fill:var(--t1)"></text></g>
+<g id="nEV" class="ct" style="display:none"><path class="fl" d="M434,302 L434,362"/><path id="fe" class="fa" d="M434,302 L434,362" pathLength="100" opacity="0"/><text x="434" y="372" class="vl">${L.ev}</text><g id="evIcon" transform="translate(434,398) scale(1.65) translate(-434,-398)"><path d="M419.5,402.5 Q419.3,398.2 424,397.1 Q426.5,391.6 432,390.9 L437,390.9 Q442.3,391.3 445.3,395.2 Q449.1,396.1 449.4,399.6 Q449.6,402.5 446.6,402.5 L422.4,402.5 Q419.6,402.5 419.5,402.5 Z" fill="var(--load)" opacity="0.8"/><path d="M427.6,395.9 Q429.1,392.6 432.6,392.3 L433.6,392.3 L433.6,395.9 Z" fill="rgba(0,0,0,0.35)"/><path d="M435.1,392.3 L436.9,392.3 Q440.4,392.7 442.4,395.9 L435.1,395.9 Z" fill="rgba(0,0,0,0.35)"/><circle cx="426" cy="402.4" r="3.1" fill="rgba(0,0,0,0.55)"/><circle cx="426" cy="402.4" r="1.4" fill="rgba(255,255,255,0.35)"/><circle cx="442.3" cy="402.4" r="3.1" fill="rgba(0,0,0,0.55)"/><circle cx="442.3" cy="402.4" r="1.4" fill="rgba(255,255,255,0.35)"/><path id="evbolt" d="M452.5,391 L450.5,396 L453.5,396 L451.5,401" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.3)" stroke-width="0.5"/></g><text x="434" y="440" class="vm" style="fill:var(--green)" id="ve"></text><text x="434" y="460" class="vc" id="evsoc"></text><text x="434" y="476" class="vd" id="de"></text></g>
 <defs><clipPath id="au-clip"><rect x="476" y="-4" width="47" height="34" rx="6"/></clipPath></defs><rect x="476" y="-4" width="47" height="34" rx="6" fill="none"/><rect x="476" y="-4" width="47" height="34" rx="6" fill="none" id="au-border" stroke="#1a4a36" stroke-width="1.5"/><text x="499" y="9" id="va" font-family="-apple-system,sans-serif" font-size="13.6" font-weight="800" fill="white" text-anchor="middle" dominant-baseline="middle"></text><g clip-path="url(#au-clip)"><rect x="476" y="19" width="47" height="11" id="au-bar" fill="#1a4a36"/><text x="499" y="25" font-family="-apple-system,sans-serif" font-size="4.1" font-weight="700" fill="white" text-anchor="middle" dominant-baseline="middle">${L.autarky.toUpperCase()}</text></g>
 </g></svg>
 <div class="sr">
@@ -687,7 +713,7 @@ _setupTooltips(){
   setup(null,'cb','db2','tb','battery','#7C4DFF');
 }
 _spd(p){const a=Math.abs(p);if(a<10)return 0;let s=Math.max(ANIM_MIN_SPD,ANIM_MAX_SPD-(a/ANIM_MAX_W)*(ANIM_MAX_SPD-ANIM_MIN_SPD));if(a>=3000)s*=0.4;else if(a>=2000)s*=0.6;else if(a>=1000)s*=0.8;return s;}
-_sf(el,id,p,d,c,o){if(!el)return;if(Math.abs(p)<10){el.setAttribute('opacity','0');return;}el.setAttribute('stroke',c);el.setAttribute('opacity',o);if(this._fs[id]!==d){this._fs[id]=d;el.setAttribute('class','fa '+d);}}
+_sf(el,id,p,d,c,o){if(!el)return;if(Math.abs(p)<10){el.setAttribute('opacity','0');return;}el.setAttribute('stroke',c);el.setAttribute('opacity',o);if(this._fs[id]!==d){this._fs[id]=d;el.setAttribute('class','fa '+d);this._resync=true;}}
 _spark(id,aid,data){const el=this._$(id);const af=this._$(aid);if(!el||!data.length)return;const w=200,h=55,py=2,max=Math.max(...data)||1;const pts=data.map((v,i)=>[(i/(data.length-1))*w,py+(1-v/max)*(h-py*2)]);if(pts.length<2)return;const tension=0.3;const cp=(p0,p1,p2,t)=>[p1[0]+(p2[0]-p0[0])*t,p1[1]+(p2[1]-p0[1])*t];let d='M'+pts[0][0].toFixed(1)+','+pts[0][1].toFixed(1);for(let i=0;i<pts.length-1;i++){const p0=pts[Math.max(0,i-1)];const p1=pts[i];const p2=pts[i+1];const p3=pts[Math.min(pts.length-1,i+2)];const c1=cp(p0,p1,p2,tension);const c2=[p2[0]-(p3[0]-p1[0])*tension,p2[1]-(p3[1]-p1[1])*tension];d+=' C'+c1[0].toFixed(1)+','+c1[1].toFixed(1)+' '+c2[0].toFixed(1)+','+c2[1].toFixed(1)+' '+p2[0].toFixed(1)+','+p2[1].toFixed(1);}el.setAttribute('d',d);if(af){af.setAttribute('d',d+'L'+w+','+h+'L0,'+h+'Z');}}
 _drawSparks(){this._spark('hs','hsa',this._hist.solar);this._spark('hl','hla',this._hist.load);this._spark('hg','hga',this._hist.grid);this._spark('hb2','hb2a',this._hist.battery);}
 
@@ -720,8 +746,8 @@ this._$('vl').textContent=this._arrow(load,p.load)+this._fmt(load);
 this._prev={solar:sol??0,bat:bat??0,grid:grid??0,load:load??0};
 
 const socVal=soc??0;
-const bpEl=this._$('bp');if(bpEl)bpEl.textContent=soc!==null?Math.round(soc)+'%':L.unavailable;
-const shu=c.shutdown_soc??20;let batC='var(--battery)',bpC='white';if(soc!==null&&socVal<=shu){batC='#EF5350';bpC='#EF5350';}else if(soc!==null&&socVal<=shu+15){batC='#FFA726';bpC='#FFA726';}const ch=bat!==null&&bat<-10;const blEl=this._$('bl');if(blEl){blEl.setAttribute('width',(26*(socVal/100)).toFixed(1));if(ch){blEl.setAttribute('fill','#4CD964');blEl.setAttribute('class','bat-charge');}else{blEl.setAttribute('fill',batC);blEl.removeAttribute('class');}}if(bpEl)bpEl.setAttribute('fill',ch?'white':bpC);
+const bpEl=this._$('bp');if(bpEl)bpEl.textContent=soc!==null?String(Math.round(soc)):L.unavailable;
+const shu=c.shutdown_soc??20;let batC='var(--batf)',bpC='var(--batn)';if(soc!==null&&socVal<=shu){batC='#EF5350';bpC='#fff';}else if(soc!==null&&socVal<=shu+15){batC='#FFA726';bpC='#111';}const ch=bat!==null&&bat<-10;if(ch){batC='#4CD964';bpC='#fff';}const blEl=this._$('bl');if(blEl){blEl.setAttribute('width',(32*(socVal/100)).toFixed(1));blEl.setAttribute('fill',batC);if(ch)blEl.setAttribute('class','bat-charge');else blEl.removeAttribute('class');}if(bpEl){bpEl.setAttribute('fill',bpC);bpEl.setAttribute('x',ch?'245':'248');}const bboltEl=this._$('bbolt');if(bboltEl)bboltEl.style.display=ch?'':'none';
 
 if(temp!==null)this._$('tp').textContent=temp.toFixed(0)+'\u00B0C';else this._$('tp').textContent='';
 if(pvv!==null&&pvv2!==null){this._$('pv1').textContent=pvv.toFixed(0)+'V';this._$('pv').textContent=pvv2.toFixed(0)+'V';}else if(pvv!==null){this._$('pv1').textContent='';this._$('pv').textContent=pvv.toFixed(0)+'V';}else if(pvv2!==null){this._$('pv1').textContent='';this._$('pv').textContent=pvv2.toFixed(0)+'V';}else{this._$('pv1').textContent='';this._$('pv').textContent='';}
@@ -746,7 +772,7 @@ this._$('db').textContent=L.charge+' '+this._fmtE(dC)+' '+L.discharge+' '+this._
 const solF=sol??0,batF=bat??0,gridF=grid??0,loadF=load??0;
 const maxP=Math.max(solF,Math.abs(batF),Math.abs(gridF),loadF);
 const syncSpd=maxP>10?this._spd(maxP):3;
-if(this._syncSpd<=0||Math.abs(syncSpd-this._syncSpd)/this._syncSpd>0.1){this._syncSpd=syncSpd;const spdIn=(syncSpd*0.75).toFixed(1)+'s';const spdOut=syncSpd.toFixed(1)+'s';['fs','fg','fb'].forEach(id=>{const el=this._$(id);if(el)el.style.setProperty('--spd',spdIn);});const fh=this._$('fh');if(fh)fh.style.setProperty('--spd',spdOut);const fe=this._$('fe');if(fe)fe.style.setProperty('--spd',spdOut);}
+if(this._syncSpd<=0||Math.abs(syncSpd-this._syncSpd)/this._syncSpd>0.1){this._syncSpd=syncSpd;const spd=syncSpd.toFixed(1)+'s';['fs','fg','fb','fh','fe'].forEach(id=>{const el=this._$(id);if(el)el.style.setProperty('--spd',spd);});this._resync=true;}
 this._sf(this._$('fs'),'s',solF,'fd','var(--green)','0.8');
 this._sf(this._$('fg'),'g',gridF,gridF>0?'fr':'fL',gridF>0?'var(--red)':'var(--green)','0.7');
 this._sf(this._$('fb'),'b',batF,batF<0?'fd':'fu',batF<0?'var(--green)':'var(--solar)','0.75');
@@ -773,6 +799,9 @@ if(nEV){
     const evbolt=this._$('evbolt');if(evbolt){if(evAbs>10){evbolt.setAttribute('fill','var(--green)');evbolt.setAttribute('stroke','var(--green)');evbolt.setAttribute('class','led-on');}else{evbolt.setAttribute('fill','rgba(255,255,255,0.15)');evbolt.setAttribute('stroke','rgba(255,255,255,0.3)');evbolt.removeAttribute('class');}}
   }else{nEV.style.display='none';}
 }
+
+// Phase lock — restart all flow animations in the same frame so pulses relay through the inverter
+if(this._resync){this._resync=false;const els=['fs','fg','fb','fh','fe'].map(id=>this._$(id)).filter(Boolean);els.forEach(el=>{el.style.animation='none';});void this.offsetWidth;els.forEach(el=>{el.style.animation='';});}
 
 const batCap=c.battery_capacity??5120;const shuSoc=c.shutdown_soc??20;
 const brEl=this._$('br');
