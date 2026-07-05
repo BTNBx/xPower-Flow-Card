@@ -20,27 +20,36 @@ Select your brand in the visual editor. Entities and polarity are configured aut
 
 ## Features
 
-- 9 inverter presets with auto-configured entities and polarity
-- 8 languages: Portuguese, English, German, French, Spanish, Italian, Dutch, Polish
-- Configurable battery and grid polarity sign conventions
-- Dual MPPT support - configure two solar strings independently
-- Animated pulse flow lines with speed proportional to power output
-- Color-coded values: solar (green), grid (red), home (cyan), battery (yellow)
-- Inverter icon with 4 status LEDs indicating active energy flows
-- LCD display on the inverter showing home consumption
-- Battery runtime estimation with shutdown SOC and ETA
-- Battery gauge with SOC level indicator
-- Optional weather display (temperature and humidity)
-- 24-hour sparkline charts with Catmull-Rom interpolation, updated every 5 minutes
-- Sparkline tooltips showing power and timestamp on hover
-- Auto-scaling Y-axis on all sparklines
-- Autarky badge with color-coded self-sufficiency percentage
-- Daily totals for import, export, and production in kWh
-- Trend arrows for rising, falling, or stable values
-- Graceful handling of unavailable sensors (`--`)
-- Dynamic card border color reflecting the dominant energy source
-- Visual editor for all configuration options
-- Light and dark theme support with automatic detection
+* 9 inverter presets with auto-configured entities and polarity
+* 8 languages: Portuguese, English, German, French, Spanish, Italian, Dutch, Polish
+* Configurable battery and grid polarity sign conventions
+* Dual MPPT support - configure two solar strings independently
+* Optional EV charging node with animated flow, blinking bolt, SOC and daily energy
+* Animated pulse flow lines with speed proportional to power output
+* Color-coded values: solar (green), grid (red), home (cyan), battery (yellow)
+* Inverter icon with 4 status LEDs indicating active energy flows
+* LCD display on the inverter showing home consumption
+* Battery runtime estimation with shutdown SOC and ETA
+* iPhone-style battery icon with SOC percentage inside, color-coded (normal / orange / red) as it drains
+* Optional weather display (temperature and humidity)
+* 24-hour sparkline charts with Catmull-Rom interpolation, updated every 5 minutes
+* Sparkline tooltips showing power and timestamp on hover
+* Auto-scaling Y-axis on all sparklines
+* Autarky badge with color-coded self-sufficiency percentage
+* Daily totals for import, export, and production in kWh
+* Trend arrows for rising, falling, or stable values
+* Graceful handling of unavailable sensors (`--`)
+* Dynamic card border color reflecting the dominant energy source
+* Visual editor for all configuration options
+* Light and dark theme support with automatic detection
+* Compact mode (flow diagram only, no sparklines)
+* Three-phase grid voltage display (L1/L2/L3)
+* Split battery charge/discharge sensors for Solis/Modbus setups
+* Daily energy cost overlay (import cost / export earnings)
+* Grid status indicator dot (on-grid / off-grid)
+* Click any node to open the entity more-info dialog
+* Full theming via CSS custom properties (`--xpf-*`)
+* Performance-optimized: entity diffing, paused updates in hidden tabs
 
 ## Installation
 
