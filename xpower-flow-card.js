@@ -1,10 +1,23 @@
 // xPower Flow Card — Modern power flow card for solar hybrid inverters
 // Copyright (C) 2025 BTNBx — MIT License
-const V='1.3.11';
+const V='1.3.12';
 
 /* ═══════════════════════════════════════
    CHANGELOG
    ═══════════════════════════════════════
+v1.3.14
+    Visual:
+        - Battery SOC color states: fill + inner % text turn orange at shutdown_soc+15, red at shutdown_soc
+        - Charging keeps green fill with white text
+v1.3.13
+    Visual:
+        - Battery icon redesigned iPhone-style: SOC percentage rendered inside the icon over the fill level
+        - Icon enlarged (scale 1.70 -> 2.05); standalone SOC text row removed; daily/runtime rows moved up
+v1.3.12
+    Features:
+        - EV charging node (bottom-right, below Home): car icon, charge power, optional SOC + daily energy
+        - New optional entities: ev_power, ev_soc, daily_ev (editor + YAML); node hidden when not configured
+        - Animated Home -> EV flow (green), blinking bolt while charging; click opens more-info
 v1.3.11
     Performance:
         - hass setter now diffs configured entity states — DOM update skipped when nothing relevant changed
@@ -71,7 +84,7 @@ v1.3.10
    xPower Flow Card — i18n
    ═══════════════════════════════════════ */
 const LANG={
-  pt:{solar:'SOLAR',grid:'REDE',load:'CASA',battery:'BATERIA',inverter:'Inversor',
+  pt:{solar:'SOLAR',grid:'REDE',load:'CASA',battery:'BATERIA',ev:'CARRO',inverter:'Inversor',
       autarky:'Autossufici\u00EAncia',runtime_to:'at\u00E9',
       charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
       daily:'\u25B8',solar24:'SOLAR (24h)',load24:'CASA (24h)',grid24:'REDE (24h)',bat24:'BATERIA (24h)',
@@ -82,7 +95,7 @@ const LANG={
       editor_preset:'Marca / Preset',editor_polarity:'Polaridade',
       editor_bat_pol:'Bateria: negativo =',editor_grid_pol:'Rede: positivo =',
       charging:'carga',discharging:'descarga',importing:'importar',exporting:'exportar'},
-  en:{solar:'SOLAR',grid:'GRID',load:'HOME',battery:'BATTERY',inverter:'Inverter',
+  en:{solar:'SOLAR',grid:'GRID',load:'HOME',battery:'BATTERY',ev:'EV',inverter:'Inverter',
       autarky:'Self-sufficiency',runtime_to:'to',
       charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
       daily:'\u25B8',solar24:'SOLAR (24h)',load24:'HOME (24h)',grid24:'GRID (24h)',bat24:'BATTERY (24h)',
@@ -93,7 +106,7 @@ const LANG={
       editor_preset:'Brand / Preset',editor_polarity:'Polarity',
       editor_bat_pol:'Battery: negative =',editor_grid_pol:'Grid: positive =',
       charging:'charging',discharging:'discharging',importing:'import',exporting:'export'},
-  de:{solar:'SOLAR',grid:'NETZ',load:'HAUS',battery:'BATTERIE',inverter:'Wechselrichter',
+  de:{solar:'SOLAR',grid:'NETZ',load:'HAUS',battery:'BATTERIE',ev:'E-AUTO',inverter:'Wechselrichter',
       autarky:'Autarkie',runtime_to:'bis',
       charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
       daily:'\u25B8',solar24:'SOLAR (24h)',load24:'HAUS (24h)',grid24:'NETZ (24h)',bat24:'BATTERIE (24h)',
@@ -104,7 +117,7 @@ const LANG={
       editor_preset:'Marke / Vorlage',editor_polarity:'Polarit\u00E4t',
       editor_bat_pol:'Batterie: negativ =',editor_grid_pol:'Netz: positiv =',
       charging:'Laden',discharging:'Entladen',importing:'Bezug',exporting:'Einspeisung'},
-  fr:{solar:'SOLAIRE',grid:'R\u00C9SEAU',load:'MAISON',battery:'BATTERIE',inverter:'Onduleur',
+  fr:{solar:'SOLAIRE',grid:'R\u00C9SEAU',load:'MAISON',battery:'BATTERIE',ev:'VOITURE',inverter:'Onduleur',
       autarky:'Autosuffisance',runtime_to:'jusqu\u0027\u00E0',
       charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
       daily:'\u25B8',solar24:'SOLAIRE (24h)',load24:'MAISON (24h)',grid24:'R\u00C9SEAU (24h)',bat24:'BATTERIE (24h)',
@@ -115,7 +128,7 @@ const LANG={
       editor_preset:'Marque / Pr\u00E9r\u00E9glage',editor_polarity:'Polarit\u00E9',
       editor_bat_pol:'Batterie: n\u00E9gatif =',editor_grid_pol:'R\u00E9seau: positif =',
       charging:'charge',discharging:'d\u00E9charge',importing:'importation',exporting:'exportation'},
-  es:{solar:'SOLAR',grid:'RED',load:'HOGAR',battery:'BATER\u00CDAS',inverter:'Inversor',
+  es:{solar:'SOLAR',grid:'RED',load:'HOGAR',battery:'BATER\u00CDAS',ev:'COCHE',inverter:'Inversor',
       autarky:'Autosuficiencia',runtime_to:'hasta',
       charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
       daily:'\u25B8',solar24:'SOLAR (24h)',load24:'HOGAR (24h)',grid24:'RED (24h)',bat24:'BATERÍA (24h)',
@@ -126,7 +139,7 @@ const LANG={
       editor_preset:'Marca / Preset',editor_polarity:'Polaridad',
       editor_bat_pol:'Bater\u00EDa: negativo =',editor_grid_pol:'Red: positivo =',
       charging:'carga',discharging:'descarga',importing:'importaci\u00F3n',exporting:'exportaci\u00F3n'},
-  it:{solar:'SOLARE',grid:'RETE',load:'CASA',battery:'BATTERIA',inverter:'Inverter',
+  it:{solar:'SOLARE',grid:'RETE',load:'CASA',battery:'BATTERIA',ev:'AUTO',inverter:'Inverter',
       autarky:'Autosufficienza',runtime_to:'fino a',
       charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
       daily:'\u25B8',solar24:'SOLARE (24h)',load24:'CASA (24h)',grid24:'RETE (24h)',bat24:'BATTERIA (24h)',
@@ -137,7 +150,7 @@ const LANG={
       editor_preset:'Marca / Preset',editor_polarity:'Polarit\u00E0',
       editor_bat_pol:'Batteria: negativo =',editor_grid_pol:'Rete: positivo =',
       charging:'carica',discharging:'scarica',importing:'importazione',exporting:'esportazione'},
-  nl:{solar:'ZONNE',grid:'NET',load:'HUIS',battery:'BATTERIJ',inverter:'Omvormer',
+  nl:{solar:'ZONNE',grid:'NET',load:'HUIS',battery:'BATTERIJ',ev:'EV',inverter:'Omvormer',
       autarky:'Zelfvoorziening',runtime_to:'tot',
       charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
       daily:'\u25B8',solar24:'ZONNE (24h)',load24:'HUIS (24h)',grid24:'NET (24h)',bat24:'BATTERIJ (24h)',
@@ -148,7 +161,7 @@ const LANG={
       editor_preset:'Merk / Preset',editor_polarity:'Polariteit',
       editor_bat_pol:'Batterij: negatief =',editor_grid_pol:'Net: positief =',
       charging:'laden',discharging:'ontladen',importing:'import',exporting:'export'},
-  pl:{solar:'SOLAR',grid:'SIE\u0106',load:'DOM',battery:'BATERIA',inverter:'Falownik',
+  pl:{solar:'SOLAR',grid:'SIE\u0106',load:'DOM',battery:'BATERIA',ev:'EV',inverter:'Falownik',
       autarky:'Samowystarczalno\u015B\u0107',runtime_to:'do',
       charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
       daily:'\u25B8',solar24:'SOLAR (24h)',load24:'DOM (24h)',grid24:'SIE\u0106 (24h)',bat24:'BATERIA (24h)',
@@ -281,6 +294,7 @@ const DEFAULTS={
   shutdown_soc:20,battery_capacity:5120,language:'pt',
   inverter_name:'DEYE',
   weather_temp:'',weather_humidity:'',
+  ev_power:'',ev_soc:'',daily_ev:'',
   import_cost:'',export_cost:'',
   compact:false,
   theme:'auto'
@@ -302,6 +316,7 @@ const ENTITY_FIELDS=[
   {key:'daily_export',label:'Daily Export'},{key:'daily_load',label:'Daily Load'},
   {key:'daily_charge',label:'Daily Charge'},{key:'daily_discharge',label:'Daily Discharge'},
   {key:'weather_temp',label:'Weather Temp.'},{key:'weather_humidity',label:'Weather Humidity'},
+  {key:'ev_power',label:'EV Charger Power (optional)'},{key:'ev_soc',label:'EV SOC (optional)'},{key:'daily_ev',label:'Daily EV Energy (optional)'},
   {key:'import_cost',label:'Daily Import Cost'},{key:'export_cost',label:'Daily Export Earnings'}
 ];
 const ENT_KEYS=ENTITY_FIELDS.map(f=>f.key);
@@ -570,8 +585,8 @@ svg{width:100%;height:auto;display:block}
 .bat-charge{animation:batPulse 1.5s ease-in-out infinite}
 @keyframes sunSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 #sunG{transform-origin:250px 38px;transition:opacity 0.8s ease}
-#gridIcon,#loadIcon,#batIcon{transition:opacity 0.8s ease}
-#vs,#vg,#vl,#vb{transition:opacity 0.8s ease}
+#gridIcon,#loadIcon,#batIcon,#evIcon{transition:opacity 0.8s ease}
+#vs,#vg,#vl,#vb,#ve{transition:opacity 0.8s ease}
 .sun-spin{animation:sunSpin 60s linear infinite}
 @keyframes fR{from{stroke-dashoffset:200}to{stroke-dashoffset:0}}@keyframes fL{from{stroke-dashoffset:0}to{stroke-dashoffset:200}}@keyframes fD{from{stroke-dashoffset:200}to{stroke-dashoffset:0}}@keyframes fU{from{stroke-dashoffset:0}to{stroke-dashoffset:200}}
 .vm{fill:var(--t1);font-size:var(--xpf-vm-size);font-weight:600;text-anchor:middle;dominant-baseline:middle}
@@ -621,7 +636,8 @@ svg{width:100%;height:auto;display:block}
 <g><g transform="translate(250,225) scale(1.65)"><rect x="-18" y="-24" width="36" height="48" rx="2" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.25)" stroke-width="1"/><rect x="-18" y="-24" width="36" height="5" rx="2" fill="rgba(255,255,255,0.12)"/><rect x="-12" y="-15" width="24" height="12" rx="1.5" fill="rgba(102,187,106,0.15)" stroke="rgba(102,187,106,0.4)" stroke-width="0.7"/><circle id="led1" cx="-6" cy="2" r="1.2" fill="rgba(255,255,255,0.12)"/><circle id="led2" cx="-2" cy="2" r="1.2" fill="rgba(255,255,255,0.12)"/><circle id="led3" cx="2" cy="2" r="1.2" fill="rgba(255,255,255,0.12)"/><circle id="led4" cx="6" cy="2" r="1.2" fill="rgba(255,255,255,0.12)"/><path id="bolt" d="M-6,9 L-8,15 L-4,15 L-6,21" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.3)" stroke-width="0.5"/><rect x="2" y="12" width="10" height="3" rx="0.5" fill="rgba(255,255,255,0.1)"/><rect x="2" y="17" width="10" height="3" rx="0.5" fill="rgba(255,255,255,0.1)"/><text id="lcd" x="0" y="-9" class="lcd">0W</text></g>${INV?'<text x="250" y="272" class="il">'+INV+'</text>':''}<text x="296" y="264" class="vc" id="tp" text-anchor="start"></text></g>
 <g id="nGrid" class="ct"><g id="gridIcon" transform="translate(66,225) scale(1.65) translate(-66,-196)"><rect x="64" y="181" width="4" height="30" rx="1" fill="var(--red)" opacity="0.7"/><rect x="54" y="183" width="24" height="3" rx="1" fill="var(--red)" opacity="0.6"/><rect x="57" y="192" width="18" height="2.5" rx="1" fill="var(--red)" opacity="0.5"/><path d="M60,211 L64,199 L68,199 L72,211" fill="var(--red)" opacity="0.4"/><circle cx="56" cy="184" r="1.5" fill="var(--red)" opacity="0.8"/><circle cx="76" cy="184" r="1.5" fill="var(--red)" opacity="0.8"/><circle cx="58" cy="193" r="1.2" fill="var(--red)" opacity="0.7"/><circle cx="74" cy="193" r="1.2" fill="var(--red)" opacity="0.7"/><line x1="54" y1="184" x2="46" y2="181" stroke="var(--red)" stroke-width="0.8" opacity="0.3"/><line x1="78" y1="184" x2="86" y2="181" stroke="var(--red)" stroke-width="0.8" opacity="0.3"/></g><text x="66" y="268" class="vm" style="fill:var(--red)" id="vg"></text><text x="66" y="190" class="vl">${L.grid}</text><text x="66" y="286" class="vc" id="gv"></text><circle id="gsd" cx="92" cy="189" r="4" fill="rgba(255,255,255,0.12)"/><text x="66" y="300" class="vd" id="dg"></text></g>
 <g id="nLoad" class="ct"><g id="loadIcon" transform="translate(434,225) scale(1.65) translate(-434,-188)"><path d="M416,188 L434,174 L452,188 Z" fill="var(--load)" opacity="0.8"/><rect x="420" y="187" width="28" height="18" rx="1" fill="var(--load)" opacity="0.6"/><rect x="430" y="195" width="8" height="10" rx="1" fill="rgba(0,0,0,0.3)"/><rect x="422" y="190" width="6" height="5" rx="0.5" fill="rgba(255,255,255,0.15)"/><rect x="440" y="190" width="6" height="5" rx="0.5" fill="rgba(255,255,255,0.15)"/><rect x="441" y="176" width="5" height="8" rx="1" fill="var(--load)" opacity="0.5"/></g><text x="434" y="268" class="vm" style="fill:var(--load)" id="vl"></text><text x="434" y="190" class="vl">${L.load}</text><text x="434" y="288" class="vd" id="dl"></text></g>
-<g id="nBat" class="ct"><g id="batIcon" transform="translate(250,400) scale(1.70) translate(-250,-351)"><rect x="232" y="341" width="32" height="20" rx="3" fill="var(--battery)" opacity="0.75"/><rect x="264" y="345.5" width="6" height="11" rx="2" fill="var(--battery)" opacity="0.9"/><rect x="235" y="344" width="26" height="14" rx="1.5" fill="rgba(0,0,0,0.35)"/><rect id="bl" x="235" y="344" width="26" height="14" rx="1.5" fill="var(--battery)" opacity="0.45"/></g><text x="250" y="440" class="vm" style="fill:var(--solar)" id="vb"></text><text x="250" y="462" class="vs" id="vc"></text><text x="250" y="372" class="vl">${L.battery}</text><text x="310" y="394" class="vc" id="bv" text-anchor="start"></text><text x="310" y="406" class="vc" id="bt" text-anchor="start"></text><text x="250" y="483" class="vd" id="db"></text><text x="250" y="498" class="vc" id="br" style="fill:var(--t1)"></text></g>
+<g id="nBat" class="ct"><g id="batIcon" transform="translate(250,400) scale(2.05) translate(-250,-351)"><rect x="232" y="341" width="32" height="20" rx="3" fill="var(--battery)" opacity="0.75"/><rect x="264" y="345.5" width="6" height="11" rx="2" fill="var(--battery)" opacity="0.9"/><rect x="235" y="344" width="26" height="14" rx="1.5" fill="rgba(0,0,0,0.35)"/><rect id="bl" x="235" y="344" width="26" height="14" rx="1.5" fill="var(--battery)" opacity="0.45"/><text id="bp" x="248" y="351.4" font-family="-apple-system,sans-serif" font-size="7.5" font-weight="800" fill="white" text-anchor="middle" dominant-baseline="middle" style="paint-order:stroke;stroke:rgba(0,0,0,0.45);stroke-width:0.6px">--</text></g><text x="250" y="440" class="vm" style="fill:var(--solar)" id="vb"></text><text x="250" y="372" class="vl">${L.battery}</text><text x="316" y="394" class="vc" id="bv" text-anchor="start"></text><text x="316" y="406" class="vc" id="bt" text-anchor="start"></text><text x="250" y="470" class="vd" id="db"></text><text x="250" y="486" class="vc" id="br" style="fill:var(--t1)"></text></g>
+<g id="nEV" class="ct" style="display:none"><path class="fl" d="M434,302 L434,362"/><path id="fe" class="fa" d="M434,302 L434,362" pathLength="100" opacity="0"/><text x="434" y="372" class="vl">${L.ev}</text><g id="evIcon" transform="translate(434,398) scale(1.65) translate(-434,-398)"><path d="M425,396 Q426,391 430,390.5 L438,390.5 Q442,391 443,396" fill="var(--load)" opacity="0.55"/><rect x="420" y="395.5" width="28" height="7.5" rx="2.5" fill="var(--load)" opacity="0.8"/><rect x="427.5" y="392.5" width="5.5" height="3.5" rx="0.8" fill="rgba(0,0,0,0.35)"/><rect x="434.5" y="392.5" width="5.5" height="3.5" rx="0.8" fill="rgba(0,0,0,0.35)"/><circle cx="426.5" cy="403.5" r="3" fill="rgba(0,0,0,0.55)"/><circle cx="426.5" cy="403.5" r="1.4" fill="rgba(255,255,255,0.35)"/><circle cx="441.5" cy="403.5" r="3" fill="rgba(0,0,0,0.55)"/><circle cx="441.5" cy="403.5" r="1.4" fill="rgba(255,255,255,0.35)"/><path id="evbolt" d="M449.5,391 L447.5,396 L450.5,396 L448.5,401" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.3)" stroke-width="0.5"/></g><text x="434" y="440" class="vm" style="fill:var(--green)" id="ve"></text><text x="434" y="460" class="vc" id="evsoc"></text><text x="434" y="476" class="vd" id="de"></text></g>
 <defs><clipPath id="au-clip"><rect x="476" y="-4" width="47" height="34" rx="6"/></clipPath></defs><rect x="476" y="-4" width="47" height="34" rx="6" fill="none"/><rect x="476" y="-4" width="47" height="34" rx="6" fill="none" id="au-border" stroke="#1a4a36" stroke-width="1.5"/><text x="499" y="9" id="va" font-family="-apple-system,sans-serif" font-size="13.6" font-weight="800" fill="white" text-anchor="middle" dominant-baseline="middle"></text><g clip-path="url(#au-clip)"><rect x="476" y="19" width="47" height="11" id="au-bar" fill="#1a4a36"/><text x="499" y="25" font-family="-apple-system,sans-serif" font-size="4.1" font-weight="700" fill="white" text-anchor="middle" dominant-baseline="middle">${L.autarky.toUpperCase()}</text></g>
 </g></svg>
 <div class="sr">
@@ -633,7 +649,7 @@ svg{width:100%;height:auto;display:block}
 
 _$(id){return this.shadowRoot.getElementById(id);}
 _moreInfo(entityId){if(!entityId)return;this.dispatchEvent(new CustomEvent('hass-more-info',{detail:{entityId},bubbles:true,composed:true}));}
-_setupClicks(){const c=this._c;const bind=(id,entity)=>{const el=this._$(id);if(el&&entity)el.addEventListener('click',()=>this._moreInfo(entity));};bind('nSolar',c.solar);bind('nGrid',c.grid);bind('nLoad',c.load);bind('nBat',c.battery||c.soc);}
+_setupClicks(){const c=this._c;const bind=(id,entity)=>{const el=this._$(id);if(el&&entity)el.addEventListener('click',()=>this._moreInfo(entity));};bind('nSolar',c.solar);bind('nGrid',c.grid);bind('nLoad',c.load);bind('nBat',c.battery||c.soc);bind('nEV',c.ev_power||c.ev_soc);}
 _setupTooltips(){
   const self=this;
   const setup=(svgParent,cursorId,dotId,tipId,dataKey,color)=>{
@@ -701,8 +717,8 @@ this._$('vl').textContent=this._arrow(load,p.load)+this._fmt(load);
 this._prev={solar:sol??0,bat:bat??0,grid:grid??0,load:load??0};
 
 const socVal=soc??0;
-this._$('vc').textContent=soc!==null?Math.round(soc)+'% | '+c.shutdown_soc+'%':L.unavailable;
-const blEl=this._$('bl');if(blEl){blEl.setAttribute('width',(26*(socVal/100)).toFixed(1));if(bat!==null&&bat<-10){blEl.setAttribute('fill','#4CD964');blEl.setAttribute('class','bat-charge');}else{blEl.setAttribute('fill','var(--battery)');blEl.removeAttribute('class');}}
+const bpEl=this._$('bp');if(bpEl)bpEl.textContent=soc!==null?Math.round(soc)+'%':L.unavailable;
+const shu=c.shutdown_soc??20;let batC='var(--battery)',bpC='white';if(soc!==null&&socVal<=shu){batC='#EF5350';bpC='#EF5350';}else if(soc!==null&&socVal<=shu+15){batC='#FFA726';bpC='#FFA726';}const ch=bat!==null&&bat<-10;const blEl=this._$('bl');if(blEl){blEl.setAttribute('width',(26*(socVal/100)).toFixed(1));if(ch){blEl.setAttribute('fill','#4CD964');blEl.setAttribute('class','bat-charge');}else{blEl.setAttribute('fill',batC);blEl.removeAttribute('class');}}if(bpEl)bpEl.setAttribute('fill',ch?'white':bpC);
 
 if(temp!==null)this._$('tp').textContent=temp.toFixed(0)+'\u00B0C';else this._$('tp').textContent='';
 if(pvv!==null&&pvv2!==null){this._$('pv1').textContent=pvv.toFixed(0)+'V';this._$('pv').textContent=pvv2.toFixed(0)+'V';}else if(pvv!==null){this._$('pv1').textContent='';this._$('pv').textContent=pvv.toFixed(0)+'V';}else if(pvv2!==null){this._$('pv1').textContent='';this._$('pv').textContent=pvv2.toFixed(0)+'V';}else{this._$('pv1').textContent='';this._$('pv').textContent='';}
@@ -727,7 +743,7 @@ this._$('db').textContent=L.charge+' '+this._fmtE(dC)+' '+L.discharge+' '+this._
 const solF=sol??0,batF=bat??0,gridF=grid??0,loadF=load??0;
 const maxP=Math.max(solF,Math.abs(batF),Math.abs(gridF),loadF);
 const syncSpd=maxP>10?this._spd(maxP):3;
-if(this._syncSpd<=0||Math.abs(syncSpd-this._syncSpd)/this._syncSpd>0.1){this._syncSpd=syncSpd;const spdIn=(syncSpd*0.75).toFixed(1)+'s';const spdOut=syncSpd.toFixed(1)+'s';['fs','fg','fb'].forEach(id=>{const el=this._$(id);if(el)el.style.setProperty('--spd',spdIn);});const fh=this._$('fh');if(fh)fh.style.setProperty('--spd',spdOut);}
+if(this._syncSpd<=0||Math.abs(syncSpd-this._syncSpd)/this._syncSpd>0.1){this._syncSpd=syncSpd;const spdIn=(syncSpd*0.75).toFixed(1)+'s';const spdOut=syncSpd.toFixed(1)+'s';['fs','fg','fb'].forEach(id=>{const el=this._$(id);if(el)el.style.setProperty('--spd',spdIn);});const fh=this._$('fh');if(fh)fh.style.setProperty('--spd',spdOut);const fe=this._$('fe');if(fe)fe.style.setProperty('--spd',spdOut);}
 this._sf(this._$('fs'),'s',solF,'fd','var(--green)','0.8');
 this._sf(this._$('fg'),'g',gridF,gridF>0?'fr':'fL',gridF>0?'var(--red)':'var(--green)','0.7');
 this._sf(this._$('fb'),'b',batF,batF<0?'fd':'fu',batF<0?'var(--green)':'var(--solar)','0.75');
@@ -735,6 +751,25 @@ const solContrib=solF>0?solF:0;const batContrib=batF>0?batF:0;const gridContrib=
 let homeColor='var(--green)';
 if(loadF>10){if(gridContrib>=solContrib&&gridContrib>=batContrib&&gridContrib>0)homeColor='var(--red)';else if(batContrib>=solContrib&&batContrib>0)homeColor='var(--solar)';else homeColor='var(--green)';}
 this._sf(this._$('fh'),'h',loadF,'fr',homeColor,'0.75');
+
+// EV node — visible only when ev_power/ev_soc configured
+const nEV=this._$('nEV');
+if(nEV){
+  if(c.ev_power||c.ev_soc){
+    nEV.style.display='';
+    const evV=this._gv(c.ev_power);
+    const evAbs=evV!==null?Math.abs(evV):0;
+    this._$('ve').textContent=this._fmt(evV!==null?evAbs:null);
+    const evSoc=this._gv(c.ev_soc);
+    this._$('evsoc').textContent=evSoc!==null?Math.round(evSoc)+'%':'';
+    const dEV=this._gv(c.daily_ev);
+    this._$('de').textContent=dEV!==null?L.daily+' '+this._fmtE(dEV):'';
+    this._sf(this._$('fe'),'e',evAbs,'fd','var(--green)','0.75');
+    const evIcon=this._$('evIcon');if(evIcon)evIcon.style.opacity=evAbs>10?'1':'0.25';
+    this._$('ve').style.opacity=evAbs>10?'1':'0.25';
+    const evbolt=this._$('evbolt');if(evbolt){if(evAbs>10){evbolt.setAttribute('fill','var(--green)');evbolt.setAttribute('stroke','var(--green)');evbolt.setAttribute('class','led-on');}else{evbolt.setAttribute('fill','rgba(255,255,255,0.15)');evbolt.setAttribute('stroke','rgba(255,255,255,0.3)');evbolt.removeAttribute('class');}}
+  }else{nEV.style.display='none';}
+}
 
 const batCap=c.battery_capacity??5120;const shuSoc=c.shutdown_soc??20;
 const brEl=this._$('br');
