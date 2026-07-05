@@ -177,6 +177,28 @@ LEDs blink when active and remain dim when inactive.
 
 ## Changelog
 
+## v1.3.12
+
+### Features
+- **EV charging node** new node in the bottom-right corner, below Home: car icon, charge power, optional SOC and daily charged energy
+- New optional entities: `ev_power`, `ev_soc`, `daily_ev` (visual editor + YAML) node is hidden when not configured
+- Animated Home → EV flow (green) with blinking charge bolt while charging; click opens more-info
+
+### Example
+```yaml
+ev_power: sensor.wallbox_power    # W
+ev_soc: sensor.car_battery        # % (optional)
+daily_ev: sensor.wallbox_today    # kWh (optional)
+```
+### Visual
+- **Battery icon redesigned iPhone-style** SOC percentage now rendered inside the icon, over the fill level (white text with dark outline for legibility)
+- Battery icon enlarged (scale 1.70 → 2.05); standalone SOC text row removed; daily/runtime rows moved up
+- **Dynamic SOC colors** fill + inner % text change as the battery drains:
+  - above `shutdown_soc + 15%` → normal (purple fill, white text)
+  - at or below `shutdown_soc + 15%` → orange
+  - at or below `shutdown_soc` → red
+  - charging → green fill with white text (always)
+
 ## v1.3.11
 
 ### Performance
