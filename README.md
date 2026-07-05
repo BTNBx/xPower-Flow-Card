@@ -201,12 +201,7 @@ daily_ev: sensor.wallbox_today    # kWh (optional)
 ```
 ### Visual
 - **Battery icon redesigned iPhone-style** SOC percentage now rendered inside the icon, over the fill level (white text with dark outline for legibility)
-- Battery icon enlarged (scale 1.70 → 2.05); standalone SOC text row removed; daily/runtime rows moved up
-- **Dynamic SOC colors** fill + inner % text change as the battery drains:
-  - above `shutdown_soc + 15%` → normal (purple fill, white text)
-  - at or below `shutdown_soc + 15%` → orange
-  - at or below `shutdown_soc` → red
-  - charging → green fill with white text (always)
+- Battery icon enlarged (scale 1.70 → 2.05); standalone SOC text row removed; daily/runtime rows moved up.
 
 ## v1.3.11
 
