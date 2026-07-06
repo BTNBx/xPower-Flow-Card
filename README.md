@@ -55,7 +55,7 @@ Select your brand in the visual editor. Entities and polarity are configured aut
 * Respects `prefers-reduced-motion` (all animations disabled)
 * Fully translated visual editor (all 8 languages)
 * One-click entity auto-detection (HA Energy Dashboard + power sensor heuristics)
-* Live entity validation in the editor — missing entities flagged in red
+* Live entity validation in the editor missing entities flagged in red
 * `prefers-color-scheme` theme fallback when HA theme info is absent
 
 ## Installation
