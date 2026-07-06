@@ -1,10 +1,33 @@
 // xPower Flow Card — Modern power flow card for solar hybrid inverters
 // Copyright (C) 2025 BTNBx — MIT License
-const V='1.3.16';
+const V='1.3.17';
 
 /* ═══════════════════════════════════════
    CHANGELOG
    ═══════════════════════════════════════
+v1.4.6
+    Visual:
+        - Power values normalized to ~15px from each icon's visual edge (solar 82->81, grid 268->265)
+v1.4.5
+    Features:
+        - New option `grid_threshold` (W, default 0): grid readings below it count as 0 —
+          value dims, flow stops, icon goes inactive, autarky unaffected by standby draw
+v1.4.4
+    Visual:
+        - Removed green pulse on the battery fill while charging (dimming made the number hard to read);
+          solid green fill + bolt remain
+v1.4.3
+    Fixes:
+        - Battery no longer shows green charging state at 100% SOC (residual standby draw kept it green)
+v1.4.2
+    Fixes:
+        - Battery node alignment: icon group now centers on the pill body (values below no longer look shifted right)
+        - Battery power/daily/runtime rows moved up 8px — gap to icon now matches the Home node
+v1.4.1
+    Fixes:
+        - Flows/LEDs frozen when the OS has "reduce motion" enabled — v1.4.0 honored it unconditionally.
+          Now gated by new config `animations`: 'auto' (default, follow OS) or 'always' (ignore OS).
+          Applied via :host(.rm) class instead of a hard @media rule; tween respects the same setting.
 v1.4.0
     Features:
         - Editor: one-click entity auto-detection (HA Energy Dashboard prefs + power-sensor heuristics)
@@ -337,13 +360,14 @@ const DEFAULTS={
   battery_charge:'',battery_discharge:'',
   grid_voltage_l2:'',grid_voltage_l3:'',
   bat_polarity:'negative',grid_polarity:'positive',
-  shutdown_soc:20,battery_capacity:5120,language:'pt',
+  shutdown_soc:20,battery_capacity:5120,grid_threshold:0,language:'pt',
   inverter_name:'DEYE',
   weather_temp:'',weather_humidity:'',
   ev_power:'',ev_soc:'',daily_ev:'',
   import_cost:'',export_cost:'',
   compact:false,
-  theme:'auto'
+  theme:'auto',
+  animations:'auto'
 };
 
 const ENTITY_FIELDS=[
@@ -390,6 +414,9 @@ class XPowerFlowCardEditor extends HTMLElement{
     cfg.inverter_name=this.querySelector('#ed-inv').value;
     cfg.theme=this.querySelector('#ed-theme').value;
     cfg.compact=this.querySelector('#ed-compact').value==='true';
+    cfg.animations=this.querySelector('#ed-anim').value;
+    const gthVal=parseInt(this.querySelector('#ed-gth').value,10);
+    cfg.grid_threshold=isNaN(gthVal)?0:gthVal;
     cfg.bat_polarity=this.querySelector('#ed-bpol').value;
     cfg.grid_polarity=this.querySelector('#ed-gpol').value;
     const socVal=parseInt(this.querySelector('#ed-ssoc').value,10);
@@ -539,6 +566,17 @@ class XPowerFlowCardEditor extends HTMLElement{
           <label>${L.editor_capacity}</label>
           <input type="number" id="ed-cap" min="0" value="${c.battery_capacity??5120}">
         </div>
+        <div class="field">
+          <label>Grid min. (W)</label>
+          <input type="number" id="ed-gth" min="0" value="${c.grid_threshold??0}">
+        </div>
+        <div class="field">
+          <label>Animations</label>
+          <select id="ed-anim" style="${selStyle}">
+            <option value="auto" ${c.animations!=='always'?'selected':''}>Auto</option>
+            <option value="always" ${c.animations==='always'?'selected':''}>Always</option>
+          </select>
+        </div>
       </div>
 
       <h4>${L.editor_entities} <button id="ed-auto" type="button" style="float:right;margin-top:-4px;padding:4px 10px;font-size:11px;border:1px solid var(--divider-color,rgba(255,255,255,0.15));border-radius:4px;background:var(--card-background-color,#1c1e21);color:var(--primary-text-color);cursor:pointer">\u26A1 ${L.autodetect}</button></h4>
@@ -589,7 +627,7 @@ set hass(h){
   const t=this._c.theme||'auto';
   if(t==='auto'){const dm=h.themes?.darkMode;const dark=dm!==undefined?dm!==false:!(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches);this.classList.toggle('light',!dark);}
   else{this.classList.toggle('light',t==='light');}
-  this.classList.toggle('compact',!!this._c.compact);
+  this.classList.toggle('compact',!!this._c.compact);this.classList.toggle('rm',this._rm&&this._c.animations!=='always');
   if(document.hidden)return;
   const now=Date.now();
   if(!this._c.compact&&now-this._histLastLoad>HIST_INTERVAL){this._histLastLoad=now;this._loadHistory();}
@@ -664,7 +702,7 @@ svg{width:100%;height:auto;display:block}
 .led-on{animation:ledBlink 1.5s ease-in-out infinite}
 @keyframes batPulse{0%,100%{opacity:0.5}50%{opacity:0.85}}
 .bat-charge{animation:batPulse 1.5s ease-in-out infinite}
-@media (prefers-reduced-motion:reduce){.fa,.led-on,.bat-charge,.sun-spin{animation:none !important}}
+:host(.rm) .fa,:host(.rm) .led-on,:host(.rm) .bat-charge,:host(.rm) .sun-spin{animation:none !important}
 @keyframes sunSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 #sunG{transform-origin:250px 38px;transition:opacity 0.8s ease}
 #gridIcon,#loadIcon,#batIcon,#evIcon{transition:opacity 0.8s ease}
@@ -714,11 +752,11 @@ svg{width:100%;height:auto;display:block}
 </g>
 <path class="fl" d="M250,96 L250,178"/><path class="fl" d="M250,272 L250,364"/><path class="fl" d="M90,225 L215,225"/><path class="fl" d="M285,225 L395,225"/>
 <path id="fs" class="fa" d="M250,96 L250,178" pathLength="100" opacity="0"/><path id="fb" class="fa" d="M250,272 L250,364" pathLength="100" opacity="0"/><path id="fg" class="fa" d="M90,225 L215,225" pathLength="100" opacity="0"/><path id="fh" class="fa" d="M285,225 L395,225" pathLength="100" opacity="0"/>
-<g id="nSolar" class="ct"><g id="sunG"><g transform="translate(250,38) scale(1.65) translate(-250,-38)"><circle cx="250" cy="38" r="9" fill="var(--solar)" opacity="0.85"/><line x1="250" y1="25" x2="250" y2="21" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.6"/><line x1="250" y1="51" x2="250" y2="55" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.6"/><line x1="237" y1="38" x2="233" y2="38" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.6"/><line x1="263" y1="38" x2="267" y2="38" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.6"/><line x1="240.8" y1="28.8" x2="238" y2="26" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.5"/><line x1="259.2" y1="47.2" x2="262" y2="50" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.5"/><line x1="259.2" y1="28.8" x2="262" y2="26" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.5"/><line x1="240.8" y1="47.2" x2="238" y2="50" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.5"/></g></g><text x="250" y="82" class="vm" style="fill:var(--green)" id="vs"></text><text x="250" y="-2" class="vl">${L.solar}</text><text x="205" y="30" class="vd" id="ds1" style="text-anchor:end"></text><text x="205" y="44" class="vc" id="pv1" style="text-anchor:end"></text><text x="295" y="30" class="vd" id="ds" style="text-anchor:start"></text><text x="295" y="44" class="vc" id="pv" style="text-anchor:start"></text></g>
+<g id="nSolar" class="ct"><g id="sunG"><g transform="translate(250,38) scale(1.65) translate(-250,-38)"><circle cx="250" cy="38" r="9" fill="var(--solar)" opacity="0.85"/><line x1="250" y1="25" x2="250" y2="21" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.6"/><line x1="250" y1="51" x2="250" y2="55" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.6"/><line x1="237" y1="38" x2="233" y2="38" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.6"/><line x1="263" y1="38" x2="267" y2="38" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.6"/><line x1="240.8" y1="28.8" x2="238" y2="26" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.5"/><line x1="259.2" y1="47.2" x2="262" y2="50" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.5"/><line x1="259.2" y1="28.8" x2="262" y2="26" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.5"/><line x1="240.8" y1="47.2" x2="238" y2="50" stroke="var(--solar)" stroke-width="2" stroke-linecap="round" opacity="0.5"/></g></g><text x="250" y="81" class="vm" style="fill:var(--green)" id="vs"></text><text x="250" y="-2" class="vl">${L.solar}</text><text x="205" y="30" class="vd" id="ds1" style="text-anchor:end"></text><text x="205" y="44" class="vc" id="pv1" style="text-anchor:end"></text><text x="295" y="30" class="vd" id="ds" style="text-anchor:start"></text><text x="295" y="44" class="vc" id="pv" style="text-anchor:start"></text></g>
 <g><g transform="translate(250,225) scale(1.65)"><rect x="-18" y="-24" width="36" height="48" rx="2" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.25)" stroke-width="1"/><rect x="-18" y="-24" width="36" height="5" rx="2" fill="rgba(255,255,255,0.12)"/><rect x="-12" y="-15" width="24" height="12" rx="1.5" fill="rgba(102,187,106,0.15)" stroke="rgba(102,187,106,0.4)" stroke-width="0.7"/><circle id="led1" cx="-6" cy="2" r="1.2" fill="rgba(255,255,255,0.12)"/><circle id="led2" cx="-2" cy="2" r="1.2" fill="rgba(255,255,255,0.12)"/><circle id="led3" cx="2" cy="2" r="1.2" fill="rgba(255,255,255,0.12)"/><circle id="led4" cx="6" cy="2" r="1.2" fill="rgba(255,255,255,0.12)"/><path id="bolt" d="M-6,9 L-8,15 L-4,15 L-6,21" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.3)" stroke-width="0.5"/><rect x="2" y="12" width="10" height="3" rx="0.5" fill="rgba(255,255,255,0.1)"/><rect x="2" y="17" width="10" height="3" rx="0.5" fill="rgba(255,255,255,0.1)"/><text id="lcd" x="0" y="-9" class="lcd">0W</text></g>${INV?'<text x="250" y="272" class="il">'+INV+'</text>':''}<text x="296" y="264" class="vc" id="tp" text-anchor="start"></text></g>
-<g id="nGrid" class="ct"><g id="gridIcon" transform="translate(66,225) scale(1.65) translate(-66,-196)"><rect x="64" y="181" width="4" height="30" rx="1" fill="var(--red)" opacity="0.7"/><rect x="54" y="183" width="24" height="3" rx="1" fill="var(--red)" opacity="0.6"/><rect x="57" y="192" width="18" height="2.5" rx="1" fill="var(--red)" opacity="0.5"/><path d="M60,211 L64,199 L68,199 L72,211" fill="var(--red)" opacity="0.4"/><circle cx="56" cy="184" r="1.5" fill="var(--red)" opacity="0.8"/><circle cx="76" cy="184" r="1.5" fill="var(--red)" opacity="0.8"/><circle cx="58" cy="193" r="1.2" fill="var(--red)" opacity="0.7"/><circle cx="74" cy="193" r="1.2" fill="var(--red)" opacity="0.7"/><line x1="54" y1="184" x2="46" y2="181" stroke="var(--red)" stroke-width="0.8" opacity="0.3"/><line x1="78" y1="184" x2="86" y2="181" stroke="var(--red)" stroke-width="0.8" opacity="0.3"/></g><text x="66" y="268" class="vm" style="fill:var(--red)" id="vg"></text><text x="66" y="190" class="vl">${L.grid}</text><text x="66" y="286" class="vc" id="gv"></text><circle id="gsd" cx="92" cy="189" r="4" fill="rgba(255,255,255,0.12)"/><text x="66" y="300" class="vd" id="dg"></text></g>
+<g id="nGrid" class="ct"><g id="gridIcon" transform="translate(66,225) scale(1.65) translate(-66,-196)"><rect x="64" y="181" width="4" height="30" rx="1" fill="var(--red)" opacity="0.7"/><rect x="54" y="183" width="24" height="3" rx="1" fill="var(--red)" opacity="0.6"/><rect x="57" y="192" width="18" height="2.5" rx="1" fill="var(--red)" opacity="0.5"/><path d="M60,211 L64,199 L68,199 L72,211" fill="var(--red)" opacity="0.4"/><circle cx="56" cy="184" r="1.5" fill="var(--red)" opacity="0.8"/><circle cx="76" cy="184" r="1.5" fill="var(--red)" opacity="0.8"/><circle cx="58" cy="193" r="1.2" fill="var(--red)" opacity="0.7"/><circle cx="74" cy="193" r="1.2" fill="var(--red)" opacity="0.7"/><line x1="54" y1="184" x2="46" y2="181" stroke="var(--red)" stroke-width="0.8" opacity="0.3"/><line x1="78" y1="184" x2="86" y2="181" stroke="var(--red)" stroke-width="0.8" opacity="0.3"/></g><text x="66" y="265" class="vm" style="fill:var(--red)" id="vg"></text><text x="66" y="190" class="vl">${L.grid}</text><text x="66" y="286" class="vc" id="gv"></text><circle id="gsd" cx="92" cy="189" r="4" fill="rgba(255,255,255,0.12)"/><text x="66" y="300" class="vd" id="dg"></text></g>
 <g id="nLoad" class="ct"><g id="loadIcon" transform="translate(434,225) scale(1.65) translate(-434,-188)"><path d="M416,188 L434,174 L452,188 Z" fill="var(--load)" opacity="0.8"/><rect x="420" y="187" width="28" height="18" rx="1" fill="var(--load)" opacity="0.6"/><rect x="430" y="195" width="8" height="10" rx="1" fill="rgba(0,0,0,0.3)"/><rect x="422" y="190" width="6" height="5" rx="0.5" fill="rgba(255,255,255,0.15)"/><rect x="440" y="190" width="6" height="5" rx="0.5" fill="rgba(255,255,255,0.15)"/><rect x="441" y="176" width="5" height="8" rx="1" fill="var(--load)" opacity="0.5"/></g><text x="434" y="268" class="vm" style="fill:var(--load)" id="vl"></text><text x="434" y="190" class="vl">${L.load}</text><text x="434" y="288" class="vd" id="dl"></text></g>
-<g id="nBat" class="ct"><g id="batIcon" transform="translate(250,400) scale(2.05) translate(-250,-351)"><rect x="232" y="342.5" width="32" height="17" rx="5.5" fill="var(--batt)"/><rect id="bl" x="232" y="342.5" width="32" height="17" fill="var(--batf)" clip-path="url(#bat-clip)"/><rect x="264.5" y="346.5" width="4" height="9" rx="2" fill="var(--batt)"/><text id="bp" x="248" y="355.7" font-family="-apple-system,sans-serif" font-size="13.5" font-weight="800" fill="var(--batn)" text-anchor="middle" clip-path="url(#bat-clip-on)">--</text><text id="bp2" x="248" y="355.7" font-family="-apple-system,sans-serif" font-size="13.5" font-weight="800" fill="var(--batf)" text-anchor="middle" clip-path="url(#bat-clip-off)">--</text><path id="bbolt" d="M260.1,345.8 L255.7,352 L258.9,352 L257.1,356.8 L262.5,349.9 L259.3,349.9 Z" fill="#fff" style="display:none"/></g><text x="250" y="440" class="vm" style="fill:var(--solar)" id="vb"></text><text x="250" y="372" class="vl">${L.battery}</text><text x="316" y="394" class="vc" id="bv" text-anchor="start"></text><text x="316" y="406" class="vc" id="bt" text-anchor="start"></text><text x="250" y="460" class="vd" id="db"></text><text x="250" y="476" class="vc" id="br" style="fill:var(--t1)"></text></g>
+<g id="nBat" class="ct"><g id="batIcon" transform="translate(250,400) scale(2.05) translate(-248,-351)"><rect x="232" y="342.5" width="32" height="17" rx="5.5" fill="var(--batt)"/><rect id="bl" x="232" y="342.5" width="32" height="17" fill="var(--batf)" clip-path="url(#bat-clip)"/><rect x="264.5" y="346.5" width="4" height="9" rx="2" fill="var(--batt)"/><text id="bp" x="248" y="355.7" font-family="-apple-system,sans-serif" font-size="13.5" font-weight="800" fill="var(--batn)" text-anchor="middle" clip-path="url(#bat-clip-on)">--</text><text id="bp2" x="248" y="355.7" font-family="-apple-system,sans-serif" font-size="13.5" font-weight="800" fill="var(--batf)" text-anchor="middle" clip-path="url(#bat-clip-off)">--</text><path id="bbolt" d="M260.1,345.8 L255.7,352 L258.9,352 L257.1,356.8 L262.5,349.9 L259.3,349.9 Z" fill="#fff" style="display:none"/></g><text x="250" y="432" class="vm" style="fill:var(--solar)" id="vb"></text><text x="250" y="372" class="vl">${L.battery}</text><text x="316" y="394" class="vc" id="bv" text-anchor="start"></text><text x="316" y="406" class="vc" id="bt" text-anchor="start"></text><text x="250" y="452" class="vd" id="db"></text><text x="250" y="468" class="vc" id="br" style="fill:var(--t1)"></text></g>
 <g id="nEV" class="ct" style="display:none"><path class="fl" d="M434,302 L434,362"/><path id="fe" class="fa" d="M434,302 L434,362" pathLength="100" opacity="0"/><text x="434" y="372" class="vl">${L.ev}</text><g id="evIcon" transform="translate(434,398) scale(1.65) translate(-434,-398)"><path d="M419.5,402.5 Q419.3,398.2 424,397.1 Q426.5,391.6 432,390.9 L437,390.9 Q442.3,391.3 445.3,395.2 Q449.1,396.1 449.4,399.6 Q449.6,402.5 446.6,402.5 L422.4,402.5 Q419.6,402.5 419.5,402.5 Z" fill="var(--load)" opacity="0.8"/><path d="M427.6,395.9 Q429.1,392.6 432.6,392.3 L433.6,392.3 L433.6,395.9 Z" fill="rgba(0,0,0,0.35)"/><path d="M435.1,392.3 L436.9,392.3 Q440.4,392.7 442.4,395.9 L435.1,395.9 Z" fill="rgba(0,0,0,0.35)"/><circle cx="426" cy="402.4" r="3.1" fill="rgba(0,0,0,0.55)"/><circle cx="426" cy="402.4" r="1.4" fill="rgba(255,255,255,0.35)"/><circle cx="442.3" cy="402.4" r="3.1" fill="rgba(0,0,0,0.55)"/><circle cx="442.3" cy="402.4" r="1.4" fill="rgba(255,255,255,0.35)"/><path id="evbolt" d="M452.5,391 L450.5,396 L453.5,396 L451.5,401" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.3)" stroke-width="0.5"/></g><text x="434" y="440" class="vm" style="fill:var(--green)" id="ve"></text><g id="evPill" style="display:none"><rect x="420.5" y="450.5" width="24" height="12" rx="4" fill="var(--batt)"/><rect id="evl" x="420.5" y="450.5" width="0" height="12" fill="var(--batf)" clip-path="url(#ev-clip)"/><rect x="444.9" y="453.3" width="3" height="6.4" rx="1.5" fill="var(--batt)"/><text id="evsoc" x="432.5" y="459.8" font-family="-apple-system,sans-serif" font-size="9.5" font-weight="800" fill="var(--batn)" text-anchor="middle" clip-path="url(#ev-clip-on)"></text><text id="evsoc2" x="432.5" y="459.8" font-family="-apple-system,sans-serif" font-size="9.5" font-weight="800" fill="var(--batf)" text-anchor="middle" clip-path="url(#ev-clip-off)"></text></g><text x="434" y="476" class="vd" id="de"></text></g>
 <defs><clipPath id="au-clip"><rect x="476" y="-4" width="47" height="34" rx="6"/></clipPath></defs><rect x="476" y="-4" width="47" height="34" rx="6" fill="none"/><rect x="476" y="-4" width="47" height="34" rx="6" fill="none" id="au-border" stroke="#1a4a36" stroke-width="1.5"/><text x="499" y="9" id="va" font-family="-apple-system,sans-serif" font-size="13.6" font-weight="800" fill="white" text-anchor="middle" dominant-baseline="middle"></text><g clip-path="url(#au-clip)"><rect x="476" y="19" width="47" height="11" id="au-bar" fill="#1a4a36"/><text x="499" y="25" font-family="-apple-system,sans-serif" font-size="4.1" font-weight="700" fill="white" text-anchor="middle" dominant-baseline="middle">${L.autarky.toUpperCase()}</text></g>
 </g></svg>
@@ -767,7 +805,7 @@ _setupTooltips(){
 }
 _spd(p){const a=Math.abs(p);if(a<10)return 0;let s=Math.max(ANIM_MIN_SPD,ANIM_MAX_SPD-(a/ANIM_MAX_W)*(ANIM_MAX_SPD-ANIM_MIN_SPD));if(a>=3000)s*=0.4;else if(a>=2000)s*=0.6;else if(a>=1000)s*=0.8;return s;}
 _sf(el,id,p,d,c,o){if(!el)return;if(Math.abs(p)<10){el.setAttribute('opacity','0');return;}el.setAttribute('stroke',c);el.setAttribute('opacity',o);if(this._fs[id]!==d){this._fs[id]=d;el.setAttribute('class','fa '+d);this._resync=true;}}
-_tween(id,target,fmt){const el=this._$(id);if(!el)return;if(target===null||this._rm){el.textContent=fmt(target);this._twv[id]=target;return;}const from=this._twv[id];if(from===undefined||from===null||Math.abs(target-from)<1){el.textContent=fmt(target);this._twv[id]=target;return;}if(this._twr[id])cancelAnimationFrame(this._twr[id]);const t0=performance.now(),dur=600;const step=t=>{let k=Math.min(1,(t-t0)/dur);k=1-Math.pow(1-k,3);const v=from+(target-from)*k;el.textContent=fmt(v);if(k<1)this._twr[id]=requestAnimationFrame(step);else{this._twr[id]=null;this._twv[id]=target;}};this._twr[id]=requestAnimationFrame(step);}
+_tween(id,target,fmt){const el=this._$(id);if(!el)return;if(target===null||(this._rm&&this._c.animations!=='always')){el.textContent=fmt(target);this._twv[id]=target;return;}const from=this._twv[id];if(from===undefined||from===null||Math.abs(target-from)<1){el.textContent=fmt(target);this._twv[id]=target;return;}if(this._twr[id])cancelAnimationFrame(this._twr[id]);const t0=performance.now(),dur=600;const step=t=>{let k=Math.min(1,(t-t0)/dur);k=1-Math.pow(1-k,3);const v=from+(target-from)*k;el.textContent=fmt(v);if(k<1)this._twr[id]=requestAnimationFrame(step);else{this._twr[id]=null;this._twv[id]=target;}};this._twr[id]=requestAnimationFrame(step);}
 _spark(id,aid,data){const el=this._$(id);const af=this._$(aid);if(!el||!data.length)return;const w=200,h=55,py=2,max=Math.max(...data)||1;const pts=data.map((v,i)=>[(i/(data.length-1))*w,py+(1-v/max)*(h-py*2)]);if(pts.length<2)return;const tension=0.3;const cp=(p0,p1,p2,t)=>[p1[0]+(p2[0]-p0[0])*t,p1[1]+(p2[1]-p0[1])*t];let d='M'+pts[0][0].toFixed(1)+','+pts[0][1].toFixed(1);for(let i=0;i<pts.length-1;i++){const p0=pts[Math.max(0,i-1)];const p1=pts[i];const p2=pts[i+1];const p3=pts[Math.min(pts.length-1,i+2)];const c1=cp(p0,p1,p2,tension);const c2=[p2[0]-(p3[0]-p1[0])*tension,p2[1]-(p3[1]-p1[1])*tension];d+=' C'+c1[0].toFixed(1)+','+c1[1].toFixed(1)+' '+c2[0].toFixed(1)+','+c2[1].toFixed(1)+' '+p2[0].toFixed(1)+','+p2[1].toFixed(1);}el.setAttribute('d',d);if(af){af.setAttribute('d',d+'L'+w+','+h+'L0,'+h+'Z');}}
 _drawSparks(){this._spark('hs','hsa',this._hist.solar);this._spark('hl','hla',this._hist.load);this._spark('hg','hga',this._hist.grid);this._spark('hb2','hb2a',this._hist.battery);}
 
@@ -781,7 +819,7 @@ const batCh=this._gv(c.battery_charge);
 const batDis=this._gv(c.battery_discharge);
 const bat=(batCh!==null||batDis!==null)?(batDis??0)-(batCh??0):this._norm(this._gv(c.battery),'bat');
 const soc=this._gv(c.soc);
-const grid=this._norm(this._gv(c.grid),'grid');
+let grid=this._norm(this._gv(c.grid),'grid');const gth=Number(c.grid_threshold)||0;if(grid!==null&&Math.abs(grid)<gth)grid=0;
 const load=this._gv(c.load);
 const temp=this._gv(c.temperature);
 const gv=this._gv(c.grid_voltage);
@@ -801,7 +839,7 @@ this._prev={solar:sol??0,bat:bat??0,grid:grid??0,load:load??0};
 
 const socVal=soc??0;
 const bpEl=this._$('bp'),bp2El=this._$('bp2');const bpTxt=soc!==null?String(Math.round(soc)):L.unavailable;if(bpEl)bpEl.textContent=bpTxt;if(bp2El)bp2El.textContent=bpTxt;
-const shu=c.shutdown_soc??20;let batC='var(--batf)',bpC='var(--batn)';if(soc!==null&&socVal<=shu){batC='#EF5350';bpC='#fff';}else if(soc!==null&&socVal<=shu+15){batC='#FFA726';bpC='#111';}const ch=bat!==null&&bat<-10;if(ch){batC='#4CD964';bpC='#fff';}const bw=32*(socVal/100);const blEl=this._$('bl');if(blEl){blEl.setAttribute('width',bw.toFixed(1));blEl.setAttribute('fill',batC);if(ch)blEl.setAttribute('class','bat-charge');else blEl.removeAttribute('class');}const bcA=this._$('bclipA'),bcB=this._$('bclipB');if(bcA)bcA.setAttribute('width',bw.toFixed(1));if(bcB){bcB.setAttribute('x',(232+bw).toFixed(1));bcB.setAttribute('width',(32-bw).toFixed(1));}const bx=ch?'245':'248';if(bpEl){bpEl.setAttribute('fill',bpC);bpEl.setAttribute('x',bx);}if(bp2El){bp2El.setAttribute('fill',batC);bp2El.setAttribute('x',bx);}const bboltEl=this._$('bbolt');if(bboltEl)bboltEl.style.display=ch?'':'none';
+const shu=c.shutdown_soc??20;let batC='var(--batf)',bpC='var(--batn)';if(soc!==null&&socVal<=shu){batC='#EF5350';bpC='#fff';}else if(soc!==null&&socVal<=shu+15){batC='#FFA726';bpC='#111';}const ch=bat!==null&&bat<-10&&socVal<100;if(ch){batC='#4CD964';bpC='#fff';}const bw=32*(socVal/100);const blEl=this._$('bl');if(blEl){blEl.setAttribute('width',bw.toFixed(1));blEl.setAttribute('fill',batC);blEl.removeAttribute('class');}const bcA=this._$('bclipA'),bcB=this._$('bclipB');if(bcA)bcA.setAttribute('width',bw.toFixed(1));if(bcB){bcB.setAttribute('x',(232+bw).toFixed(1));bcB.setAttribute('width',(32-bw).toFixed(1));}const bx=ch?'245':'248';if(bpEl){bpEl.setAttribute('fill',bpC);bpEl.setAttribute('x',bx);}if(bp2El){bp2El.setAttribute('fill',batC);bp2El.setAttribute('x',bx);}const bboltEl=this._$('bbolt');if(bboltEl)bboltEl.style.display=ch?'':'none';
 
 if(temp!==null)this._$('tp').textContent=temp.toFixed(0)+'\u00B0C';else this._$('tp').textContent='';
 if(pvv!==null&&pvv2!==null){this._$('pv1').textContent=pvv.toFixed(0)+'V';this._$('pv').textContent=pvv2.toFixed(0)+'V';}else if(pvv!==null){this._$('pv1').textContent='';this._$('pv').textContent=pvv.toFixed(0)+'V';}else if(pvv2!==null){this._$('pv1').textContent='';this._$('pv').textContent=pvv2.toFixed(0)+'V';}else{this._$('pv1').textContent='';this._$('pv').textContent='';}
