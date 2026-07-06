@@ -193,6 +193,23 @@ LEDs blink when active and remain dim when inactive.
 
 ## Changelog
 
+## v1.3.17
+
+**Visual**
+- Power values vertically aligned to a consistent ~15px from each icon's visual edge (solar y=82->81, grid y=268->265) real geometry varies but perceived gap is now even
+- Removed green pulse on the battery fill while charging (dimming made the number hard to read); solid green fill + bolt remain
+
+
+**Features**
+- New option `grid_threshold` (W, default 0): grid readings below it count as 0 value dims, flow stops, icon goes inactive, autarky unaffected by standby draw
+
+
+**Fixes**
+- Battery no longer shows green charging state at 100% SOC (residual standby draw kept it green)
+- Battery node alignment: icon group now centers on the pill body (values below no longer look shifted right)  
+- Battery power/daily/runtime rows moved up 8px gap to icon now matches the Home node
+- Flows/LEDs frozen when the OS has "reduce motion" enabled v1.3.16 honored it unconditionally. Now gated by new config `animations`: 'auto' (default, follow OS) or 'always' (ignore OS). Applied via :host(.rm) class instead of a hard @media rule; tween respects the same setting.
+
 ## v1.3.16
 
 **Features**
