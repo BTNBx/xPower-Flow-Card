@@ -30,7 +30,6 @@ Select your brand in the visual editor. Entities and polarity are configured aut
 * Inverter icon with 4 status LEDs indicating active energy flows
 * LCD display on the inverter showing home consumption
 * Battery runtime estimation with shutdown SOC and ETA
-* iPhone-style battery icon with SOC percentage inside, color-coded (normal / orange / red) as it drains
 * Optional weather display (temperature and humidity)
 * 24-hour sparkline charts with Catmull-Rom interpolation, updated every 5 minutes
 * Sparkline tooltips showing power and timestamp on hover
@@ -50,6 +49,14 @@ Select your brand in the visual editor. Entities and polarity are configured aut
 * Click any node to open the entity more-info dialog
 * Full theming via CSS custom properties (`--xpf-*`)
 * Performance-optimized: entity diffing, paused updates in hidden tabs
+* Animated value transitions, smooth count-up on power changes
+* Gradient-filled sparkline areas
+* EV SOC shown as a mini iOS-style pill (green while charging)
+* Respects `prefers-reduced-motion` (all animations disabled)
+* Fully translated visual editor (all 8 languages)
+* One-click entity auto-detection (HA Energy Dashboard + power sensor heuristics)
+* Live entity validation in the editor — missing entities flagged in red
+* `prefers-color-scheme` theme fallback when HA theme info is absent
 
 ## Installation
 
@@ -185,6 +192,22 @@ The 4 LEDs on the inverter icon reflect active power flows:
 LEDs blink when active and remain dim when inactive.
 
 ## Changelog
+
+## v1.3.16
+
+**Features**
+- Editor: one-click **entity auto-detection** — reads the HA Energy Dashboard preferences (daily energy stats) and applies power-sensor heuristics; only fills empty fields
+- Editor: **live entity validation** — unknown entity ids get a red border and a warning
+- Editor: field labels **translated in all 8 languages**
+- EV SOC displayed as a **mini iOS pill** (matches the battery icon, green while charging)
+
+**Visual**
+- Smooth **count-up tween** on all main power values (600 ms, cubic ease-out)
+- Sparkline areas now use **vertical gradient fills**
+
+**Accessibility**
+- `prefers-reduced-motion` honored: all animations off, values update instantly
+- `prefers-color-scheme` fallback for theme auto-detection when HA theme info is absent
 
 
 ## v1.3.13, v1.3.14, v1.3.15
