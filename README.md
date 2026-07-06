@@ -196,8 +196,8 @@ LEDs blink when active and remain dim when inactive.
 ## v1.3.16
 
 **Features**
-- Editor: one-click **entity auto-detection** — reads the HA Energy Dashboard preferences (daily energy stats) and applies power-sensor heuristics; only fills empty fields
-- Editor: **live entity validation** — unknown entity ids get a red border and a warning
+- Editor: one-click **entity auto-detection** reads the HA Energy Dashboard preferences (daily energy stats) and applies power-sensor heuristics; only fills empty fields
+- Editor: **live entity validation** unknown entity ids get a red border and a warning
 - Editor: field labels **translated in all 8 languages**
 - EV SOC displayed as a **mini iOS pill** (matches the battery icon, green while charging)
 
