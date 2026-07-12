@@ -193,6 +193,11 @@ LEDs blink when active and remain dim when inactive.
 
 ## Changelog
 
+## v1.3.19
+
+**Visual**
+- Main SVG viewBox height 487 -> 470: kills the dead band under the battery node (content ends ~463). Scales with width, so the phone gap shrinks proportionally. Compact mode unaffected, nothing sits below y=470. Also v1.4.7 gap fix used mm by mistake (4mm ~ 15px); now 4px.
+
 ## v1.3.18
 
 **Animation**
