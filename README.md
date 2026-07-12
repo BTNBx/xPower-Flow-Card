@@ -193,6 +193,14 @@ LEDs blink when active and remain dim when inactive.
 
 ## Changelog
 
+## v1.3.18
+
+**Animation**
+- True pass-through relay: Home outlet delayed -T/2 so its pulse departs the inverter the instant the inlet pulse front arrives (was: departed only after inlet fully drained). Home -> EV keeps zero delay, which now chains exactly off the pulse arriving at Home.
+
+**Fixes**
+- Dual-color SOC numbers invisible on iOS (WebKit ignores clip-path on SVG <text>, layers cancel out). Replaced text clip-paths with nested <svg> viewport cropping battery + EV pill. Desktop unchanged.
+
 ## v1.3.17
 
 **Visual**
