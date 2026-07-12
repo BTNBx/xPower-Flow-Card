@@ -1,10 +1,19 @@
 // xPower Flow Card — Modern power flow card for solar hybrid inverters
 // Copyright (C) 2025 BTNBx — MIT License
-const V='1.3.18';
+const V='1.4.11';
 
 /* ═══════════════════════════════════════
    CHANGELOG
    ═══════════════════════════════════════
+v1.4.11
+    Visual:
+        - Main SVG viewBox height 487 -> 470: kills the dead band under the battery node (content ends ~463).
+          Scales with width, so the phone gap shrinks proportionally. Compact mode unaffected — nothing sits
+          below y=470. Also v1.4.7 gap fix used mm by mistake (4mm ~ 15px); now 4px.
+v1.4.10
+    Animation:
+        - -T/2 outlet delay now applied to ALL flows leaving the inverter, not just Home:
+          battery while charging (fd) and grid while exporting (fl). Discharge/import stay inlet-phased.
 v1.4.9
     Animation:
         - True pass-through relay: Home outlet delayed -T/2 so its pulse departs the inverter the instant
@@ -753,7 +762,7 @@ svg{width:100%;height:auto;display:block}
 .ss #hs{fill:none;stroke:rgba(102,187,106,0.7);stroke-width:1.2}.sc #hl{fill:none;stroke:rgba(38,198,218,0.7);stroke-width:1.2}.sg #hg{fill:none;stroke:rgba(66,165,245,0.7);stroke-width:1.2}.sbt #hb2{fill:none;stroke:rgba(124,77,255,0.7);stroke-width:1.2}
 .ss #hsa{fill:url(#sgd-s);stroke:none}.sc #hla{fill:url(#sgd-l);stroke:none}.sg #hga{fill:url(#sgd-g);stroke:none}.sbt #hb2a{fill:url(#sgd-b);stroke:none}
 </style>
-<ha-card><svg viewBox="0 0 526 487"><defs><filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter><clipPath id="bat-clip"><rect x="232" y="342.5" width="32" height="17" rx="5.5"/></clipPath><clipPath id="ev-clip"><rect x="420.5" y="450.5" width="24" height="12" rx="4"/></clipPath></defs><g transform="translate(25.5,10) scale(0.95)">
+<ha-card><svg viewBox="0 0 526 470"><defs><filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter><clipPath id="bat-clip"><rect x="232" y="342.5" width="32" height="17" rx="5.5"/></clipPath><clipPath id="ev-clip"><rect x="420.5" y="450.5" width="24" height="12" rx="4"/></clipPath></defs><g transform="translate(25.5,10) scale(0.95)">
 <g id="wicons" style="display:none" transform="translate(-20,0)">
 <rect class="wb" x="-2" y="-4" width="86" height="20"/>
 <g transform="translate(0,1)"><rect x="6" y="0" width="2.5" height="7" rx="1.2" fill="none" stroke="var(--t3)" stroke-width="0.7"/><circle cx="7.2" cy="9" r="2.5" fill="none" stroke="var(--t3)" stroke-width="0.7"/><line x1="7.2" y1="3" x2="7.2" y2="7" stroke="var(--red)" stroke-width="1" stroke-linecap="round"/><circle cx="7.2" cy="9" r="1.2" fill="var(--red)"/></g>
@@ -772,7 +781,7 @@ svg{width:100%;height:auto;display:block}
 <g id="nEV" class="ct" style="display:none"><path class="fl" d="M434,302 L434,362"/><path id="fe" class="fa" d="M434,302 L434,362" pathLength="100" opacity="0"/><text x="434" y="372" class="vl">${L.ev}</text><g id="evIcon" transform="translate(434,398) scale(1.65) translate(-434,-398)"><path d="M419.5,402.5 Q419.3,398.2 424,397.1 Q426.5,391.6 432,390.9 L437,390.9 Q442.3,391.3 445.3,395.2 Q449.1,396.1 449.4,399.6 Q449.6,402.5 446.6,402.5 L422.4,402.5 Q419.6,402.5 419.5,402.5 Z" fill="var(--load)" opacity="0.8"/><path d="M427.6,395.9 Q429.1,392.6 432.6,392.3 L433.6,392.3 L433.6,395.9 Z" fill="rgba(0,0,0,0.35)"/><path d="M435.1,392.3 L436.9,392.3 Q440.4,392.7 442.4,395.9 L435.1,395.9 Z" fill="rgba(0,0,0,0.35)"/><circle cx="426" cy="402.4" r="3.1" fill="rgba(0,0,0,0.55)"/><circle cx="426" cy="402.4" r="1.4" fill="rgba(255,255,255,0.35)"/><circle cx="442.3" cy="402.4" r="3.1" fill="rgba(0,0,0,0.55)"/><circle cx="442.3" cy="402.4" r="1.4" fill="rgba(255,255,255,0.35)"/><path id="evbolt" d="M452.5,391 L450.5,396 L453.5,396 L451.5,401" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.3)" stroke-width="0.5"/></g><text x="434" y="440" class="vm" style="fill:var(--green)" id="ve"></text><g id="evPill" style="display:none"><rect x="420.5" y="450.5" width="24" height="12" rx="4" fill="var(--batt)"/><rect id="evl" x="420.5" y="450.5" width="0" height="12" fill="var(--batf)" clip-path="url(#ev-clip)"/><rect x="444.9" y="453.3" width="3" height="6.4" rx="1.5" fill="var(--batt)"/><svg id="evA" x="420.5" y="450.5" width="24" height="12" viewBox="420.5 450.5 24 12" preserveAspectRatio="xMinYMin slice"><text id="evsoc" x="432.5" y="459.8" font-family="-apple-system,sans-serif" font-size="9.5" font-weight="800" fill="var(--batn)" text-anchor="middle"></text></svg><svg id="evB" x="444.5" y="450.5" width="0" height="12" viewBox="444.5 450.5 0.01 12" preserveAspectRatio="xMinYMin slice"><text id="evsoc2" x="432.5" y="459.8" font-family="-apple-system,sans-serif" font-size="9.5" font-weight="800" fill="var(--batf)" text-anchor="middle"></text></svg></g><text x="434" y="476" class="vd" id="de"></text></g>
 <defs><clipPath id="au-clip"><rect x="476" y="-4" width="47" height="34" rx="6"/></clipPath></defs><rect x="476" y="-4" width="47" height="34" rx="6" fill="none"/><rect x="476" y="-4" width="47" height="34" rx="6" fill="none" id="au-border" stroke="#1a4a36" stroke-width="1.5"/><text x="499" y="9" id="va" font-family="-apple-system,sans-serif" font-size="13.6" font-weight="800" fill="white" text-anchor="middle" dominant-baseline="middle"></text><g clip-path="url(#au-clip)"><rect x="476" y="19" width="47" height="11" id="au-bar" fill="#1a4a36"/><text x="499" y="25" font-family="-apple-system,sans-serif" font-size="4.1" font-weight="700" fill="white" text-anchor="middle" dominant-baseline="middle">${L.autarky.toUpperCase()}</text></g>
 </g></svg>
-<div class="sr" style="margin-top:4mm">
+<div class="sr" style="margin-top:4px">
 <div class="sb sg"><div class="sb-header"><span class="sl">${L.grid24}</span><span class="sv" id="hz"></span></div><svg viewBox="0 0 200 55" preserveAspectRatio="none"><defs><linearGradient id="sgd-g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(66,165,245,0.30)"/><stop offset="1" stop-color="rgba(66,165,245,0)"/></linearGradient></defs><path id="hga"/><path id="hg"/><line class="cursor" id="cg" x1="0" y1="0" x2="0" y2="55"/><circle class="cursor-dot" id="dg2" cx="0" cy="0" r="3"/></svg><span class="sb-tip" id="tg"></span></div>
 <div class="sb ss"><div class="sb-header"><span class="sl">${L.solar24}</span><span class="sv" id="hv"></span></div><svg viewBox="0 0 200 55" preserveAspectRatio="none"><defs><linearGradient id="sgd-s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(102,187,106,0.30)"/><stop offset="1" stop-color="rgba(102,187,106,0)"/></linearGradient></defs><path id="hsa"/><path id="hs"/><line class="cursor" id="cs" x1="0" y1="0" x2="0" y2="55"/><circle class="cursor-dot" id="ds2" cx="0" cy="0" r="3"/></svg><span class="sb-tip" id="ts"></span></div>
 <div class="sb sc"><div class="sb-header"><span class="sl">${L.load24}</span><span class="sv" id="hx"></span></div><svg viewBox="0 0 200 55" preserveAspectRatio="none"><defs><linearGradient id="sgd-l" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(38,198,218,0.30)"/><stop offset="1" stop-color="rgba(38,198,218,0)"/></linearGradient></defs><path id="hla"/><path id="hl"/><line class="cursor" id="cl" x1="0" y1="0" x2="0" y2="55"/><circle class="cursor-dot" id="dl2" cx="0" cy="0" r="3"/></svg><span class="sb-tip" id="tl"></span></div>
@@ -923,7 +932,7 @@ if(nEV){
 }
 
 // Phase lock — restart all flow animations in the same frame so pulses relay through the inverter
-if(this._resync){this._resync=false;const els=['fs','fg','fb','fh','fe'].map(id=>this._$(id)).filter(Boolean);els.forEach(el=>{el.style.animation='none';});void this.offsetWidth;els.forEach(el=>{el.style.animation='';el.style.animationDelay=el.id==='fh'?('-'+(this._syncSpd/2).toFixed(2)+'s'):'0s';});}
+if(this._resync){this._resync=false;const els=['fs','fg','fb','fh','fe'].map(id=>this._$(id)).filter(Boolean);els.forEach(el=>{el.style.animation='none';});void this.offsetWidth;els.forEach(el=>{el.style.animation='';const half='-'+(this._syncSpd/2).toFixed(2)+'s';let d='0s';if(el.id==='fh')d=half;else if(el.id==='fb'&&this._fs['b']==='fd')d=half;else if(el.id==='fg'&&this._fs['g']==='fl')d=half;el.style.animationDelay=d;});}
 
 const batCap=c.battery_capacity??5120;const shuSoc=c.shutdown_soc??20;
 const brEl=this._$('br');
