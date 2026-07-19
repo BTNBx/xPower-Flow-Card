@@ -193,6 +193,18 @@ LEDs blink when active and remain dim when inactive.
 
 ## Changelog
 
+## v1.3.21
+
+### Fixed
+- 24h sparklines floated above the panel bottom when header text wrapped (narrow layouts equalize panel heights). Charts are now pinned to the bottom of each panel.
+
+### Added
+- **Solar day ring**: 270° arc around the sun icon showing sunrise → sunset progress — amber gradient, animated position dot (opacity pulse only), sunrise and sunset times at the arc ends. Uses `sun.sun` (configurable via `sun_entity`), hidden below the horizon. New editor field, translated in 8 languages.
+
+### Changed
+- PV1/PV2 side info restructured as centered columns (title / power / voltage) with amber inward arrows outside the values. Single-MPPT setups keep the daily kWh on the right.
+- `SOLAR` label moved up (y −2 → −10); viewBox top extended (0 → −8) for dot clearance at solar noon.
+
 ## v1.3.20
 
 - Bug fixing
