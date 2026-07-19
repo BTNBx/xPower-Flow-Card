@@ -62,10 +62,11 @@ Select your brand in the visual editor. Entities and polarity are configured aut
 
 ### HACS (Recommended)
 
-1. Open HACS, go to Frontend, click the menu, then Custom repositories
-2. Add `https://github.com/BTNBx/xPower-Flow-Card` as **Dashboard**
-3. Search for "xPower Flow Card" and install
-4. Refresh your browser (Ctrl+Shift+R)
+[![Open your Home Assistant instance and open a repository inside HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=BTNBx&repository=xPower-Flow-Card&category=dashboard)
+
+1. Open **HACS** in Home Assistant
+2. Search for **"xPower Flow Card"** and install
+3. Refresh your browser (Ctrl+Shift+R)
 
 ### Manual
 
