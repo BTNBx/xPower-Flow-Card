@@ -194,6 +194,15 @@ LEDs blink when active and remain dim when inactive.
 
 ## Changelog
 
+## v1.4.14
+
+- **Solar day ring redesigned**, 96 thin radial ticks (r 32→40, amber→coral gradient) replace the continuous arc. Elapsed ticks light up as the day progresses; the rest stay dimmed. Progress path, position dot and halo removed.
+- **Sun icon**, rays removed in favour of a radial-gradient disc (r=19) with a soft halo (r=28). The `sun-spin` rotation was dropped (invisible on a plain disc), along with its keyframes and the unused `.sr-halo`/`srPulse` rules.
+- **Sunrise/sunset times**, hidden by default, revealed on hover or on tap of the ring (invisible hit path + `.srshow` class for 3s on touch). Tapping the ring no longer opens the solar more-info dialog.
+- **Inverter icon redesigned**, near-square white body (38×38, rx 5), dark central capsule with three status LEDs (green solar, amber battery, red grid) and three connector tabs on the base. The skeuomorphic box, LCD readout, bolt, vents and the 4th (load) LED are gone.
+- **Accent bar tied to grid status**, green when the grid is online, red when it is down, Huawei red when no `grid_status` entity is configured.
+- **Flow lines re-anchored** to the new inverter body: equal 6px gap on all four sides (solar/battery moved in, grid/home moved out). The EV line is unchanged.
+
 ## v1.3.21
 
 ### Fixed
