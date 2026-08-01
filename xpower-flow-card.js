@@ -1,22 +1,32 @@
 // xPower Flow Card — Modern power flow card for solar hybrid inverters
 // Copyright (C) 2025 BTNBx — MIT License
-const V='1.3.22';
+const V='1.3.23';
 
 /* ═══════════════════════════════════════
    CHANGELOG
    ═══════════════════════════════════════
+v1.3.23
+   - Fix: grid-export flow phase — resync compared 'fl' but the class is 'fL',
+     so the -T/2 outlet delay never applied while exporting. Corrected to 'fL'.
+   - Solar node (single MPPT): daily kWh and PV voltage enlarged to match the
+     grid node (13px / 11px) and nudged right (x 314 -> 330) to clear the sun.
+v1.4.14
+   - Autarky badge redesigned as a circular mini-ring (replaces the corner
+     pill): green→lime progress arc, centered %, leaf glyph below, and the
+     "Autossuficiência" label hidden — revealed on hover (desktop) or tap
+     (mobile, 3s). Level colors kept (amber ≥50, orange ≥25, red <25); ≥90 glow.
 v1.4.13
    - Fix: 24h sparklines floated above the panel bottom when header text
      wrapped (narrow layouts equalize panel heights); .sb svg margin-top
      4px -> auto pins each chart to the bottom of its panel.
 v1.4.12
-   - Solar day ring: 270\u00b0 arc (r=36) around the sun icon, sunrise\u2192sunset
+   - Solar day ring: 270° arc (r=36) around the sun icon, sunrise→sunset
      progress with amber gradient + position dot (opacity pulse only).
      Sunrise/sunset times at the arc ends. Uses sun.sun (config: sun_entity),
      hidden below horizon. Editor field added (8 languages).
    - PV1/PV2 side info: centered columns (title / power / voltage) with
      amber inward arrows outside the values. Single-MPPT keeps daily kWh right.
-   - SOLAR label y -2 \u2192 -10; viewBox top 0 \u2192 -8 (dot clearance at solar noon).
+   - SOLAR label y -2 → -10; viewBox top 0 → -8 (dot clearance at solar noon).
 v1.4.11
     Visual:
         - Main SVG viewBox height 487 -> 470: kills the dead band under the battery node (content ends ~463).
@@ -764,6 +774,10 @@ svg{width:100%;height:auto;display:block}
 .il{fill:rgba(255,255,255,0.35);font-size:12px;font-weight:600;letter-spacing:0.05em;text-anchor:middle;dominant-baseline:middle}
 .au{fill:white;font-size:9px;font-weight:600;letter-spacing:0.04em;text-anchor:middle;dominant-baseline:middle}
 .au-pill{rx:8;ry:8;transition:fill 0.5s ease}
+.au-track{stroke:rgba(255,255,255,0.10)}
+:host(.light) .au-track{stroke:rgba(0,0,0,0.10)}
+.aul{fill:var(--t1);font-size:8.5px;font-weight:600;letter-spacing:0.02em;text-anchor:end;dominant-baseline:middle;opacity:0;transition:opacity 0.25s ease}
+#nAutarky:hover .aul,#nAutarky.aushow .aul{opacity:1}
 .ct{cursor:pointer}.ct:hover{filter:brightness(1.2)}
 
 
@@ -796,15 +810,15 @@ svg{width:100%;height:auto;display:block}
 <g id="wdrop" transform="translate(2,1)"><path d="M46,9 Q46,4 49,0 Q52,4 52,9 Q52,12 49,12 Q46,12 46,9Z" fill="none" stroke="var(--t3)" stroke-width="0.7"/><path d="M47.2,8.5 Q47.2,5.5 49,2 Q50.8,5.5 50.8,8.5 Q50.8,10.5 49,10.5 Q47.2,10.5 47.2,8.5Z" fill="var(--grid)" opacity="0.5"/></g>
 <text x="58" y="8" class="wt" id="wh"></text>
 </g>
-<path class="fl" d="M250,96 L250,187.6"/><path class="fl" d="M250,266.3 L250,364"/><path class="fl" d="M90,225 L212.6,225"/><path class="fl" d="M287.4,225 L395,225"/>
-<path id="fs" class="fa" d="M250,96 L250,187.6" pathLength="100" opacity="0"/><path id="fb" class="fa" d="M250,266.3 L250,364" pathLength="100" opacity="0"/><path id="fg" class="fa" d="M90,225 L212.6,225" pathLength="100" opacity="0"/><path id="fh" class="fa" d="M287.4,225 L395,225" pathLength="100" opacity="0"/>
+<path class="fl" d="M250,96 L250,187.7"/><path class="fl" d="M250,262.4 L250,364"/><path class="fl" d="M90,225 L212.7,225"/><path class="fl" d="M287.4,225 L395,225"/>
+<path id="fs" class="fa" d="M250,96 L250,187.7" pathLength="100" opacity="0"/><path id="fb" class="fa" d="M250,262.4 L250,364" pathLength="100" opacity="0"/><path id="fg" class="fa" d="M90,225 L212.7,225" pathLength="100" opacity="0"/><path id="fh" class="fa" d="M287.4,225 L395,225" pathLength="100" opacity="0"/>
 <g id="nSolar" class="ct"><g id="sunRing" style="display:none">${SUNTICKS}<path id="srhit" d="M224.5,63.5 A36,36 0 1 1 275.5,63.5" fill="none" stroke="transparent" stroke-width="16" pointer-events="stroke" style="cursor:pointer"/><text id="srx" x="215" y="66" class="srt" style="text-anchor:end"></text><text id="ssx" x="285" y="66" class="srt" style="text-anchor:start"></text></g><g id="sunG"><circle cx="250" cy="38" r="28" fill="url(#sunhl)"/><circle cx="250" cy="38" r="19" fill="url(#sundisc)"/></g><text x="250" y="81" class="vm" style="fill:var(--green)" id="vs"></text><text x="250" y="-10" class="vl">${L.solar}</text><text id="dst1" x="186" y="22" class="pvh"></text><text id="ds1" x="186" y="34" class="pvv"></text><text id="pv1" x="186" y="46" class="pvu"></text><text id="dst" x="314" y="22" class="pvh"></text><text id="ds" x="314" y="34" class="pvv"></text><text id="pv" x="314" y="46" class="pvu"></text><path id="arl" d="M162,31 L162,37 L168,34 Z" fill="#FFD54F" opacity="0.85" style="display:none"/><path id="arr" d="M338,31 L338,37 L332,34 Z" fill="#FFD54F" opacity="0.85" style="display:none"/></g>
 <g><g transform="translate(250,225) scale(1.65)"><rect x="-19" y="-19" width="38" height="38" rx="5" fill="url(#ivbody)" stroke="rgba(0,0,0,0.18)" stroke-width="0.5"/><rect x="-11" y="18" width="4.5" height="2.4" rx="0.8" fill="rgba(0,0,0,0.35)"/><rect x="-2.25" y="18" width="4.5" height="2.4" rx="0.8" fill="rgba(0,0,0,0.35)"/><rect x="6.5" y="18" width="4.5" height="2.4" rx="0.8" fill="rgba(0,0,0,0.35)"/><rect x="-11" y="-4.6" width="22" height="9.2" rx="4.6" fill="url(#ivpill)"/><circle id="led1" cx="-4" cy="-0.6" r="1.15" fill="rgba(255,255,255,0.12)"/><circle id="led2" cx="0" cy="-0.6" r="1.15" fill="rgba(255,255,255,0.12)"/><circle id="led3" cx="4" cy="-0.6" r="1.15" fill="rgba(255,255,255,0.12)"/><rect id="ivbar" x="-3" y="2.6" width="6" height="0.9" rx="0.45" fill="#E4002B"/></g>${INV?'<text x="250" y="272" class="il">'+INV+'</text>':''}<text x="296" y="264" class="vc" id="tp" text-anchor="start"></text></g>
 <g id="nGrid" class="ct"><g id="gridIcon" transform="translate(66,225) scale(1.65) translate(-66,-196)"><rect x="64" y="181" width="4" height="30" rx="1" fill="var(--red)" opacity="0.7"/><rect x="54" y="183" width="24" height="3" rx="1" fill="var(--red)" opacity="0.6"/><rect x="57" y="192" width="18" height="2.5" rx="1" fill="var(--red)" opacity="0.5"/><path d="M60,211 L64,199 L68,199 L72,211" fill="var(--red)" opacity="0.4"/><circle cx="56" cy="184" r="1.5" fill="var(--red)" opacity="0.8"/><circle cx="76" cy="184" r="1.5" fill="var(--red)" opacity="0.8"/><circle cx="58" cy="193" r="1.2" fill="var(--red)" opacity="0.7"/><circle cx="74" cy="193" r="1.2" fill="var(--red)" opacity="0.7"/><line x1="54" y1="184" x2="46" y2="181" stroke="var(--red)" stroke-width="0.8" opacity="0.3"/><line x1="78" y1="184" x2="86" y2="181" stroke="var(--red)" stroke-width="0.8" opacity="0.3"/></g><text x="66" y="265" class="vm" style="fill:var(--red)" id="vg"></text><text x="66" y="190" class="vl">${L.grid}</text><text x="66" y="286" class="vc" id="gv"></text><circle id="gsd" cx="92" cy="189" r="4" fill="rgba(255,255,255,0.12)"/><text x="66" y="300" class="vd" id="dg"></text></g>
 <g id="nLoad" class="ct"><g id="loadIcon" transform="translate(434,225) scale(1.65) translate(-434,-188)"><path d="M416,188 L434,174 L452,188 Z" fill="var(--load)" opacity="0.8"/><rect x="420" y="187" width="28" height="18" rx="1" fill="var(--load)" opacity="0.6"/><rect x="430" y="195" width="8" height="10" rx="1" fill="rgba(0,0,0,0.3)"/><rect x="422" y="190" width="6" height="5" rx="0.5" fill="rgba(255,255,255,0.15)"/><rect x="440" y="190" width="6" height="5" rx="0.5" fill="rgba(255,255,255,0.15)"/><rect x="441" y="176" width="5" height="8" rx="1" fill="var(--load)" opacity="0.5"/></g><text x="434" y="268" class="vm" style="fill:var(--load)" id="vl"></text><text x="434" y="190" class="vl">${L.load}</text><text x="434" y="288" class="vd" id="dl"></text></g>
 <g id="nBat" class="ct"><g id="batIcon" transform="translate(250,400) scale(2.05) translate(-248,-351)"><rect x="232" y="342.5" width="32" height="17" rx="5.5" fill="var(--batt)"/><rect id="bl" x="232" y="342.5" width="32" height="17" fill="var(--batf)" clip-path="url(#bat-clip)"/><rect x="264.5" y="346.5" width="4" height="9" rx="2" fill="var(--batt)"/><svg id="bpA" x="232" y="342.5" width="32" height="17" viewBox="232 342.5 32 17" preserveAspectRatio="xMinYMin slice"><text id="bp" x="248" y="355.7" font-family="-apple-system,sans-serif" font-size="13.5" font-weight="800" fill="var(--batn)" text-anchor="middle">--</text></svg><svg id="bpB" x="264" y="342.5" width="0" height="17" viewBox="264 342.5 0.01 17" preserveAspectRatio="xMinYMin slice"><text id="bp2" x="248" y="355.7" font-family="-apple-system,sans-serif" font-size="13.5" font-weight="800" fill="var(--batf)" text-anchor="middle">--</text></svg><path id="bbolt" d="M260.1,345.8 L255.7,352 L258.9,352 L257.1,356.8 L262.5,349.9 L259.3,349.9 Z" fill="#fff" style="display:none"/></g><text x="250" y="432" class="vm" style="fill:var(--solar)" id="vb"></text><text x="250" y="372" class="vl">${L.battery}</text><text x="316" y="394" class="vc" id="bv" text-anchor="start"></text><text x="316" y="406" class="vc" id="bt" text-anchor="start"></text><text x="250" y="452" class="vd" id="db"></text><text x="250" y="468" class="vc" id="br" style="fill:var(--t1)"></text></g>
 <g id="nEV" class="ct" style="display:none"><path class="fl" d="M434,302 L434,362"/><path id="fe" class="fa" d="M434,302 L434,362" pathLength="100" opacity="0"/><text x="434" y="372" class="vl">${L.ev}</text><g id="evIcon" transform="translate(434,398) scale(1.65) translate(-434,-398)"><path d="M419.5,402.5 Q419.3,398.2 424,397.1 Q426.5,391.6 432,390.9 L437,390.9 Q442.3,391.3 445.3,395.2 Q449.1,396.1 449.4,399.6 Q449.6,402.5 446.6,402.5 L422.4,402.5 Q419.6,402.5 419.5,402.5 Z" fill="var(--load)" opacity="0.8"/><path d="M427.6,395.9 Q429.1,392.6 432.6,392.3 L433.6,392.3 L433.6,395.9 Z" fill="rgba(0,0,0,0.35)"/><path d="M435.1,392.3 L436.9,392.3 Q440.4,392.7 442.4,395.9 L435.1,395.9 Z" fill="rgba(0,0,0,0.35)"/><circle cx="426" cy="402.4" r="3.1" fill="rgba(0,0,0,0.55)"/><circle cx="426" cy="402.4" r="1.4" fill="rgba(255,255,255,0.35)"/><circle cx="442.3" cy="402.4" r="3.1" fill="rgba(0,0,0,0.55)"/><circle cx="442.3" cy="402.4" r="1.4" fill="rgba(255,255,255,0.35)"/><path id="evbolt" d="M452.5,391 L450.5,396 L453.5,396 L451.5,401" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.3)" stroke-width="0.5"/></g><text x="434" y="440" class="vm" style="fill:var(--green)" id="ve"></text><g id="evPill" style="display:none"><rect x="420.5" y="450.5" width="24" height="12" rx="4" fill="var(--batt)"/><rect id="evl" x="420.5" y="450.5" width="0" height="12" fill="var(--batf)" clip-path="url(#ev-clip)"/><rect x="444.9" y="453.3" width="3" height="6.4" rx="1.5" fill="var(--batt)"/><svg id="evA" x="420.5" y="450.5" width="24" height="12" viewBox="420.5 450.5 24 12" preserveAspectRatio="xMinYMin slice"><text id="evsoc" x="432.5" y="459.8" font-family="-apple-system,sans-serif" font-size="9.5" font-weight="800" fill="var(--batn)" text-anchor="middle"></text></svg><svg id="evB" x="444.5" y="450.5" width="0" height="12" viewBox="444.5 450.5 0.01 12" preserveAspectRatio="xMinYMin slice"><text id="evsoc2" x="432.5" y="459.8" font-family="-apple-system,sans-serif" font-size="9.5" font-weight="800" fill="var(--batf)" text-anchor="middle"></text></svg></g><text x="434" y="476" class="vd" id="de"></text></g>
-<defs><clipPath id="au-clip"><rect x="476" y="-4" width="47" height="34" rx="6"/></clipPath></defs><rect x="476" y="-4" width="47" height="34" rx="6" fill="none"/><rect x="476" y="-4" width="47" height="34" rx="6" fill="none" id="au-border" stroke="#1a4a36" stroke-width="1.5"/><text x="499" y="9" id="va" font-family="-apple-system,sans-serif" font-size="13.6" font-weight="800" fill="white" text-anchor="middle" dominant-baseline="middle"></text><g clip-path="url(#au-clip)"><rect x="476" y="19" width="47" height="11" id="au-bar" fill="#1a4a36"/><text x="499" y="25" font-family="-apple-system,sans-serif" font-size="4.1" font-weight="700" fill="white" text-anchor="middle" dominant-baseline="middle">${L.autarky.toUpperCase()}</text></g>
+<linearGradient id="augrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#10b981"/><stop offset="1" stop-color="#a3e635"/></linearGradient><g id="nAutarky" class="ct"><text id="au-label" x="479" y="10" class="aul">${L.autarky}</text><circle class="au-track" cx="500" cy="10" r="15" fill="none" stroke-width="3.4"/><circle id="au-arc" cx="500" cy="10" r="15" fill="none" stroke="url(#augrad)" stroke-width="3.4" stroke-linecap="round" pathLength="100" stroke-dasharray="0 100" transform="rotate(-90 500 10)"/><text x="500" y="5" id="va" font-family="-apple-system,sans-serif" font-size="8.5" font-weight="800" fill="var(--t1)" text-anchor="middle" dominant-baseline="middle"></text><g id="au-leaf" transform="translate(495.4,9.9) scale(0.4)" fill="none" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6"/></g><circle id="au-hit" cx="500" cy="10" r="17" fill="transparent" pointer-events="all"/></g>
 </g></svg>
 <div class="sr" style="margin-top:4px">
 <div class="sb sg"><div class="sb-header"><span class="sl">${L.grid24}</span><span class="sv" id="hz"></span></div><svg viewBox="0 0 200 55" preserveAspectRatio="none"><defs><linearGradient id="sgd-g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(66,165,245,0.30)"/><stop offset="1" stop-color="rgba(66,165,245,0)"/></linearGradient></defs><path id="hga"/><path id="hg"/><line class="cursor" id="cg" x1="0" y1="0" x2="0" y2="55"/><circle class="cursor-dot" id="dg2" cx="0" cy="0" r="3"/></svg><span class="sb-tip" id="tg"></span></div>
@@ -815,7 +829,7 @@ svg{width:100%;height:auto;display:block}
 
 _$(id){return this.shadowRoot.getElementById(id);}
 _moreInfo(entityId){if(!entityId)return;this.dispatchEvent(new CustomEvent('hass-more-info',{detail:{entityId},bubbles:true,composed:true}));}
-_setupClicks(){const c=this._c;const bind=(id,entity)=>{const el=this._$(id);if(el&&entity)el.addEventListener('click',()=>this._moreInfo(entity));};bind('nSolar',c.solar);bind('nGrid',c.grid);bind('nLoad',c.load);bind('nBat',c.battery||c.soc);bind('nEV',c.ev_power||c.ev_soc);const hit=this._$('srhit'),sg=this._$('sunRing');if(hit&&sg)hit.addEventListener('click',(e)=>{e.stopPropagation();sg.classList.add('srshow');clearTimeout(this._srT);this._srT=setTimeout(()=>sg.classList.remove('srshow'),3000);});}
+_setupClicks(){const c=this._c;const bind=(id,entity)=>{const el=this._$(id);if(el&&entity)el.addEventListener('click',()=>this._moreInfo(entity));};bind('nSolar',c.solar);bind('nGrid',c.grid);bind('nLoad',c.load);bind('nBat',c.battery||c.soc);bind('nEV',c.ev_power||c.ev_soc);const hit=this._$('srhit'),sg=this._$('sunRing');if(hit&&sg)hit.addEventListener('click',(e)=>{e.stopPropagation();sg.classList.add('srshow');clearTimeout(this._srT);this._srT=setTimeout(()=>sg.classList.remove('srshow'),3000);});const auHit=this._$('au-hit'),auG=this._$('nAutarky');if(auHit&&auG)auHit.addEventListener('click',(e)=>{e.stopPropagation();auG.classList.add('aushow');clearTimeout(this._auT);this._auT=setTimeout(()=>auG.classList.remove('aushow'),3000);});}
 _setupTooltips(){
   const self=this;
   const setup=(svgParent,cursorId,dotId,tipId,dataKey,color)=>{
@@ -901,6 +915,8 @@ if(c.solar2&&sol1!==null&&sol2!==null){
   this._$('ds1').textContent=this._fmt(sol1);
   this._$('dst').textContent='PV2';
   this._$('ds').textContent=this._fmt(sol2);
+  this._$('ds').setAttribute('x','314');this._$('ds').style.fontSize='';
+  this._$('pv').setAttribute('x','314');this._$('pv').style.fontSize='';
   this._$('arl').style.display='';
   this._$('arr').style.display='';
 }else{
@@ -908,6 +924,8 @@ if(c.solar2&&sol1!==null&&sol2!==null){
   this._$('ds1').textContent='';
   this._$('dst').textContent='';
   this._$('ds').textContent=L.daily+' '+this._fmtE(dS);
+  this._$('ds').setAttribute('x','330');this._$('ds').style.fontSize='13px';
+  this._$('pv').setAttribute('x','330');this._$('pv').style.fontSize='11px';
   this._$('arl').style.display='none';
   this._$('arr').style.display='none';
 }
@@ -966,7 +984,7 @@ if(nEV){
 }
 
 // Phase lock — restart all flow animations in the same frame so pulses relay through the inverter
-if(this._resync){this._resync=false;const els=['fs','fg','fb','fh','fe'].map(id=>this._$(id)).filter(Boolean);els.forEach(el=>{el.style.animation='none';});void this.offsetWidth;els.forEach(el=>{el.style.animation='';const half='-'+(this._syncSpd/2).toFixed(2)+'s';let d='0s';if(el.id==='fh')d=half;else if(el.id==='fb'&&this._fs['b']==='fd')d=half;else if(el.id==='fg'&&this._fs['g']==='fl')d=half;el.style.animationDelay=d;});}
+if(this._resync){this._resync=false;const els=['fs','fg','fb','fh','fe'].map(id=>this._$(id)).filter(Boolean);els.forEach(el=>{el.style.animation='none';});void this.offsetWidth;els.forEach(el=>{el.style.animation='';const half='-'+(this._syncSpd/2).toFixed(2)+'s';let d='0s';if(el.id==='fh')d=half;else if(el.id==='fb'&&this._fs['b']==='fd')d=half;else if(el.id==='fg'&&this._fs['g']==='fL')d=half;el.style.animationDelay=d;});}
 
 const batCap=c.battery_capacity??5120;const shuSoc=c.shutdown_soc??20;
 const brEl=this._$('br');
@@ -981,7 +999,7 @@ if(batF>RUNTIME_MIN_W&&socVal>shuSoc){
 const gridImp=gridF>0?gridF:0;
 const au=loadF>0?Math.max(0,Math.min(100,((loadF-gridImp)/loadF)*100)):0;
 this._$('va').textContent=au.toFixed(0)+'%';
-let auC;if(au>=80)auC='#1a4a36';else if(au>=50)auC='rgba(180,140,60,0.55)';else if(au>=25)auC='rgba(180,100,60,0.55)';else auC='rgba(180,70,70,0.55)';const auBar=this._$('au-bar');if(auBar)auBar.setAttribute('fill',auC);const auBorder=this._$('au-border');if(auBorder){auBorder.setAttribute('stroke',auC);auBorder.style.filter=au>=90?'url(#glow)':'';}
+const auArc=this._$('au-arc');if(auArc){auArc.setAttribute('stroke-dasharray',au.toFixed(1)+' 100');let auS;if(au>=80)auS='url(#augrad)';else if(au>=50)auS='#FFA726';else if(au>=25)auS='#FB8C00';else auS='#EF5350';auArc.setAttribute('stroke',auS);auArc.style.filter=au>=90?'url(#glow)':'';}const auLeaf=this._$('au-leaf');if(auLeaf)auLeaf.setAttribute('stroke',au>=25?'#34d399':'#EF5350');
 
 const wtv=this._gv(c.weather_temp);const whv=this._gv(c.weather_humidity);
 const wicons=this._$('wicons');const wdrop=this._$('wdrop');const wdiv=this._$('wdiv');
