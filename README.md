@@ -195,9 +195,9 @@ LEDs blink when active and remain dim when inactive.
 ## Changelog
 
 ## v1.3.23
-   - **Fix:** grid-export flow phase — resync compared 'fl' but the class is 'fL',
+   - **Fix:** grid-export flow phase, resync compared 'fl' but the class is 'fL',
      so the -T/2 outlet delay never applied while exporting. Corrected to 'fL'.
-   - Solar node (single MPPT): daily kWh and PV voltage enlarged to match the
+   - **Solar node (single MPPT):** daily kWh and PV voltage enlarged to match the
      grid node (13px / 11px) and nudged right (x 314 -> 330) to clear the sun.
 
 ## v1.3.22
