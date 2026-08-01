@@ -194,7 +194,13 @@ LEDs blink when active and remain dim when inactive.
 
 ## Changelog
 
-## v1.4.14
+## v1.3.23
+   - **Fix:** grid-export flow phase — resync compared 'fl' but the class is 'fL',
+     so the -T/2 outlet delay never applied while exporting. Corrected to 'fL'.
+   - Solar node (single MPPT): daily kWh and PV voltage enlarged to match the
+     grid node (13px / 11px) and nudged right (x 314 -> 330) to clear the sun.
+
+## v1.3.22
 
 - **Solar day ring redesigned**, 96 thin radial ticks (r 32→40, amber→coral gradient) replace the continuous arc. Elapsed ticks light up as the day progresses; the rest stay dimmed. Progress path, position dot and halo removed.
 - **Sun icon**, rays removed in favour of a radial-gradient disc (r=19) with a soft halo (r=28). The `sun-spin` rotation was dropped (invisible on a plain disc), along with its keyframes and the unused `.sr-halo`/`srPulse` rules.
