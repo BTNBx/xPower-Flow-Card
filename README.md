@@ -180,14 +180,13 @@ weather_humidity: sensor.my_outdoor_humidity
 
 ### Inverter LEDs
 
-The 4 LEDs on the inverter icon reflect active power flows:
+The 3 LEDs on the inverter icon reflect active power flows:
 
 | LED | Color | Condition |
 |-----|-------|-----------|
 | 1st | Green | Solar producing (>10 W) |
 | 2nd | Orange | Battery discharging (>10 W) |
 | 3rd | Red | Grid importing (>10 W) |
-| 4th | Cyan | Home consuming (>10 W) |
 
 LEDs blink when active and remain dim when inactive.
 
