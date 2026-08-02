@@ -19,7 +19,6 @@ A power flow visualization card for solar hybrid inverters in Home Assistant. Si
 Select your brand in the visual editor. Entities and polarity are configured automatically.
 
 ## Features
-
 * 9 inverter presets with auto-configured entities and polarity
 * 8 languages: Portuguese, English, German, French, Spanish, Italian, Dutch, Polish
 * Configurable battery and grid polarity sign conventions
@@ -28,25 +27,25 @@ Select your brand in the visual editor. Entities and polarity are configured aut
 * Animated pulse flow lines with speed proportional to power output
 * Color-coded values: solar (green), grid (red), home (cyan), battery (yellow)
 * Inverter icon with 4 status LEDs indicating active energy flows
-* LCD display on the inverter showing home consumption
 * Battery runtime estimation with shutdown SOC and ETA
 * Optional weather display (temperature and humidity)
 * 24-hour sparkline charts with Catmull-Rom interpolation, updated every 5 minutes
 * Sparkline tooltips showing power and timestamp on hover
 * Auto-scaling Y-axis on all sparklines
-* Autarky badge with color-coded self-sufficiency percentage
+* Circular self-sufficiency ring — color-coded arc, centered %, leaf glyph, and hover/tap label
 * Daily totals for import, export, and production in kWh
 * Trend arrows for rising, falling, or stable values
 * Graceful handling of unavailable sensors (`--`)
 * Dynamic card border color reflecting the dominant energy source
 * Visual editor for all configuration options
+* Adjustable main-value font size from the visual editor
 * Light and dark theme support with automatic detection
 * Compact mode (flow diagram only, no sparklines)
 * Three-phase grid voltage display (L1/L2/L3)
 * Split battery charge/discharge sensors for Solis/Modbus setups
 * Daily energy cost overlay (import cost / export earnings)
 * Grid status indicator dot (on-grid / off-grid)
-* Click any node to open the entity more-info dialog
+* Click any node to open its more-info dialog — dual-MPPT opens each string (PV1/PV2) separately
 * Full theming via CSS custom properties (`--xpf-*`)
 * Performance-optimized: entity diffing, paused updates in hidden tabs
 * Animated value transitions, smooth count-up on power changes
