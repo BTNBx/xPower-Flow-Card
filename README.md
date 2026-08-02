@@ -194,6 +194,9 @@ LEDs blink when active and remain dim when inactive.
 
 ## Changelog
 
+## v1.3.24
+- Bug fixing
+
 ## v1.3.23
    - **Fix:** grid-export flow phase, resync compared 'fl' but the class is 'fL',
      so the -T/2 outlet delay never applied while exporting. Corrected to 'fL'.
