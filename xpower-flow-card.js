@@ -1,6 +1,6 @@
 // xPower Flow Card — Modern power flow card for solar hybrid inverters
 // Copyright (C) 2025 BTNBx — MIT License
-const V='1.3.23';
+const V='1.3.24';
 
 /* ═══════════════════════════════════════
    CHANGELOG
@@ -10,16 +10,16 @@ v1.3.23
      so the -T/2 outlet delay never applied while exporting. Corrected to 'fL'.
    - Solar node (single MPPT): daily kWh and PV voltage enlarged to match the
      grid node (13px / 11px) and nudged right (x 314 -> 330) to clear the sun.
-v1.4.14
+v1.3.22
    - Autarky badge redesigned as a circular mini-ring (replaces the corner
      pill): green→lime progress arc, centered %, leaf glyph below, and the
      "Autossuficiência" label hidden — revealed on hover (desktop) or tap
      (mobile, 3s). Level colors kept (amber ≥50, orange ≥25, red <25); ≥90 glow.
-v1.4.13
+v1.3.21
    - Fix: 24h sparklines floated above the panel bottom when header text
      wrapped (narrow layouts equalize panel heights); .sb svg margin-top
      4px -> auto pins each chart to the bottom of its panel.
-v1.4.12
+v1.3.20
    - Solar day ring: 270° arc (r=36) around the sun icon, sunrise→sunset
      progress with amber gradient + position dot (opacity pulse only).
      Sunrise/sunset times at the arc ends. Uses sun.sun (config: sun_entity),
@@ -27,51 +27,51 @@ v1.4.12
    - PV1/PV2 side info: centered columns (title / power / voltage) with
      amber inward arrows outside the values. Single-MPPT keeps daily kWh right.
    - SOLAR label y -2 → -10; viewBox top 0 → -8 (dot clearance at solar noon).
-v1.4.11
+v1.3.19
     Visual:
         - Main SVG viewBox height 487 -> 470: kills the dead band under the battery node (content ends ~463).
           Scales with width, so the phone gap shrinks proportionally. Compact mode unaffected — nothing sits
           below y=470. Also v1.4.7 gap fix used mm by mistake (4mm ~ 15px); now 4px.
-v1.4.10
+v1.3.18
     Animation:
         - -T/2 outlet delay now applied to ALL flows leaving the inverter, not just Home:
           battery while charging (fd) and grid while exporting (fl). Discharge/import stay inlet-phased.
-v1.4.9
+v1.3.17
     Animation:
         - True pass-through relay: Home outlet delayed -T/2 so its pulse departs the inverter the instant
           the inlet pulse front arrives (was: departed only after inlet fully drained). Home -> EV keeps
           zero delay, which now chains exactly off the pulse arriving at Home.
-v1.4.8
+v1.3.16
     Fixes:
         - Dual-color SOC numbers invisible on iOS (WebKit ignores clip-path on SVG <text>, layers cancel out).
           Replaced text clip-paths with nested <svg> viewport cropping — battery + EV pill. Desktop unchanged.
-v1.4.7
+v1.3.15
     Visual:
         - Gap between battery node and sparklines reduced 16px -> 8px
-v1.4.6
+v1.3.14
     Visual:
         - Power values normalized to ~15px from each icon's visual edge (solar 82->81, grid 268->265)
-v1.4.5
+v1.3.13
     Features:
         - New option `grid_threshold` (W, default 0): grid readings below it count as 0 —
           value dims, flow stops, icon goes inactive, autarky unaffected by standby draw
-v1.4.4
+v1.3.12
     Visual:
         - Removed green pulse on the battery fill while charging (dimming made the number hard to read);
           solid green fill + bolt remain
-v1.4.3
+v1.3.11
     Fixes:
         - Battery no longer shows green charging state at 100% SOC (residual standby draw kept it green)
-v1.4.2
+v1.3.10
     Fixes:
         - Battery node alignment: icon group now centers on the pill body (values below no longer look shifted right)
         - Battery power/daily/runtime rows moved up 8px — gap to icon now matches the Home node
-v1.4.1
+v1.3.9
     Fixes:
         - Flows/LEDs frozen when the OS has "reduce motion" enabled — v1.4.0 honored it unconditionally.
           Now gated by new config `animations`: 'auto' (default, follow OS) or 'always' (ignore OS).
           Applied via :host(.rm) class instead of a hard @media rule; tween respects the same setting.
-v1.4.0
+v1.3.8
     Features:
         - Editor: one-click entity auto-detection (HA Energy Dashboard prefs + power-sensor heuristics)
         - Editor: live entity validation — unknown entity ids get red border + warning
@@ -83,54 +83,54 @@ v1.4.0
     Accessibility:
         - prefers-reduced-motion honored: all animations off, values update instantly
         - prefers-color-scheme fallback for theme auto-detection when HA theme info is absent
-v1.3.23
+v1.3.7
     Visual:
         - Battery pill height reduced 20 -> 17, number 15 -> 13.5
         - iOS dual-color number: part covered by the fill is dark, uncovered part inverts to the fill color
           (two clipped text layers synced to the level width)
-v1.3.22
+v1.3.6
     Visual:
         - Battery number enlarged 13 -> 15
-v1.3.21
+v1.3.5
     Visual:
         - iOS charging state: white number + white bolt inside the green pill (number shifts left to fit bolt)
-v1.3.20
+v1.3.4
     Fixes:
         - Battery number enlarged (10.5 -> 13) and truly centered — dominant-baseline dropped (Safari/iOS
           renders it inconsistently), replaced with fixed baseline offset
-v1.3.19
+v1.3.3
     Fixes:
         - Battery nub moved flush against the pill (was 2px gap)
-v1.3.18
+v1.3.2
     Visual:
         - Battery icon now true iOS style: solid pill, level fill clipped by rounded shape, plain number (no %)
         - Theme-aware: white fill/dark number on dark theme, inverted on light; state colors green/orange/red kept
-v1.3.17
+v1.3.1
     Visual:
         - EV icon replaced with Tesla-style fastback silhouette (single smooth body curve, flush wheels)
-v1.3.16
+v1.3.0
     Animation:
         - Relay-synced flows: all lines share one duration and phase — pulses arrive at the inverter,
           and only then does the pulse depart toward Home (Home -> EV chained the same way)
         - Inlet 0.75x speed factor removed (equal duration required for phase sync)
         - All flow animations restart in the same frame on any direction/speed change (phase lock)
-v1.3.15
+v1.2.9
     Fixes:
         - Battery node: removed vertical gap between power value and daily charge/discharge row (leftover from removed SOC row)
-v1.3.14
+v1.2.8
     Visual:
         - Battery SOC color states: fill + inner % text turn orange at shutdown_soc+15, red at shutdown_soc
         - Charging keeps green fill with white text
-v1.3.13
+v1.2.7
     Visual:
         - Battery icon redesigned iPhone-style: SOC percentage rendered inside the icon over the fill level
         - Icon enlarged (scale 1.70 -> 2.05); standalone SOC text row removed; daily/runtime rows moved up
-v1.3.12
+v1.2.6
     Features:
         - EV charging node (bottom-right, below Home): car icon, charge power, optional SOC + daily energy
         - New optional entities: ev_power, ev_soc, daily_ev (editor + YAML); node hidden when not configured
         - Animated Home -> EV flow (green), blinking bolt while charging; click opens more-info
-v1.3.11
+v1.2.5
     Performance:
         - hass setter now diffs configured entity states — DOM update skipped when nothing relevant changed
         - Updates + history polling paused while tab hidden; instant refresh on return (visibilitychange)
@@ -142,7 +142,7 @@ v1.3.11
     Features:
         - Battery runtime: charging now shows time-to-100% ETA (mirrors discharge estimate)
         - getGridOptions() for HA sections view sizing
-v1.3.10
+v1.2.4
     Fixes:
         - Dual-MPPT crash: removed dead branch referencing dS before declaration (ReferenceError blanked the card)
         - Autarky badge label now translated (was hard-coded PT)
@@ -153,17 +153,17 @@ v1.3.10
             ──────────────────────────────────────────────────────── */
 
 /* ════════════════════════════════════════════════════════
-    v1.3.7
+    v1.2.3
    Fixes:
    - Solis polarity: bat_polarity changed to 'negative' (modbus reports charging as positive,
      same convention as Deye/Sunsynk — no inversion needed)
    - LCD inverter display: now shows load power (home consumption) instead of sum of all flows
    Features:
-   v1.3.9:
+   v1.2.2:
    - Fix: PV daily/voltage text spacing from sun icon
    - Dual MPPT layout: PV1 left of sun (▸ arrow), PV2 right (◂ arrow),
      each with own voltage below; symmetrical layout
-   v1.3.8:
+   v1.2.1:
    - Fix: PV1/PV2 + voltage text overlapped sun icon (CSS .vd text-anchor:middle
      overrides SVG presentation attribute; now inline style)
    - Solis/modbus: optional split battery_charge + battery_discharge sensors
@@ -176,7 +176,7 @@ v1.3.10
    ════════════════════════════════════════════════════════ */
 
 /* ────────────────────────────────────────────────────────
-    v1.3.5
+    v1.2.0
    Visual:
    - Autarky badge moved to top-right corner
    - Badge size reduced 15% (55x40 -> 47x34)
@@ -403,7 +403,7 @@ const DEFAULTS={
   battery_charge:'',battery_discharge:'',
   grid_voltage_l2:'',grid_voltage_l3:'',
   bat_polarity:'negative',grid_polarity:'positive',
-  shutdown_soc:20,battery_capacity:5120,grid_threshold:0,language:'pt',
+  shutdown_soc:20,battery_capacity:5120,grid_threshold:0,font_size:24,language:'pt',
   inverter_name:'DEYE',
   weather_temp:'',weather_humidity:'',
   ev_power:'',ev_soc:'',daily_ev:'',
@@ -461,6 +461,8 @@ class XPowerFlowCardEditor extends HTMLElement{
     cfg.animations=this.querySelector('#ed-anim').value;
     const gthVal=parseInt(this.querySelector('#ed-gth').value,10);
     cfg.grid_threshold=isNaN(gthVal)?0:gthVal;
+    const fsVal=parseInt(this.querySelector('#ed-fsize').value,10);
+    cfg.font_size=isNaN(fsVal)?24:fsVal;
     cfg.bat_polarity=this.querySelector('#ed-bpol').value;
     cfg.grid_polarity=this.querySelector('#ed-gpol').value;
     const socVal=parseInt(this.querySelector('#ed-ssoc').value,10);
@@ -621,6 +623,10 @@ class XPowerFlowCardEditor extends HTMLElement{
             <option value="always" ${c.animations==='always'?'selected':''}>Always</option>
           </select>
         </div>
+        <div class="field">
+          <label>Values font (px)</label>
+          <input type="number" id="ed-fsize" min="10" max="48" value="${c.font_size??24}">
+        </div>
       </div>
 
       <h4>${L.editor_entities} <button id="ed-auto" type="button" style="float:right;margin-top:-4px;padding:4px 10px;font-size:11px;border:1px solid var(--divider-color,rgba(255,255,255,0.15));border-radius:4px;background:var(--card-background-color,#1c1e21);color:var(--primary-text-color);cursor:pointer">\u26A1 ${L.autodetect}</button></h4>
@@ -740,7 +746,7 @@ _bucket(arr,t0,t1,n){
 async _loadHistory(){if(this._histLoading||!this._h)return;this._histLoading=true;try{const now=new Date();const start=new Date(now.getTime()-24*60*60*1000);const iso=encodeURIComponent(start.toISOString());const entities=encodeURIComponent([this._c.solar,this._c.load,this._c.grid,this._c.battery].filter(Boolean).join(','));if(!entities)return;const url='history/period/'+iso+'?filter_entity_id='+entities+'&minimal_response&no_attributes&significant_changes_only';const res=await this._h.callApi('GET',url);if(!res||!res.length)return;for(const series of res){if(!series.length)continue;const eid=series[0].entity_id;const pts=this._bucket(series,start.getTime(),now.getTime(),HIST_POINTS);const mx=pts.length?Math.max(...pts)||1:1;if(eid===this._c.solar){this._hist.solar=pts;this._histMax.solar=mx;}else if(eid===this._c.load){this._hist.load=pts;this._histMax.load=mx;}else if(eid===this._c.grid){this._hist.grid=pts;this._histMax.grid=mx;}else if(eid===this._c.battery){this._hist.battery=pts;this._histMax.battery=mx;}}this._drawSparks();}catch(e){console.warn('xPower history:',e);}finally{this._histLoading=false;}}
 
 _render(){const L=this._lang;const INV=String(this._c.inverter_name||'').replace(/[<>&]/g,m=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[m]));const s=this.shadowRoot;s.innerHTML=`<style>
-:host{--solar:var(--xpf-solar,#FFB300);--battery:var(--xpf-battery,#7C4DFF);--grid:var(--xpf-grid,#42A5F5);--load:var(--xpf-load,#26C6DA);--green:var(--xpf-green,#66BB6A);--red:var(--xpf-red,#EF5350);--orange:var(--xpf-orange,#FFA726);--t1:var(--xpf-text,rgba(255,255,255,0.92));--t3:var(--xpf-text-secondary,rgba(255,255,255,0.45));--xpf-r:var(--xpf-radius,20px);--xpf-vm-size:var(--xpf-font-size,24px);--flow-w:var(--xpf-flow-width,3);--flow-dash:var(--xpf-dash-size,100);--batf:#fff;--batn:#111;--batt:rgba(255,255,255,0.22)}
+:host{--solar:var(--xpf-solar,#FFB300);--battery:var(--xpf-battery,#7C4DFF);--grid:var(--xpf-grid,#42A5F5);--load:var(--xpf-load,#26C6DA);--green:var(--xpf-green,#66BB6A);--red:var(--xpf-red,#EF5350);--orange:var(--xpf-orange,#FFA726);--t1:var(--xpf-text,rgba(255,255,255,0.92));--t3:var(--xpf-text-secondary,rgba(255,255,255,0.45));--xpf-r:var(--xpf-radius,20px);--xpf-vm-size:var(--xpf-font-size,${this._c.font_size||24}px);--flow-w:var(--xpf-flow-width,3);--flow-dash:var(--xpf-dash-size,100);--batf:#fff;--batn:#111;--batt:rgba(255,255,255,0.22)}
 :host(.light){--t1:var(--xpf-text,rgba(0,0,0,0.85));--t3:var(--xpf-text-secondary,rgba(0,0,0,0.45));--batf:rgba(0,0,0,0.85);--batn:#fff;--batt:rgba(0,0,0,0.12)}
 :host(.light) ha-card{background:var(--xpf-bg,rgba(255,255,255,0.92));border-color:rgba(0,0,0,0.08)}
 :host(.light) ha-card::before{background:linear-gradient(90deg,transparent,rgba(124,77,255,0.12),transparent)}
@@ -812,13 +818,13 @@ svg{width:100%;height:auto;display:block}
 </g>
 <path class="fl" d="M250,96 L250,187.7"/><path class="fl" d="M250,262.4 L250,364"/><path class="fl" d="M90,225 L212.7,225"/><path class="fl" d="M287.4,225 L395,225"/>
 <path id="fs" class="fa" d="M250,96 L250,187.7" pathLength="100" opacity="0"/><path id="fb" class="fa" d="M250,262.4 L250,364" pathLength="100" opacity="0"/><path id="fg" class="fa" d="M90,225 L212.7,225" pathLength="100" opacity="0"/><path id="fh" class="fa" d="M287.4,225 L395,225" pathLength="100" opacity="0"/>
-<g id="nSolar" class="ct"><g id="sunRing" style="display:none">${SUNTICKS}<path id="srhit" d="M224.5,63.5 A36,36 0 1 1 275.5,63.5" fill="none" stroke="transparent" stroke-width="16" pointer-events="stroke" style="cursor:pointer"/><text id="srx" x="215" y="66" class="srt" style="text-anchor:end"></text><text id="ssx" x="285" y="66" class="srt" style="text-anchor:start"></text></g><g id="sunG"><circle cx="250" cy="38" r="28" fill="url(#sunhl)"/><circle cx="250" cy="38" r="19" fill="url(#sundisc)"/></g><text x="250" y="81" class="vm" style="fill:var(--green)" id="vs"></text><text x="250" y="-10" class="vl">${L.solar}</text><text id="dst1" x="186" y="22" class="pvh"></text><text id="ds1" x="186" y="34" class="pvv"></text><text id="pv1" x="186" y="46" class="pvu"></text><text id="dst" x="314" y="22" class="pvh"></text><text id="ds" x="314" y="34" class="pvv"></text><text id="pv" x="314" y="46" class="pvu"></text><path id="arl" d="M162,31 L162,37 L168,34 Z" fill="#FFD54F" opacity="0.85" style="display:none"/><path id="arr" d="M338,31 L338,37 L332,34 Z" fill="#FFD54F" opacity="0.85" style="display:none"/></g>
+<g id="nSolar" class="ct"><g id="sunRing" style="display:none">${SUNTICKS}<path id="srhit" d="M224.5,63.5 A36,36 0 1 1 275.5,63.5" fill="none" stroke="transparent" stroke-width="16" pointer-events="stroke" style="cursor:pointer"/><text id="srx" x="215" y="66" class="srt" style="text-anchor:end"></text><text id="ssx" x="285" y="66" class="srt" style="text-anchor:start"></text></g><g id="sunG"><circle cx="250" cy="38" r="28" fill="url(#sunhl)"/><circle cx="250" cy="38" r="19" fill="url(#sundisc)"/></g><text x="250" y="81" class="vm" style="fill:var(--green)" id="vs"></text><text x="250" y="-10" class="vl">${L.solar}</text><text id="dst1" x="186" y="22" class="pvh"></text><text id="ds1" x="186" y="34" class="pvv"></text><text id="pv1" x="186" y="46" class="pvu"></text><text id="dst" x="314" y="22" class="pvh"></text><text id="ds" x="314" y="34" class="pvv"></text><text id="pv" x="314" y="46" class="pvu"></text><path id="arl" d="M162,31 L162,37 L168,34 Z" fill="#FFD54F" opacity="0.85" style="display:none"/><path id="arr" d="M338,31 L338,37 L332,34 Z" fill="#FFD54F" opacity="0.85" style="display:none"/><rect id="pv1hit" x="164" y="14" width="44" height="40" fill="transparent" pointer-events="all" style="display:none;cursor:pointer"/><rect id="pv2hit" x="292" y="14" width="44" height="40" fill="transparent" pointer-events="all" style="display:none;cursor:pointer"/></g>
 <g><g transform="translate(250,225) scale(1.65)"><rect x="-19" y="-19" width="38" height="38" rx="5" fill="url(#ivbody)" stroke="rgba(0,0,0,0.18)" stroke-width="0.5"/><rect x="-11" y="18" width="4.5" height="2.4" rx="0.8" fill="rgba(0,0,0,0.35)"/><rect x="-2.25" y="18" width="4.5" height="2.4" rx="0.8" fill="rgba(0,0,0,0.35)"/><rect x="6.5" y="18" width="4.5" height="2.4" rx="0.8" fill="rgba(0,0,0,0.35)"/><rect x="-11" y="-4.6" width="22" height="9.2" rx="4.6" fill="url(#ivpill)"/><circle id="led1" cx="-4" cy="-0.6" r="1.15" fill="rgba(255,255,255,0.12)"/><circle id="led2" cx="0" cy="-0.6" r="1.15" fill="rgba(255,255,255,0.12)"/><circle id="led3" cx="4" cy="-0.6" r="1.15" fill="rgba(255,255,255,0.12)"/><rect id="ivbar" x="-3" y="2.6" width="6" height="0.9" rx="0.45" fill="#E4002B"/></g>${INV?'<text x="250" y="272" class="il">'+INV+'</text>':''}<text x="296" y="264" class="vc" id="tp" text-anchor="start"></text></g>
 <g id="nGrid" class="ct"><g id="gridIcon" transform="translate(66,225) scale(1.65) translate(-66,-196)"><rect x="64" y="181" width="4" height="30" rx="1" fill="var(--red)" opacity="0.7"/><rect x="54" y="183" width="24" height="3" rx="1" fill="var(--red)" opacity="0.6"/><rect x="57" y="192" width="18" height="2.5" rx="1" fill="var(--red)" opacity="0.5"/><path d="M60,211 L64,199 L68,199 L72,211" fill="var(--red)" opacity="0.4"/><circle cx="56" cy="184" r="1.5" fill="var(--red)" opacity="0.8"/><circle cx="76" cy="184" r="1.5" fill="var(--red)" opacity="0.8"/><circle cx="58" cy="193" r="1.2" fill="var(--red)" opacity="0.7"/><circle cx="74" cy="193" r="1.2" fill="var(--red)" opacity="0.7"/><line x1="54" y1="184" x2="46" y2="181" stroke="var(--red)" stroke-width="0.8" opacity="0.3"/><line x1="78" y1="184" x2="86" y2="181" stroke="var(--red)" stroke-width="0.8" opacity="0.3"/></g><text x="66" y="265" class="vm" style="fill:var(--red)" id="vg"></text><text x="66" y="190" class="vl">${L.grid}</text><text x="66" y="286" class="vc" id="gv"></text><circle id="gsd" cx="92" cy="189" r="4" fill="rgba(255,255,255,0.12)"/><text x="66" y="300" class="vd" id="dg"></text></g>
 <g id="nLoad" class="ct"><g id="loadIcon" transform="translate(434,225) scale(1.65) translate(-434,-188)"><path d="M416,188 L434,174 L452,188 Z" fill="var(--load)" opacity="0.8"/><rect x="420" y="187" width="28" height="18" rx="1" fill="var(--load)" opacity="0.6"/><rect x="430" y="195" width="8" height="10" rx="1" fill="rgba(0,0,0,0.3)"/><rect x="422" y="190" width="6" height="5" rx="0.5" fill="rgba(255,255,255,0.15)"/><rect x="440" y="190" width="6" height="5" rx="0.5" fill="rgba(255,255,255,0.15)"/><rect x="441" y="176" width="5" height="8" rx="1" fill="var(--load)" opacity="0.5"/></g><text x="434" y="268" class="vm" style="fill:var(--load)" id="vl"></text><text x="434" y="190" class="vl">${L.load}</text><text x="434" y="288" class="vd" id="dl"></text></g>
 <g id="nBat" class="ct"><g id="batIcon" transform="translate(250,400) scale(2.05) translate(-248,-351)"><rect x="232" y="342.5" width="32" height="17" rx="5.5" fill="var(--batt)"/><rect id="bl" x="232" y="342.5" width="32" height="17" fill="var(--batf)" clip-path="url(#bat-clip)"/><rect x="264.5" y="346.5" width="4" height="9" rx="2" fill="var(--batt)"/><svg id="bpA" x="232" y="342.5" width="32" height="17" viewBox="232 342.5 32 17" preserveAspectRatio="xMinYMin slice"><text id="bp" x="248" y="355.7" font-family="-apple-system,sans-serif" font-size="13.5" font-weight="800" fill="var(--batn)" text-anchor="middle">--</text></svg><svg id="bpB" x="264" y="342.5" width="0" height="17" viewBox="264 342.5 0.01 17" preserveAspectRatio="xMinYMin slice"><text id="bp2" x="248" y="355.7" font-family="-apple-system,sans-serif" font-size="13.5" font-weight="800" fill="var(--batf)" text-anchor="middle">--</text></svg><path id="bbolt" d="M260.1,345.8 L255.7,352 L258.9,352 L257.1,356.8 L262.5,349.9 L259.3,349.9 Z" fill="#fff" style="display:none"/></g><text x="250" y="432" class="vm" style="fill:var(--solar)" id="vb"></text><text x="250" y="372" class="vl">${L.battery}</text><text x="316" y="394" class="vc" id="bv" text-anchor="start"></text><text x="316" y="406" class="vc" id="bt" text-anchor="start"></text><text x="250" y="452" class="vd" id="db"></text><text x="250" y="468" class="vc" id="br" style="fill:var(--t1)"></text></g>
 <g id="nEV" class="ct" style="display:none"><path class="fl" d="M434,302 L434,362"/><path id="fe" class="fa" d="M434,302 L434,362" pathLength="100" opacity="0"/><text x="434" y="372" class="vl">${L.ev}</text><g id="evIcon" transform="translate(434,398) scale(1.65) translate(-434,-398)"><path d="M419.5,402.5 Q419.3,398.2 424,397.1 Q426.5,391.6 432,390.9 L437,390.9 Q442.3,391.3 445.3,395.2 Q449.1,396.1 449.4,399.6 Q449.6,402.5 446.6,402.5 L422.4,402.5 Q419.6,402.5 419.5,402.5 Z" fill="var(--load)" opacity="0.8"/><path d="M427.6,395.9 Q429.1,392.6 432.6,392.3 L433.6,392.3 L433.6,395.9 Z" fill="rgba(0,0,0,0.35)"/><path d="M435.1,392.3 L436.9,392.3 Q440.4,392.7 442.4,395.9 L435.1,395.9 Z" fill="rgba(0,0,0,0.35)"/><circle cx="426" cy="402.4" r="3.1" fill="rgba(0,0,0,0.55)"/><circle cx="426" cy="402.4" r="1.4" fill="rgba(255,255,255,0.35)"/><circle cx="442.3" cy="402.4" r="3.1" fill="rgba(0,0,0,0.55)"/><circle cx="442.3" cy="402.4" r="1.4" fill="rgba(255,255,255,0.35)"/><path id="evbolt" d="M452.5,391 L450.5,396 L453.5,396 L451.5,401" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.3)" stroke-width="0.5"/></g><text x="434" y="440" class="vm" style="fill:var(--green)" id="ve"></text><g id="evPill" style="display:none"><rect x="420.5" y="450.5" width="24" height="12" rx="4" fill="var(--batt)"/><rect id="evl" x="420.5" y="450.5" width="0" height="12" fill="var(--batf)" clip-path="url(#ev-clip)"/><rect x="444.9" y="453.3" width="3" height="6.4" rx="1.5" fill="var(--batt)"/><svg id="evA" x="420.5" y="450.5" width="24" height="12" viewBox="420.5 450.5 24 12" preserveAspectRatio="xMinYMin slice"><text id="evsoc" x="432.5" y="459.8" font-family="-apple-system,sans-serif" font-size="9.5" font-weight="800" fill="var(--batn)" text-anchor="middle"></text></svg><svg id="evB" x="444.5" y="450.5" width="0" height="12" viewBox="444.5 450.5 0.01 12" preserveAspectRatio="xMinYMin slice"><text id="evsoc2" x="432.5" y="459.8" font-family="-apple-system,sans-serif" font-size="9.5" font-weight="800" fill="var(--batf)" text-anchor="middle"></text></svg></g><text x="434" y="476" class="vd" id="de"></text></g>
-<linearGradient id="augrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#10b981"/><stop offset="1" stop-color="#a3e635"/></linearGradient><g id="nAutarky" class="ct"><text id="au-label" x="479" y="10" class="aul">${L.autarky}</text><circle class="au-track" cx="500" cy="10" r="15" fill="none" stroke-width="3.4"/><circle id="au-arc" cx="500" cy="10" r="15" fill="none" stroke="url(#augrad)" stroke-width="3.4" stroke-linecap="round" pathLength="100" stroke-dasharray="0 100" transform="rotate(-90 500 10)"/><text x="500" y="5" id="va" font-family="-apple-system,sans-serif" font-size="8.5" font-weight="800" fill="var(--t1)" text-anchor="middle" dominant-baseline="middle"></text><g id="au-leaf" transform="translate(495.4,9.9) scale(0.4)" fill="none" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6"/></g><circle id="au-hit" cx="500" cy="10" r="17" fill="transparent" pointer-events="all"/></g>
+<linearGradient id="augrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#10b981"/><stop offset="1" stop-color="#a3e635"/></linearGradient><g id="nAutarky" class="ct"><text id="au-label" x="479" y="10" class="aul">${L.autarky}</text><circle class="au-track" cx="500" cy="10" r="15" fill="none" stroke-width="1.5"/><circle id="au-arc" cx="500" cy="10" r="15" fill="none" stroke="url(#augrad)" stroke-width="1.5" stroke-linecap="round" pathLength="100" stroke-dasharray="0 100" transform="rotate(-90 500 10)"/><text x="500" y="5" id="va" font-family="-apple-system,sans-serif" font-size="8.5" font-weight="800" fill="var(--t1)" text-anchor="middle" dominant-baseline="middle"></text><g id="au-leaf" transform="translate(495.4,9.9) scale(0.4)" fill="none" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6"/></g><circle id="au-hit" cx="500" cy="10" r="17" fill="transparent" pointer-events="all"/></g>
 </g></svg>
 <div class="sr" style="margin-top:4px">
 <div class="sb sg"><div class="sb-header"><span class="sl">${L.grid24}</span><span class="sv" id="hz"></span></div><svg viewBox="0 0 200 55" preserveAspectRatio="none"><defs><linearGradient id="sgd-g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(66,165,245,0.30)"/><stop offset="1" stop-color="rgba(66,165,245,0)"/></linearGradient></defs><path id="hga"/><path id="hg"/><line class="cursor" id="cg" x1="0" y1="0" x2="0" y2="55"/><circle class="cursor-dot" id="dg2" cx="0" cy="0" r="3"/></svg><span class="sb-tip" id="tg"></span></div>
@@ -829,7 +835,7 @@ svg{width:100%;height:auto;display:block}
 
 _$(id){return this.shadowRoot.getElementById(id);}
 _moreInfo(entityId){if(!entityId)return;this.dispatchEvent(new CustomEvent('hass-more-info',{detail:{entityId},bubbles:true,composed:true}));}
-_setupClicks(){const c=this._c;const bind=(id,entity)=>{const el=this._$(id);if(el&&entity)el.addEventListener('click',()=>this._moreInfo(entity));};bind('nSolar',c.solar);bind('nGrid',c.grid);bind('nLoad',c.load);bind('nBat',c.battery||c.soc);bind('nEV',c.ev_power||c.ev_soc);const hit=this._$('srhit'),sg=this._$('sunRing');if(hit&&sg)hit.addEventListener('click',(e)=>{e.stopPropagation();sg.classList.add('srshow');clearTimeout(this._srT);this._srT=setTimeout(()=>sg.classList.remove('srshow'),3000);});const auHit=this._$('au-hit'),auG=this._$('nAutarky');if(auHit&&auG)auHit.addEventListener('click',(e)=>{e.stopPropagation();auG.classList.add('aushow');clearTimeout(this._auT);this._auT=setTimeout(()=>auG.classList.remove('aushow'),3000);});}
+_setupClicks(){const c=this._c;const bind=(id,entity)=>{const el=this._$(id);if(el&&entity)el.addEventListener('click',()=>this._moreInfo(entity));};bind('nSolar',c.solar);bind('nGrid',c.grid);bind('nLoad',c.load);bind('nBat',c.battery||c.soc);bind('nEV',c.ev_power||c.ev_soc);const hit=this._$('srhit'),sg=this._$('sunRing');if(hit&&sg)hit.addEventListener('click',(e)=>{e.stopPropagation();sg.classList.add('srshow');clearTimeout(this._srT);this._srT=setTimeout(()=>sg.classList.remove('srshow'),3000);});const auHit=this._$('au-hit'),auG=this._$('nAutarky');if(auHit&&auG)auHit.addEventListener('click',(e)=>{e.stopPropagation();auG.classList.add('aushow');clearTimeout(this._auT);this._auT=setTimeout(()=>auG.classList.remove('aushow'),3000);});const pv1=this._$('pv1hit');if(pv1)pv1.addEventListener('click',(e)=>{e.stopPropagation();this._moreInfo(c.solar);});const pv2=this._$('pv2hit');if(pv2)pv2.addEventListener('click',(e)=>{e.stopPropagation();this._moreInfo(c.solar2);});}
 _setupTooltips(){
   const self=this;
   const setup=(svgParent,cursorId,dotId,tipId,dataKey,color)=>{
@@ -919,6 +925,7 @@ if(c.solar2&&sol1!==null&&sol2!==null){
   this._$('pv').setAttribute('x','314');this._$('pv').style.fontSize='';
   this._$('arl').style.display='';
   this._$('arr').style.display='';
+  {const h1=this._$('pv1hit'),h2=this._$('pv2hit');if(h1)h1.style.display='';if(h2)h2.style.display='';}
 }else{
   this._$('dst1').textContent='';
   this._$('ds1').textContent='';
@@ -928,6 +935,7 @@ if(c.solar2&&sol1!==null&&sol2!==null){
   this._$('pv').setAttribute('x','330');this._$('pv').style.fontSize='11px';
   this._$('arl').style.display='none';
   this._$('arr').style.display='none';
+  {const h1=this._$('pv1hit'),h2=this._$('pv2hit');if(h1)h1.style.display='none';if(h2)h2.style.display='none';}
 }
 this._sunRing(c);
 this._$('dg').textContent=L.import_+' '+this._fmtE(dI)+(this._fmtC(c.import_cost)?' · '+this._fmtC(c.import_cost):'')+' '+L.export_+' '+this._fmtE(dE)+(this._fmtC(c.export_cost)?' · '+this._fmtC(c.export_cost):'');
@@ -998,7 +1006,7 @@ if(batF>RUNTIME_MIN_W&&socVal>shuSoc){
 
 const gridImp=gridF>0?gridF:0;
 const au=loadF>0?Math.max(0,Math.min(100,((loadF-gridImp)/loadF)*100)):0;
-this._$('va').textContent=au.toFixed(0)+'%';
+{const _va=this._$('va'),_vs=au.toFixed(0)+'%';_va.textContent=_vs;_va.setAttribute('font-size',_vs.length>=4?6.8:8.5);}
 const auArc=this._$('au-arc');if(auArc){auArc.setAttribute('stroke-dasharray',au.toFixed(1)+' 100');let auS;if(au>=80)auS='url(#augrad)';else if(au>=50)auS='#FFA726';else if(au>=25)auS='#FB8C00';else auS='#EF5350';auArc.setAttribute('stroke',auS);auArc.style.filter=au>=90?'url(#glow)':'';}const auLeaf=this._$('au-leaf');if(auLeaf)auLeaf.setAttribute('stroke',au>=25?'#34d399':'#EF5350');
 
 const wtv=this._gv(c.weather_temp);const whv=this._gv(c.weather_humidity);
