@@ -192,6 +192,17 @@ LEDs blink when active and remain dim when inactive.
 
 ## Changelog
 
+## v1.3.25
+
+- **Self-sufficiency ring split by source.** The autarky mini-ring is now
+  divided into coloured bands by what's feeding the home — green = solar,
+  amber = battery, red = grid. The ring always fills to 100%; the centre
+  number still shows self-sufficiency (solar + battery share).
+- **Inverter → home flow line split by source.** The same colour bands are
+  applied to the home flow line, ordered from the smallest share (at the
+  inverter) to the largest (at the home end). Same line and pulse animation
+  as before.
+
 ## v1.3.24
 - Bug fixing
 
