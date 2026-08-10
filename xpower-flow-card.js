@@ -1,36 +1,42 @@
-﻿// xPower Flow Card â€” Modern power flow card for solar hybrid inverters
-// Copyright (C) 2025 BTNBx â€” MIT License
-const V='1.3.24';
+// xPower Flow Card — Modern power flow card for solar hybrid inverters
+// Copyright (C) 2025 BTNBx — MIT License
+const V='1.3.25';
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* ═══════════════════════════════════════
    CHANGELOG
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   ═══════════════════════════════════════
+v1.3.25
+   - Autarky mini-ring now split by source feeding the home: green = solar,
+     amber = battery, red = grid. Ring always fills to 100%; centre % stays
+     self-sufficiency (solar + battery share).
+   - Inverter->home flow line now split into the same source bands, ordered
+     smallest share (at inverter) to largest (at home); same pulse animation.
 v1.3.23
-   - Fix: grid-export flow phase â€” resync compared 'fl' but the class is 'fL',
+   - Fix: grid-export flow phase — resync compared 'fl' but the class is 'fL',
      so the -T/2 outlet delay never applied while exporting. Corrected to 'fL'.
    - Solar node (single MPPT): daily kWh and PV voltage enlarged to match the
      grid node (13px / 11px) and nudged right (x 314 -> 330) to clear the sun.
 v1.3.22
    - Autarky badge redesigned as a circular mini-ring (replaces the corner
-     pill): greenâ†’lime progress arc, centered %, leaf glyph below, and the
-     "AutossuficiÃªncia" label hidden â€” revealed on hover (desktop) or tap
-     (mobile, 3s). Level colors kept (amber â‰¥50, orange â‰¥25, red <25); â‰¥90 glow.
+     pill): green→lime progress arc, centered %, leaf glyph below, and the
+     "Autossuficiência" label hidden — revealed on hover (desktop) or tap
+     (mobile, 3s). Level colors kept (amber ≥50, orange ≥25, red <25); ≥90 glow.
 v1.3.21
    - Fix: 24h sparklines floated above the panel bottom when header text
      wrapped (narrow layouts equalize panel heights); .sb svg margin-top
      4px -> auto pins each chart to the bottom of its panel.
 v1.3.20
-   - Solar day ring: 270Â° arc (r=36) around the sun icon, sunriseâ†’sunset
+   - Solar day ring: 270° arc (r=36) around the sun icon, sunrise→sunset
      progress with amber gradient + position dot (opacity pulse only).
      Sunrise/sunset times at the arc ends. Uses sun.sun (config: sun_entity),
      hidden below horizon. Editor field added (8 languages).
    - PV1/PV2 side info: centered columns (title / power / voltage) with
      amber inward arrows outside the values. Single-MPPT keeps daily kWh right.
-   - SOLAR label y -2 â†’ -10; viewBox top 0 â†’ -8 (dot clearance at solar noon).
+   - SOLAR label y -2 → -10; viewBox top 0 → -8 (dot clearance at solar noon).
 v1.3.19
     Visual:
         - Main SVG viewBox height 487 -> 470: kills the dead band under the battery node (content ends ~463).
-          Scales with width, so the phone gap shrinks proportionally. Compact mode unaffected â€” nothing sits
+          Scales with width, so the phone gap shrinks proportionally. Compact mode unaffected — nothing sits
           below y=470. Also v1.4.7 gap fix used mm by mistake (4mm ~ 15px); now 4px.
 v1.3.18
     Animation:
@@ -44,7 +50,7 @@ v1.3.17
 v1.3.16
     Fixes:
         - Dual-color SOC numbers invisible on iOS (WebKit ignores clip-path on SVG <text>, layers cancel out).
-          Replaced text clip-paths with nested <svg> viewport cropping â€” battery + EV pill. Desktop unchanged.
+          Replaced text clip-paths with nested <svg> viewport cropping — battery + EV pill. Desktop unchanged.
 v1.3.15
     Visual:
         - Gap between battery node and sparklines reduced 16px -> 8px
@@ -53,7 +59,7 @@ v1.3.14
         - Power values normalized to ~15px from each icon's visual edge (solar 82->81, grid 268->265)
 v1.3.13
     Features:
-        - New option `grid_threshold` (W, default 0): grid readings below it count as 0 â€”
+        - New option `grid_threshold` (W, default 0): grid readings below it count as 0 —
           value dims, flow stops, icon goes inactive, autarky unaffected by standby draw
 v1.3.12
     Visual:
@@ -65,16 +71,16 @@ v1.3.11
 v1.3.10
     Fixes:
         - Battery node alignment: icon group now centers on the pill body (values below no longer look shifted right)
-        - Battery power/daily/runtime rows moved up 8px â€” gap to icon now matches the Home node
+        - Battery power/daily/runtime rows moved up 8px — gap to icon now matches the Home node
 v1.3.9
     Fixes:
-        - Flows/LEDs frozen when the OS has "reduce motion" enabled â€” v1.4.0 honored it unconditionally.
+        - Flows/LEDs frozen when the OS has "reduce motion" enabled — v1.4.0 honored it unconditionally.
           Now gated by new config `animations`: 'auto' (default, follow OS) or 'always' (ignore OS).
           Applied via :host(.rm) class instead of a hard @media rule; tween respects the same setting.
 v1.3.8
     Features:
         - Editor: one-click entity auto-detection (HA Energy Dashboard prefs + power-sensor heuristics)
-        - Editor: live entity validation â€” unknown entity ids get red border + warning
+        - Editor: live entity validation — unknown entity ids get red border + warning
         - Editor: field labels translated in all 8 languages
         - EV SOC displayed as a mini iOS pill (matches battery, green while charging)
     Visual:
@@ -96,7 +102,7 @@ v1.3.5
         - iOS charging state: white number + white bolt inside the green pill (number shifts left to fit bolt)
 v1.3.4
     Fixes:
-        - Battery number enlarged (10.5 -> 13) and truly centered â€” dominant-baseline dropped (Safari/iOS
+        - Battery number enlarged (10.5 -> 13) and truly centered — dominant-baseline dropped (Safari/iOS
           renders it inconsistently), replaced with fixed baseline offset
 v1.3.3
     Fixes:
@@ -110,7 +116,7 @@ v1.3.1
         - EV icon replaced with Tesla-style fastback silhouette (single smooth body curve, flush wheels)
 v1.3.0
     Animation:
-        - Relay-synced flows: all lines share one duration and phase â€” pulses arrive at the inverter,
+        - Relay-synced flows: all lines share one duration and phase — pulses arrive at the inverter,
           and only then does the pulse depart toward Home (Home -> EV chained the same way)
         - Inlet 0.75x speed factor removed (equal duration required for phase sync)
         - All flow animations restart in the same frame on any direction/speed change (phase lock)
@@ -132,10 +138,10 @@ v1.2.6
         - Animated Home -> EV flow (green), blinking bolt while charging; click opens more-info
 v1.2.5
     Performance:
-        - hass setter now diffs configured entity states â€” DOM update skipped when nothing relevant changed
+        - hass setter now diffs configured entity states — DOM update skipped when nothing relevant changed
         - Updates + history polling paused while tab hidden; instant refresh on return (visibilitychange)
     Fixes:
-        - Sparklines: history bucketed by timestamp into 48 uniform 30-min slots â€” fixes time-axis distortion
+        - Sparklines: history bucketed by timestamp into 48 uniform 30-min slots — fixes time-axis distortion
           and wrong tooltip times caused by significant_changes_only irregular sampling
         - Editor: identical config echo from HA no longer re-renders (input focus preserved)
         - Autarky >=90% glow implemented via SVG filter (previous CSS box-shadow was dead code on SVG)
@@ -150,18 +156,18 @@ v1.2.4
     Changed:
         - inverter_name HTML-escaped before SVG injection
         - hass-more-info dispatched as CustomEvent
-            â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+            ──────────────────────────────────────────────────────── */
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* ════════════════════════════════════════════════════════
     v1.2.3
    Fixes:
    - Solis polarity: bat_polarity changed to 'negative' (modbus reports charging as positive,
-     same convention as Deye/Sunsynk â€” no inversion needed)
+     same convention as Deye/Sunsynk — no inversion needed)
    - LCD inverter display: now shows load power (home consumption) instead of sum of all flows
    Features:
    v1.2.2:
    - Fix: PV daily/voltage text spacing from sun icon
-   - Dual MPPT layout: PV1 left of sun (â–¸ arrow), PV2 right (â—‚ arrow),
+   - Dual MPPT layout: PV1 left of sun (▸ arrow), PV2 right (◂ arrow),
      each with own voltage below; symmetrical layout
    v1.2.1:
    - Fix: PV1/PV2 + voltage text overlapped sun icon (CSS .vd text-anchor:middle
@@ -172,29 +178,29 @@ v1.2.4
    - Victron dual MPPT: added pv1_power + pv2_power entity fields in preset;
      Solar node shows per-MPPT power breakdown when both sensors configured
    Visual:
-   - Sub-labels font sizes increased: .vc 9.5pxâ†’11px, .vd 12pxâ†’13px, .vc battery 9.5pxâ†’11px
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+   - Sub-labels font sizes increased: .vc 9.5px→11px, .vd 12px→13px, .vc battery 9.5px→11px
+   ════════════════════════════════════════════════════════ */
 
-/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+/* ────────────────────────────────────────────────────────
     v1.2.0
    Visual:
    - Autarky badge moved to top-right corner
    - Badge size reduced 15% (55x40 -> 47x34)
-   - Badge green softened â€” border/fill use low-alpha rgba instead of solid #66BB6A;
+   - Badge green softened — border/fill use low-alpha rgba instead of solid #66BB6A;
      status threshold colors (>=80/50/25%) also toned down
    - Added 8mm spacing between battery data and sparklines row
    Animation:
-   - Inlet flows (solar/grid/battery -> inverter) run at 75% of base speed â€” faster
-   - Outlet flow (inverter -> home) runs at base speed â€” slower
+   - Inlet flows (solar/grid/battery -> inverter) run at 75% of base speed — faster
+   - Outlet flow (inverter -> home) runs at base speed — slower
    - Visual effect of energy accumulating at the inverter before flowing out to home
    CSS Custom Properties:
    - --xpf-flow-width  flow line stroke width (default: 3)
    - --xpf-dash-size   dash segment size (default: 100; low value e.g. 8 = dot effect)
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+   ═══════════════════════════════════════ */
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   xPower Flow Card â€” i18n
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+/* ═══════════════════════════════════════
+   xPower Flow Card — i18n
+   ═══════════════════════════════════════ */
 const LANG={
   pt:{solar:'SOLAR',grid:'REDE',load:'CASA',battery:'BATERIA',ev:'CARRO',inverter:'Inversor',appliance:'Eletrodom\u00e9sticos',garage:'Garagem',heatpump:'Bomba de Calor',extra:'Extra',
       autarky:'Autossufici\u00EAncia',runtime_to:'at\u00E9',
@@ -224,7 +230,7 @@ const LANG={
       daily:'\u25B8',solar24:'SOL (24h)',load24:'HEM (24h)',grid24:'N\u00c4T (24h)',bat24:'BATTERI (24h)',
       unavailable:'--',autodetect:'Auto-detektera',invalid:'entitet hittades inte',
       editor_title:'xPower Flow Card',editor_lang:'Spr\u00e5k',editor_entities:'Entiteter',
-      editor_options:'Alternativ',editor_soc:'AvstÃ¤ngnings-SOC (%)',
+      editor_options:'Alternativ',editor_soc:'Avstängnings-SOC (%)',
       editor_capacity:'Batterikapacitet (Wh)',editor_inverter_name:'V\u00e4xelriktarnamn',
       editor_preset:'M\u00e4rke / Preset',editor_polarity:'Polaritet',
       editor_bat_pol:'Batteri: negativ =',editor_grid_pol:'N\u00e4t: positiv =',
@@ -254,7 +260,7 @@ const LANG={
   es:{solar:'SOLAR',grid:'RED',load:'HOGAR',battery:'BATER\u00CDAS',ev:'COCHE',inverter:'Inversor',appliance:'Electrodom\u00e9sticos',garage:'Garaje',heatpump:'Bomba de Calor',extra:'Extra',
       autarky:'Autosuficiencia',runtime_to:'hasta',
       charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
-      daily:'\u25B8',solar24:'SOLAR (24h)',load24:'HOGAR (24h)',grid24:'RED (24h)',bat24:'BATERÃA (24h)',
+      daily:'\u25B8',solar24:'SOLAR (24h)',load24:'HOGAR (24h)',grid24:'RED (24h)',bat24:'BATERÍA (24h)',
       unavailable:'--',autodetect:'Autodetectar',invalid:'entidad no existe',
       editor_title:'xPower Flow Card',editor_lang:'Idioma',editor_entities:'Entidades',
       editor_options:'Opciones',editor_soc:'SOC M\u00EDnimo (%)',
@@ -790,7 +796,7 @@ const tf=t=>{const dt=new Date(t);return String(dt.getHours()).padStart(2,'0')+'
 const sr=this._$('srx'),ss=this._$('ssx');
 if(sr)sr.textContent=tf(rise);if(ss)ss.textContent=tf(set);}
 _fmtE(v){if(v===null)return this._lang.unavailable;return v.toFixed(1)+' kWh';}
-_fmtC(e){if(!e||!this._h||!this._h.states[e])return '';const s=this._h.states[e];const v=parseFloat(s.state);if(isNaN(v))return '';const u=s.attributes?.unit_of_measurement||'â‚¬';return u+v.toFixed(2);}
+_fmtC(e){if(!e||!this._h||!this._h.states[e])return '';const s=this._h.states[e];const v=parseFloat(s.state);if(isNaN(v))return '';const u=s.attributes?.unit_of_measurement||'€';return u+v.toFixed(2);}
 _arrow(c,p){if(c===null)return '';const d=Math.abs(c)-Math.abs(p);return d>5?'\u25B4 ':d<-5?'\u25BE ':'\u25B8 ';}
 _eta(totalMin,label){const pad=v=>String(v).padStart(2,'0');const h=Math.floor(totalMin/60),m=totalMin%60;const t=new Date(Date.now()+totalMin*60000);return h+'h '+pad(m)+'m \u25B8 '+label+' @'+pad(t.getHours())+':'+pad(t.getMinutes());}
 
@@ -882,7 +888,7 @@ svg{width:100%;height:auto;display:block}
 .ss #hs{fill:none;stroke:rgba(102,187,106,0.7);stroke-width:1.2}.sc #hl{fill:none;stroke:rgba(38,198,218,0.7);stroke-width:1.2}.sg #hg{fill:none;stroke:rgba(66,165,245,0.7);stroke-width:1.2}.sbt #hb2{fill:none;stroke:rgba(124,77,255,0.7);stroke-width:1.2}
 .ss #hsa{fill:url(#sgd-s);stroke:none}.sc #hla{fill:url(#sgd-l);stroke:none}.sg #hga{fill:url(#sgd-g);stroke:none}.sbt #hb2a{fill:url(#sgd-b);stroke:none}
 </style>
-<ha-card><svg viewBox="0 -8 526 478"><defs><filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter><linearGradient id="sunrg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#FF8F00"/><stop offset="1" stop-color="#FFD54F"/></linearGradient><clipPath id="bat-clip"><rect x="232" y="342.5" width="32" height="17" rx="5.5"/></clipPath><clipPath id="ev-clip"><rect x="420.5" y="450.5" width="24" height="12" rx="4"/></clipPath><radialGradient id="sundisc" cx="38%" cy="34%" r="72%"><stop offset="0" stop-color="#FFE082"/><stop offset="0.55" stop-color="#FFC107"/><stop offset="1" stop-color="#FF9800"/></radialGradient><radialGradient id="sunhl" cx="50%" cy="50%" r="50%"><stop offset="0.55" stop-color="#FFC107" stop-opacity="0.30"/><stop offset="1" stop-color="#FFC107" stop-opacity="0"/></radialGradient><linearGradient id="ivbody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#E9ECEF"/></linearGradient><linearGradient id="ivpill" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#34373B"/><stop offset="0.55" stop-color="#2B2E31"/><stop offset="0.56" stop-color="#3C4045"/><stop offset="1" stop-color="#2B2E31"/></linearGradient></defs><g transform="translate(25.5,10) scale(0.95)">
+<ha-card><svg viewBox="0 -8 526 478"><defs><filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter><linearGradient id="sunrg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#FF8F00"/><stop offset="1" stop-color="#FFD54F"/></linearGradient><clipPath id="bat-clip"><rect x="232" y="342.5" width="32" height="17" rx="5.5"/></clipPath><clipPath id="ev-clip"><rect x="420.5" y="450.5" width="24" height="12" rx="4"/></clipPath><radialGradient id="sundisc" cx="38%" cy="34%" r="72%"><stop offset="0" stop-color="#FFE082"/><stop offset="0.55" stop-color="#FFC107"/><stop offset="1" stop-color="#FF9800"/></radialGradient><radialGradient id="sunhl" cx="50%" cy="50%" r="50%"><stop offset="0.55" stop-color="#FFC107" stop-opacity="0.30"/><stop offset="1" stop-color="#FFC107" stop-opacity="0"/></radialGradient><linearGradient id="ivbody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#E9ECEF"/></linearGradient><linearGradient id="ivpill" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#34373B"/><stop offset="0.55" stop-color="#2B2E31"/><stop offset="0.56" stop-color="#3C4045"/><stop offset="1" stop-color="#2B2E31"/></linearGradient><linearGradient id="hsrc" gradientUnits="userSpaceOnUse" x1="287.4" y1="225" x2="395" y2="225"><stop id="hs0" offset="0%" stop-color="#66BB6A"/><stop id="hs1" offset="60%" stop-color="#66BB6A"/><stop id="hs2" offset="60%" stop-color="#FFA726"/><stop id="hs3" offset="60%" stop-color="#FFA726"/><stop id="hs4" offset="60%" stop-color="#EF5350"/><stop id="hs5" offset="100%" stop-color="#EF5350"/></linearGradient></defs><g transform="translate(25.5,10) scale(0.95)">
 <g id="wicons" style="display:none" transform="translate(-20,0)">
 <rect class="wb" x="-2" y="-4" width="86" height="20"/>
 <g transform="translate(0,1)"><rect x="6" y="0" width="2.5" height="7" rx="1.2" fill="none" stroke="var(--t3)" stroke-width="0.7"/><circle cx="7.2" cy="9" r="2.5" fill="none" stroke="var(--t3)" stroke-width="0.7"/><line x1="7.2" y1="3" x2="7.2" y2="7" stroke="var(--red)" stroke-width="1" stroke-linecap="round"/><circle cx="7.2" cy="9" r="1.2" fill="var(--red)"/></g>
@@ -941,7 +947,7 @@ svg{width:100%;height:auto;display:block}
 </g>
 <text x="499" y="183" class="vm" style="fill:var(--load);font-size:13px" id="ex3val"></text>
 </g>
-<linearGradient id="augrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#10b981"/><stop offset="1" stop-color="#a3e635"/></linearGradient><g id="nAutarky" class="ct"><text id="au-label" x="479" y="10" class="aul">${L.autarky}</text><circle class="au-track" cx="500" cy="10" r="15" fill="none" stroke-width="1.5"/><circle id="au-arc" cx="500" cy="10" r="15" fill="none" stroke="url(#augrad)" stroke-width="1.5" stroke-linecap="round" pathLength="100" stroke-dasharray="0 100" transform="rotate(-90 500 10)"/><text x="500" y="5" id="va" font-family="-apple-system,sans-serif" font-size="8.5" font-weight="800" fill="var(--t1)" text-anchor="middle" dominant-baseline="middle"></text><g id="au-leaf" transform="translate(495.4,9.9) scale(0.4)" fill="none" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6"/></g><circle id="au-hit" cx="500" cy="10" r="17" fill="transparent" pointer-events="all"/></g>
+<linearGradient id="augrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#10b981"/><stop offset="1" stop-color="#a3e635"/></linearGradient><g id="nAutarky" class="ct"><text id="au-label" x="479" y="10" class="aul">${L.autarky}</text><circle class="au-track" cx="500" cy="10" r="15" fill="none" stroke-width="1.5"/><g transform="rotate(-90 500 10)" fill="none" stroke-width="1.5" stroke-linecap="butt"><circle id="au-s" cx="500" cy="10" r="15" stroke="var(--green)" pathLength="100" stroke-dasharray="0 100"/><circle id="au-b" cx="500" cy="10" r="15" stroke="var(--orange)" pathLength="100" stroke-dasharray="0 100"/><circle id="au-g" cx="500" cy="10" r="15" stroke="var(--red)" pathLength="100" stroke-dasharray="0 100"/></g><text x="500" y="5" id="va" font-family="-apple-system,sans-serif" font-size="8.5" font-weight="800" fill="var(--t1)" text-anchor="middle" dominant-baseline="middle"></text><g id="au-leaf" transform="translate(495.4,9.9) scale(0.4)" fill="none" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6"/></g><circle id="au-hit" cx="500" cy="10" r="17" fill="transparent" pointer-events="all"/></g>
 </g></svg>
 <div class="sr" style="margin-top:4px">
 <div class="sb sg"><div class="sb-header"><span class="sl">${L.grid24}</span><span class="sv" id="hz"></span></div><svg viewBox="0 0 200 55" preserveAspectRatio="none"><defs><linearGradient id="sgd-g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(66,165,245,0.30)"/><stop offset="1" stop-color="rgba(66,165,245,0)"/></linearGradient></defs><path id="hga"/><path id="hg"/><line class="cursor" id="cg" x1="0" y1="0" x2="0" y2="55"/><circle class="cursor-dot" id="dg2" cx="0" cy="0" r="3"/></svg><span class="sb-tip" id="tg"></span></div>
@@ -972,7 +978,7 @@ _setupTooltips(){
       const hoursAgo=(1-idx/(data.length-1))*24;
       const when=new Date(Date.now()-hoursAgo*3600000);
       const hh=String(when.getHours()).padStart(2,'0');const mm=String(when.getMinutes()).padStart(2,'0');
-      tip.textContent=(val>=1000?(val/1000).toFixed(1)+' kW':val.toFixed(0)+' W')+' Â· '+hh+':'+mm;
+      tip.textContent=(val>=1000?(val/1000).toFixed(1)+' kW':val.toFixed(0)+' W')+' · '+hh+':'+mm;
       tip.style.color=color;tip.classList.add('show');
     };
     const hide=()=>{cursor.style.display='none';dot.style.display='none';tip.classList.remove('show');};
@@ -1055,7 +1061,7 @@ if(c.solar2&&sol1!==null&&sol2!==null){
   {const h1=this._$('pv1hit'),h2=this._$('pv2hit');if(h1)h1.style.display='none';if(h2)h2.style.display='none';}
 }
 this._sunRing(c);
-this._$('dg').textContent=L.import_+' '+this._fmtE(dI)+(this._fmtC(c.import_cost)?' Â· '+this._fmtC(c.import_cost):'')+' '+L.export_+' '+this._fmtE(dE)+(this._fmtC(c.export_cost)?' Â· '+this._fmtC(c.export_cost):'');
+this._$('dg').textContent=L.import_+' '+this._fmtE(dI)+(this._fmtC(c.import_cost)?' · '+this._fmtC(c.import_cost):'')+' '+L.export_+' '+this._fmtE(dE)+(this._fmtC(c.export_cost)?' · '+this._fmtC(c.export_cost):'');
 this._$('dl').textContent=L.daily+' '+this._fmtE(dL);
 this._$('db').textContent=L.charge+' '+this._fmtE(dC)+' '+L.discharge+' '+this._fmtE(dD);
 
@@ -1067,11 +1073,11 @@ this._sf(this._$('fs'),'s',solF,'fd','var(--green)','0.8');
 this._sf(this._$('fg'),'g',gridF,gridF>0?'fr':'fL',gridF>0?'var(--red)':'var(--green)','0.7');
 this._sf(this._$('fb'),'b',batF,batF<0?'fd':'fu',batF<0?'var(--green)':'var(--solar)','0.75');
 const solContrib=solF>0?solF:0;const batContrib=batF>0?batF:0;const gridContrib=gridF>0?gridF:0;
-let homeColor='var(--green)';
-if(loadF>10){if(gridContrib>=solContrib&&gridContrib>=batContrib&&gridContrib>0)homeColor='var(--red)';else if(batContrib>=solContrib&&batContrib>0)homeColor='var(--solar)';else homeColor='var(--green)';}
-this._sf(this._$('fh'),'h',loadF,'fr',homeColor,'0.75');
+const _gImp=gridF>0?gridF:0,_bDis=batF>0?batF:0,_sToH=Math.max(0,loadF-_gImp-_bDis),_feed=_gImp+_bDis+_sToH;
+{const _sc=[[_sToH,'#66BB6A'],[_bDis,'#FFA726'],[_gImp,'#EF5350']].sort((a,b)=>a[0]-b[0]);let _ac=0;for(let _i=0;_i<3;_i++){const _f=_feed>0?_sc[_i][0]/_feed*100:0;const _p0=this._$('hs'+(_i*2)),_p1=this._$('hs'+(_i*2+1));if(_p0){_p0.setAttribute('offset',_ac.toFixed(2)+'%');_p0.setAttribute('stop-color',_sc[_i][1]);}_ac+=_f;if(_p1){_p1.setAttribute('offset',_ac.toFixed(2)+'%');_p1.setAttribute('stop-color',_sc[_i][1]);}}}
+this._sf(this._$('fh'),'h',loadF,'fr','url(#hsrc)','0.75');
 
-// EV node â€” visible only when ev_power/ev_soc configured
+// EV node — visible only when ev_power/ev_soc configured
 const nEV=this._$('nEV');
 if(nEV){
   if(c.ev_power||c.ev_soc){
@@ -1108,7 +1114,7 @@ if(nEV){
   }else{nEV.style.display='none';}
 }
 
-// Extra consumer nodes (1-3) â€” generic slots, each with a selectable icon
+// Extra consumer nodes (1-3) — generic slots, each with a selectable icon
 const iconLbl={appliance:L.appliance,heatpump:L.heatpump,garage:L.garage,generic:L.extra};
 [1,2,3].forEach(n=>{
   const nEl=this._$('nExtra'+n);
@@ -1130,7 +1136,7 @@ const iconLbl={appliance:L.appliance,heatpump:L.heatpump,garage:L.garage,generic
   }else{nEl.style.display='none';}
 });
 
-// Phase lock â€” restart all flow animations in the same frame so pulses relay through the inverter
+// Phase lock — restart all flow animations in the same frame so pulses relay through the inverter
 if(this._resync){this._resync=false;const els=['fs','fg','fb','fh','fe','fex1','fex2','fex3'].map(id=>this._$(id)).filter(Boolean);els.forEach(el=>{el.style.animation='none';});void this.offsetWidth;els.forEach(el=>{el.style.animation='';const half='-'+(this._syncSpd/2).toFixed(2)+'s';let d='0s';if(el.id==='fh')d=half;else if(el.id==='fb'&&this._fs['b']==='fd')d=half;else if(el.id==='fg'&&this._fs['g']==='fL')d=half;el.style.animationDelay=d;});}
 
 const batCap=c.battery_capacity??5120;const shuSoc=c.shutdown_soc??20;
@@ -1146,7 +1152,7 @@ if(batF>RUNTIME_MIN_W&&socVal>shuSoc){
 const gridImp=gridF>0?gridF:0;
 const au=loadF>0?Math.max(0,Math.min(100,((loadF-gridImp)/loadF)*100)):0;
 {const _va=this._$('va'),_vs=au.toFixed(0)+'%';_va.textContent=_vs;_va.setAttribute('font-size',_vs.length>=4?6.8:8.5);}
-const auArc=this._$('au-arc');if(auArc){auArc.setAttribute('stroke-dasharray',au.toFixed(1)+' 100');let auS;if(au>=80)auS='url(#augrad)';else if(au>=50)auS='#FFA726';else if(au>=25)auS='#FB8C00';else auS='#EF5350';auArc.setAttribute('stroke',auS);auArc.style.filter=au>=90?'url(#glow)':'';}const auLeaf=this._$('au-leaf');if(auLeaf)auLeaf.setAttribute('stroke',au>=25?'#34d399':'#EF5350');
+const _batDis=batF>0?batF:0;const _solH=Math.max(0,loadF-gridImp-_batDis);const _tot=gridImp+_batDis+_solH;const _seg=(el,st,ln)=>{if(!el)return;const l=Math.max(0,ln);el.setAttribute('stroke-dasharray',l.toFixed(2)+' '+(100-l).toFixed(2));el.setAttribute('stroke-dashoffset',(-st).toFixed(2));};const auS=this._$('au-s'),auB=this._$('au-b'),auG=this._$('au-g');if(_tot>0){const fS=_solH/_tot*100,fB=_batDis/_tot*100,fG=gridImp/_tot*100;_seg(auS,0,fS);_seg(auB,fS,fB);_seg(auG,fS+fB,fG);}else{_seg(auS,0,0);_seg(auB,0,0);_seg(auG,0,0);}const auLeaf=this._$('au-leaf');if(auLeaf)auLeaf.setAttribute('stroke',au>=25?'#34d399':'#EF5350');
 
 const wtv=this._gv(c.weather_temp);const whv=this._gv(c.weather_humidity);
 const wicons=this._$('wicons');const wdrop=this._$('wdrop');const wdiv=this._$('wdiv');
@@ -1195,7 +1201,7 @@ this._$('hx').textContent=this._fmt(load)+' / '+this._fmtE(dL);
 this._$('hz').textContent=this._fmt(grid!==null?Math.abs(grid):null)+' / '+this._fmtE(dI+dE);
 this._$('hy').textContent=this._fmt(bat!==null?Math.abs(bat):null)+' / '+this._fmtE(dC+dD);
 
-// #1 Dynamic Border â€” thin border color based on dominant source
+// #1 Dynamic Border — thin border color based on dominant source
 const card=this.shadowRoot.querySelector('ha-card');
 if(card){const sC=solF>0?solF:0;const bC=batF>0?batF:0;const gC=gridF>0?gridF:0;
 let borderColor='rgba(255,255,255,0.06)';
@@ -1204,7 +1210,7 @@ else if(bC>=sC&&bC>=gC&&bC>10)borderColor='rgba(255,179,0,0.55)';
 else if(gC>10)borderColor='rgba(239,83,80,0.45)';
 card.style.borderColor=borderColor;}
 
-// #2 LCD â€” home consumption on inverter display
+// #2 LCD — home consumption on inverter display
 }
 
 getGridOptions(){return this._c.compact?{columns:12,rows:8,min_columns:6,min_rows:4}:{columns:12,rows:10,min_columns:6,min_rows:6};}
@@ -1213,5 +1219,5 @@ getCardSize(){return this._c.compact?4:6;}
 
 customElements.define('xpower-flow-card',XPowerFlowCard);
 window.customCards=window.customCards||[];
-window.customCards.push({type:'xpower-flow-card',name:'xPower Flow Card',description:'Universal power flow card for solar hybrid inverters â€” Deye, Sunsynk, Huawei, Fronius, Growatt, Victron, SolarEdge',preview:true,documentationURL:'https://github.com/BTNBx/xPower-Flow-Card'});
+window.customCards.push({type:'xpower-flow-card',name:'xPower Flow Card',description:'Universal power flow card for solar hybrid inverters — Deye, Sunsynk, Huawei, Fronius, Growatt, Victron, SolarEdge',preview:true,documentationURL:'https://github.com/BTNBx/xPower-Flow-Card'});
 console.info('%c XPOWER-FLOW %c v'+V+' ','background:#7C4DFF;color:white;font-weight:bold;border-radius:4px 0 0 4px;padding:2px 6px','background:#333;color:white;border-radius:0 4px 4px 0;padding:2px 6px');
