@@ -157,7 +157,7 @@ weather_humidity: sensor.my_outdoor_humidity
 | Option | Default | Description |
 |--------|---------|-------------|
 | `preset` | `deye` | Inverter brand preset |
-| `language` | `pt` | Card language (`pt`, `en`, `de`, `fr`, `es`, `it`, `nl`, `pl`) |
+| `language` | `pt` | Card language (`pt`, `en`, `de`, `fr`, `es`, `it`, `nl`, `pl`, `sv`) |
 | `inverter_name` | `DEYE` | Display name (leave empty to hide) |
 | `bat_polarity` | `negative` | `negative` = charging (Deye) or `positive` = charging (Huawei) |
 | `grid_polarity` | `positive` | `positive` = import (Deye) or `negative` = import (SolarEdge) |
@@ -167,6 +167,10 @@ weather_humidity: sensor.my_outdoor_humidity
 | `pv_voltage2` | | Second MPPT PV voltage sensor (optional) |
 | `weather_temp` | | Temperature sensor for weather display |
 | `weather_humidity` | | Humidity sensor for weather display |
+| `price_sensor` | | Electricity price sensor — shows current price with the sensor's own unit (optional) |
+| `extra{1,2,3}_power` | | Power sensor for each extra-consumer node (optional; node hidden when empty) |
+| `extra{1,2,3}_name` | | Custom label for each extra-consumer node (falls back to the icon's name) |
+| `extra{1,2,3}_icon` | `appliance` / `heatpump` / `garage` | Icon per node: `appliance`, `heatpump`, `garage`, `generic` |
 
 ### Polarity Guide
 
