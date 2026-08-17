@@ -22,9 +22,9 @@ Select your brand in the visual editor. Entities and polarity are configured aut
 * 9 inverter presets with auto-configured entities and polarity
 * 9 languages: Portuguese, English, German, French, Spanish, Italian, Dutch, Polish, Swedish
 * Configurable battery and grid polarity sign conventions
-* Dual MPPT support - configure two solar strings independently
+* Dual MPPT support, configure two solar strings independently
 * Optional EV charging node with animated flow, blinking bolt, SOC and daily energy
-* Extra consumption nodes — appliances, garage, heat pump, and custom loads, each with its own power sensor, icon, and label
+* Extra consumption nodes, appliances, garage, heat pump, and custom loads, each with its own power sensor, icon, and label
 * Animated pulse flow lines with speed proportional to power output
 * Inverter → home flow coloured by the mix feeding the home (solar green / battery amber / grid red)
 * Color-coded values: solar (green), grid (red), home (cyan), battery (yellow)
@@ -34,7 +34,7 @@ Select your brand in the visual editor. Entities and polarity are configured aut
 * 24-hour sparkline charts with Catmull-Rom interpolation, updated every 5 minutes
 * Sparkline tooltips showing power and timestamp on hover
 * Auto-scaling Y-axis on all sparklines
-* Circular self-sufficiency ring — split by the source feeding the home (solar / battery / grid), centered %, leaf glyph, sliding slice transitions, and hover/tap label
+* Circular self-sufficiency ring, split by the source feeding the home (solar / battery / grid), centered %, leaf glyph, sliding slice transitions, and hover/tap label
 * Daily totals for import, export, and production in kWh
 * Trend arrows for rising, falling, or stable values
 * Graceful handling of unavailable sensors (`--`)
