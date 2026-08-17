@@ -20,7 +20,7 @@ Select your brand in the visual editor. Entities and polarity are configured aut
 
 ## Features
 * 9 inverter presets with auto-configured entities and polarity
-* 8 languages: Portuguese, English, German, French, Spanish, Italian, Dutch, Polish
+* 9 languages: Portuguese, English, German, French, Spanish, Italian, Dutch, Polish, Swedish
 * Configurable battery and grid polarity sign conventions
 * Dual MPPT support - configure two solar strings independently
 * Optional EV charging node with animated flow, blinking bolt, SOC and daily energy
