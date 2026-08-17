@@ -202,7 +202,7 @@ v1.2.4
    xPower Flow Card — i18n
    ═══════════════════════════════════════ */
 const LANG={
-  pt:{solar:'SOLAR',grid:'REDE',load:'CASA',battery:'BATERIA',ev:'CARRO',inverter:'Inversor',
+  pt:{solar:'SOLAR',grid:'REDE',load:'CASA',battery:'BATERIA',ev:'CARRO',inverter:'Inversor',appliance:'Eletrodom\u00e9sticos',garage:'Garagem',heatpump:'Bomba de Calor',extra:'Extra',
       autarky:'Autossufici\u00EAncia',runtime_to:'at\u00E9',
       charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
       daily:'\u25B8',solar24:'SOLAR (24h)',load24:'CASA (24h)',grid24:'REDE (24h)',bat24:'BATERIA (24h)',
@@ -213,7 +213,7 @@ const LANG={
       editor_preset:'Marca / Preset',editor_polarity:'Polaridade',
       editor_bat_pol:'Bateria: negativo =',editor_grid_pol:'Rede: positivo =',
       charging:'carga',discharging:'descarga',importing:'importar',exporting:'exportar'},
-  en:{solar:'SOLAR',grid:'GRID',load:'HOME',battery:'BATTERY',ev:'EV',inverter:'Inverter',
+  en:{solar:'SOLAR',grid:'GRID',load:'HOME',battery:'BATTERY',ev:'EV',inverter:'Inverter',appliance:'Appliances',garage:'Garage',heatpump:'Heat Pump',extra:'Extra',
       autarky:'Self-sufficiency',runtime_to:'to',
       charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
       daily:'\u25B8',solar24:'SOLAR (24h)',load24:'HOME (24h)',grid24:'GRID (24h)',bat24:'BATTERY (24h)',
@@ -224,7 +224,18 @@ const LANG={
       editor_preset:'Brand / Preset',editor_polarity:'Polarity',
       editor_bat_pol:'Battery: negative =',editor_grid_pol:'Grid: positive =',
       charging:'charging',discharging:'discharging',importing:'import',exporting:'export'},
-  de:{solar:'SOLAR',grid:'NETZ',load:'HAUS',battery:'BATTERIE',ev:'E-AUTO',inverter:'Wechselrichter',
+  sv:{solar:'SOL',grid:'N\u00c4T',load:'HEM',battery:'BATTERI',ev:'ELBIL',inverter:'V\u00e4xelriktare',appliance:'Vitvaror',garage:'Garage',heatpump:'V\u00e4rmepump',extra:'\u00d6vrigt',
+      autarky:'Sj\u00e4lvf\u00f6rs\u00f6rjning',runtime_to:'till',
+      charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
+      daily:'\u25B8',solar24:'SOL (24h)',load24:'HEM (24h)',grid24:'N\u00c4T (24h)',bat24:'BATTERI (24h)',
+      unavailable:'--',autodetect:'Auto-detektera',invalid:'entitet hittades inte',
+      editor_title:'xPower Flow Card',editor_lang:'Spr\u00e5k',editor_entities:'Entiteter',
+      editor_options:'Alternativ',editor_soc:'Avstängnings-SOC (%)',
+      editor_capacity:'Batterikapacitet (Wh)',editor_inverter_name:'V\u00e4xelriktarnamn',
+      editor_preset:'M\u00e4rke / Preset',editor_polarity:'Polaritet',
+      editor_bat_pol:'Batteri: negativ =',editor_grid_pol:'N\u00e4t: positiv =',
+      charging:'laddning',discharging:'urladdning',importing:'import',exporting:'export'},
+  de:{solar:'SOLAR',grid:'NETZ',load:'HAUS',battery:'BATTERIE',ev:'E-AUTO',inverter:'Wechselrichter',appliance:'Ger\u00e4te',garage:'Garage',heatpump:'W\u00e4rmepumpe',extra:'Sonstiges',
       autarky:'Autarkie',runtime_to:'bis',
       charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
       daily:'\u25B8',solar24:'SOLAR (24h)',load24:'HAUS (24h)',grid24:'NETZ (24h)',bat24:'BATTERIE (24h)',
@@ -235,7 +246,7 @@ const LANG={
       editor_preset:'Marke / Vorlage',editor_polarity:'Polarit\u00E4t',
       editor_bat_pol:'Batterie: negativ =',editor_grid_pol:'Netz: positiv =',
       charging:'Laden',discharging:'Entladen',importing:'Bezug',exporting:'Einspeisung'},
-  fr:{solar:'SOLAIRE',grid:'R\u00C9SEAU',load:'MAISON',battery:'BATTERIE',ev:'VOITURE',inverter:'Onduleur',
+  fr:{solar:'SOLAIRE',grid:'R\u00C9SEAU',load:'MAISON',battery:'BATTERIE',ev:'VOITURE',inverter:'Onduleur',appliance:'\u00c9lectrom\u00e9nager',garage:'Garage',heatpump:'Pompe \u00e0 chaleur',extra:'Autre',
       autarky:'Autosuffisance',runtime_to:'jusqu\u0027\u00E0',
       charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
       daily:'\u25B8',solar24:'SOLAIRE (24h)',load24:'MAISON (24h)',grid24:'R\u00C9SEAU (24h)',bat24:'BATTERIE (24h)',
@@ -246,7 +257,7 @@ const LANG={
       editor_preset:'Marque / Pr\u00E9r\u00E9glage',editor_polarity:'Polarit\u00E9',
       editor_bat_pol:'Batterie: n\u00E9gatif =',editor_grid_pol:'R\u00E9seau: positif =',
       charging:'charge',discharging:'d\u00E9charge',importing:'importation',exporting:'exportation'},
-  es:{solar:'SOLAR',grid:'RED',load:'HOGAR',battery:'BATER\u00CDAS',ev:'COCHE',inverter:'Inversor',
+  es:{solar:'SOLAR',grid:'RED',load:'HOGAR',battery:'BATER\u00CDAS',ev:'COCHE',inverter:'Inversor',appliance:'Electrodom\u00e9sticos',garage:'Garaje',heatpump:'Bomba de Calor',extra:'Extra',
       autarky:'Autosuficiencia',runtime_to:'hasta',
       charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
       daily:'\u25B8',solar24:'SOLAR (24h)',load24:'HOGAR (24h)',grid24:'RED (24h)',bat24:'BATERÍA (24h)',
@@ -257,7 +268,7 @@ const LANG={
       editor_preset:'Marca / Preset',editor_polarity:'Polaridad',
       editor_bat_pol:'Bater\u00EDa: negativo =',editor_grid_pol:'Red: positivo =',
       charging:'carga',discharging:'descarga',importing:'importaci\u00F3n',exporting:'exportaci\u00F3n'},
-  it:{solar:'SOLARE',grid:'RETE',load:'CASA',battery:'BATTERIA',ev:'AUTO',inverter:'Inverter',
+  it:{solar:'SOLARE',grid:'RETE',load:'CASA',battery:'BATTERIA',ev:'AUTO',inverter:'Inverter',appliance:'Elettrodomestici',garage:'Garage',heatpump:'Pompa di Calore',extra:'Extra',
       autarky:'Autosufficienza',runtime_to:'fino a',
       charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
       daily:'\u25B8',solar24:'SOLARE (24h)',load24:'CASA (24h)',grid24:'RETE (24h)',bat24:'BATTERIA (24h)',
@@ -268,7 +279,7 @@ const LANG={
       editor_preset:'Marca / Preset',editor_polarity:'Polarit\u00E0',
       editor_bat_pol:'Batteria: negativo =',editor_grid_pol:'Rete: positivo =',
       charging:'carica',discharging:'scarica',importing:'importazione',exporting:'esportazione'},
-  nl:{solar:'ZONNE',grid:'NET',load:'HUIS',battery:'BATTERIJ',ev:'EV',inverter:'Omvormer',
+  nl:{solar:'ZONNE',grid:'NET',load:'HUIS',battery:'BATTERIJ',ev:'EV',inverter:'Omvormer',appliance:'Apparaten',garage:'Garage',heatpump:'Warmtepomp',extra:'Overig',
       autarky:'Zelfvoorziening',runtime_to:'tot',
       charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
       daily:'\u25B8',solar24:'ZONNE (24h)',load24:'HUIS (24h)',grid24:'NET (24h)',bat24:'BATTERIJ (24h)',
@@ -279,7 +290,7 @@ const LANG={
       editor_preset:'Merk / Preset',editor_polarity:'Polariteit',
       editor_bat_pol:'Batterij: negatief =',editor_grid_pol:'Net: positief =',
       charging:'laden',discharging:'ontladen',importing:'import',exporting:'export'},
-  pl:{solar:'SOLAR',grid:'SIE\u0106',load:'DOM',battery:'BATERIA',ev:'EV',inverter:'Falownik',
+  pl:{solar:'SOLAR',grid:'SIE\u0106',load:'DOM',battery:'BATERIA',ev:'EV',inverter:'Falownik',appliance:'AGD',garage:'Gara\u017c',heatpump:'Pompa Ciep\u0142a',extra:'Inne',
       autarky:'Samowystarczalno\u015B\u0107',runtime_to:'do',
       charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
       daily:'\u25B8',solar24:'SOLAR (24h)',load24:'DOM (24h)',grid24:'SIE\u0106 (24h)',bat24:'BATERIA (24h)',
@@ -412,7 +423,11 @@ const DEFAULTS={
   shutdown_soc:20,battery_capacity:5120,grid_threshold:0,font_size:24,language:'pt',
   inverter_name:'DEYE',
   weather_temp:'',weather_humidity:'',
+  price_sensor:'',
   ev_power:'',ev_soc:'',daily_ev:'',
+  extra1_power:'',extra1_name:'',extra1_icon:'appliance',
+  extra2_power:'',extra2_name:'',extra2_icon:'heatpump',
+  extra3_power:'',extra3_name:'',extra3_icon:'garage',
   import_cost:'',export_cost:'',
   compact:false,
   theme:'auto',
@@ -435,7 +450,11 @@ const ENTITY_FIELDS=[
   {key:'daily_export',label:'Daily Export'},{key:'daily_load',label:'Daily Load'},
   {key:'daily_charge',label:'Daily Charge'},{key:'daily_discharge',label:'Daily Discharge'},
   {key:'weather_temp',label:'Weather Temp.'},{key:'weather_humidity',label:'Weather Humidity'},
+  {key:'price_sensor',label:'Electricity Price (optional)'},
   {key:'ev_power',label:'EV Charger Power (optional)'},{key:'ev_soc',label:'EV SOC (optional)'},{key:'daily_ev',label:'Daily EV Energy (optional)'},
+  {key:'extra1_power',label:'Extra Consumer 1 Power (optional)'},
+  {key:'extra2_power',label:'Extra Consumer 2 Power (optional)'},
+  {key:'extra3_power',label:'Extra Consumer 3 Power (optional)'},
   {key:'import_cost',label:'Daily Import Cost'},{key:'export_cost',label:'Daily Export Earnings'}
 ];
 const ENT_KEYS=ENTITY_FIELDS.map(f=>f.key);
@@ -462,6 +481,12 @@ class XPowerFlowCardEditor extends HTMLElement{
     const cfg={...this._config};
     cfg.language=this.querySelector('#ed-lang').value;
     cfg.inverter_name=this.querySelector('#ed-inv').value;
+    cfg.extra1_name=this.querySelector('#ed-ex1name').value;
+    cfg.extra1_icon=this.querySelector('#ed-ex1icon').value;
+    cfg.extra2_name=this.querySelector('#ed-ex2name').value;
+    cfg.extra2_icon=this.querySelector('#ed-ex2icon').value;
+    cfg.extra3_name=this.querySelector('#ed-ex3name').value;
+    cfg.extra3_icon=this.querySelector('#ed-ex3icon').value;
     cfg.theme=this.querySelector('#ed-theme').value;
     cfg.compact=this.querySelector('#ed-compact').value==='true';
     cfg.animations=this.querySelector('#ed-anim').value;
@@ -564,6 +589,7 @@ class XPowerFlowCardEditor extends HTMLElement{
             <option value="it" ${c.language==='it'?'selected':''}>Italiano</option>
             <option value="nl" ${c.language==='nl'?'selected':''}>Nederlands</option>
             <option value="pl" ${c.language==='pl'?'selected':''}>Polski</option>
+            <option value="sv" ${c.language==='sv'?'selected':''}>Svenska</option>
           </select>
         </div>
       </div>
@@ -634,6 +660,51 @@ class XPowerFlowCardEditor extends HTMLElement{
           <input type="number" id="ed-fsize" min="10" max="48" value="${c.font_size??24}">
         </div>
       </div>
+      <div class="row">
+        <div class="field">
+          <label>Extra Consumer 1: Name</label>
+          <input type="text" id="ed-ex1name" value="${this._esc(c.extra1_name)}" placeholder="Auto">
+        </div>
+        <div class="field">
+          <label>Extra Consumer 1: Icon</label>
+          <select id="ed-ex1icon" style="${selStyle}">
+            <option value="appliance" ${c.extra1_icon==='appliance'?'selected':''}>Appliances</option>
+            <option value="heatpump" ${c.extra1_icon==='heatpump'?'selected':''}>Heat Pump</option>
+            <option value="garage" ${c.extra1_icon==='garage'?'selected':''}>Garage/Shed</option>
+            <option value="generic" ${c.extra1_icon==='generic'?'selected':''}>Generic</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>Extra Consumer 2: Name</label>
+          <input type="text" id="ed-ex2name" value="${this._esc(c.extra2_name)}" placeholder="Auto">
+        </div>
+        <div class="field">
+          <label>Extra Consumer 2: Icon</label>
+          <select id="ed-ex2icon" style="${selStyle}">
+            <option value="appliance" ${c.extra2_icon==='appliance'?'selected':''}>Appliances</option>
+            <option value="heatpump" ${c.extra2_icon==='heatpump'?'selected':''}>Heat Pump</option>
+            <option value="garage" ${c.extra2_icon==='garage'?'selected':''}>Garage/Shed</option>
+            <option value="generic" ${c.extra2_icon==='generic'?'selected':''}>Generic</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>Extra Consumer 3: Name</label>
+          <input type="text" id="ed-ex3name" value="${this._esc(c.extra3_name)}" placeholder="Auto">
+        </div>
+        <div class="field">
+          <label>Extra Consumer 3: Icon</label>
+          <select id="ed-ex3icon" style="${selStyle}">
+            <option value="appliance" ${c.extra3_icon==='appliance'?'selected':''}>Appliances</option>
+            <option value="heatpump" ${c.extra3_icon==='heatpump'?'selected':''}>Heat Pump</option>
+            <option value="garage" ${c.extra3_icon==='garage'?'selected':''}>Garage/Shed</option>
+            <option value="generic" ${c.extra3_icon==='generic'?'selected':''}>Generic</option>
+          </select>
+        </div>
+      </div>
 
       <h4>${L.editor_entities} <button id="ed-auto" type="button" style="float:right;margin-top:-4px;padding:4px 10px;font-size:11px;border:1px solid var(--divider-color,rgba(255,255,255,0.15));border-radius:4px;background:var(--card-background-color,#1c1e21);color:var(--primary-text-color);cursor:pointer">\u26A1 ${L.autodetect}</button></h4>
       <div class="grid">
@@ -661,6 +732,10 @@ static getStubConfig(){return{...DEFAULTS};}
 setConfig(c){
   this._c={};
   Object.keys(DEFAULTS).forEach(k=>{this._c[k]=c[k]!==undefined?c[k]:DEFAULTS[k];});
+  // Backward compatibility: migrate old hardcoded keys to the generic slot system
+  if(!c.extra1_power&&c.appliance_power){this._c.extra1_power=c.appliance_power;this._c.extra1_name=c.appliance_name||'';this._c.extra1_icon='appliance';}
+  if(!c.extra2_power&&c.heatpump_power){this._c.extra2_power=c.heatpump_power;this._c.extra2_name=c.heatpump_name||'';this._c.extra2_icon='heatpump';}
+  if(!c.extra3_power&&c.garage_power){this._c.extra3_power=c.garage_power;this._c.extra3_name=c.garage_name||'';this._c.extra3_icon='garage';}
   this._lang=LANG[this._c.language]||LANG.pt;
   this._render();
   if(this._h)this._schedule();
@@ -822,14 +897,56 @@ svg{width:100%;height:auto;display:block}
 <g id="wdrop" transform="translate(2,1)"><path d="M46,9 Q46,4 49,0 Q52,4 52,9 Q52,12 49,12 Q46,12 46,9Z" fill="none" stroke="var(--t3)" stroke-width="0.7"/><path d="M47.2,8.5 Q47.2,5.5 49,2 Q50.8,5.5 50.8,8.5 Q50.8,10.5 49,10.5 Q47.2,10.5 47.2,8.5Z" fill="var(--grid)" opacity="0.5"/></g>
 <text x="58" y="8" class="wt" id="wh"></text>
 </g>
+<g id="priceicons" style="display:none" transform="translate(-20,26)">
+<rect class="wb" x="-2" y="-4" width="106" height="20"/>
+<circle cx="7" cy="6" r="5.5" fill="none" stroke="var(--t3)" stroke-width="0.7"/>
+<text x="7" y="6.5" font-family="-apple-system,sans-serif" font-size="7" font-weight="700" fill="var(--t3)" text-anchor="middle" dominant-baseline="middle">&#164;</text>
+<text x="17" y="8" class="wt" id="pr" font-size="10"></text>
+</g>
 <path class="fl" d="M250,96 L250,187.7"/><path class="fl" d="M250,262.4 L250,364"/><path class="fl" d="M90,225 L212.7,225"/><path class="fl" d="M287.4,225 L395,225"/>
 <path id="fs" class="fa" d="M250,96 L250,187.7" pathLength="100" opacity="0"/><path id="fb" class="fa" d="M250,262.4 L250,364" pathLength="100" opacity="0"/><path id="fg" class="fa" d="M90,225 L212.7,225" pathLength="100" opacity="0"/><path id="fh" class="fa" d="M287.4,225 L395,225" pathLength="100" opacity="0"/>
 <g id="nSolar" class="ct"><g id="sunRing" style="display:none">${SUNTICKS}<path id="srhit" d="M224.5,63.5 A36,36 0 1 1 275.5,63.5" fill="none" stroke="transparent" stroke-width="16" pointer-events="stroke" style="cursor:pointer"/><text id="srx" x="215" y="66" class="srt" style="text-anchor:end"></text><text id="ssx" x="285" y="66" class="srt" style="text-anchor:start"></text></g><g id="sunG"><circle cx="250" cy="38" r="28" fill="url(#sunhl)"/><circle cx="250" cy="38" r="19" fill="url(#sundisc)"/></g><text x="250" y="81" class="vm" style="fill:var(--green)" id="vs"></text><text x="250" y="-10" class="vl">${L.solar}</text><text id="dst1" x="186" y="22" class="pvh"></text><text id="ds1" x="186" y="34" class="pvv"></text><text id="pv1" x="186" y="46" class="pvu"></text><text id="dst" x="314" y="22" class="pvh"></text><text id="ds" x="314" y="34" class="pvv"></text><text id="pv" x="314" y="46" class="pvu"></text><path id="arl" d="M162,31 L162,37 L168,34 Z" fill="#FFD54F" opacity="0.85" style="display:none"/><path id="arr" d="M338,31 L338,37 L332,34 Z" fill="#FFD54F" opacity="0.85" style="display:none"/><rect id="pv1hit" x="164" y="14" width="44" height="40" fill="transparent" pointer-events="all" style="display:none;cursor:pointer"/><rect id="pv2hit" x="292" y="14" width="44" height="40" fill="transparent" pointer-events="all" style="display:none;cursor:pointer"/></g>
 <g><g transform="translate(250,225) scale(1.65)"><rect x="-19" y="-19" width="38" height="38" rx="5" fill="url(#ivbody)" stroke="rgba(0,0,0,0.18)" stroke-width="0.5"/><rect x="-11" y="18" width="4.5" height="2.4" rx="0.8" fill="rgba(0,0,0,0.35)"/><rect x="-2.25" y="18" width="4.5" height="2.4" rx="0.8" fill="rgba(0,0,0,0.35)"/><rect x="6.5" y="18" width="4.5" height="2.4" rx="0.8" fill="rgba(0,0,0,0.35)"/><rect x="-11" y="-4.6" width="22" height="9.2" rx="4.6" fill="url(#ivpill)"/><circle id="led1" cx="-4" cy="-0.6" r="1.15" fill="rgba(255,255,255,0.12)"/><circle id="led2" cx="0" cy="-0.6" r="1.15" fill="rgba(255,255,255,0.12)"/><circle id="led3" cx="4" cy="-0.6" r="1.15" fill="rgba(255,255,255,0.12)"/><rect id="ivbar" x="-3" y="2.6" width="6" height="0.9" rx="0.45" fill="#E4002B"/></g>${INV?'<text x="250" y="272" class="il">'+INV+'</text>':''}<text x="296" y="264" class="vc" id="tp" text-anchor="start"></text></g>
 <g id="nGrid" class="ct"><g id="gridIcon" transform="translate(66,225) scale(1.65) translate(-66,-196)"><rect x="64" y="181" width="4" height="30" rx="1" fill="var(--red)" opacity="0.7"/><rect x="54" y="183" width="24" height="3" rx="1" fill="var(--red)" opacity="0.6"/><rect x="57" y="192" width="18" height="2.5" rx="1" fill="var(--red)" opacity="0.5"/><path d="M60,211 L64,199 L68,199 L72,211" fill="var(--red)" opacity="0.4"/><circle cx="56" cy="184" r="1.5" fill="var(--red)" opacity="0.8"/><circle cx="76" cy="184" r="1.5" fill="var(--red)" opacity="0.8"/><circle cx="58" cy="193" r="1.2" fill="var(--red)" opacity="0.7"/><circle cx="74" cy="193" r="1.2" fill="var(--red)" opacity="0.7"/><line x1="54" y1="184" x2="46" y2="181" stroke="var(--red)" stroke-width="0.8" opacity="0.3"/><line x1="78" y1="184" x2="86" y2="181" stroke="var(--red)" stroke-width="0.8" opacity="0.3"/></g><text x="66" y="265" class="vm" style="fill:var(--red)" id="vg"></text><text x="66" y="190" class="vl">${L.grid}</text><text x="66" y="286" class="vc" id="gv"></text><circle id="gsd" cx="92" cy="189" r="4" fill="rgba(255,255,255,0.12)"/><text x="66" y="300" class="vd" id="dg"></text></g>
-<g id="nLoad" class="ct"><g id="loadIcon" transform="translate(434,225) scale(1.65) translate(-434,-188)"><path d="M416,188 L434,174 L452,188 Z" fill="var(--load)" opacity="0.8"/><rect x="420" y="187" width="28" height="18" rx="1" fill="var(--load)" opacity="0.6"/><rect x="430" y="195" width="8" height="10" rx="1" fill="rgba(0,0,0,0.3)"/><rect x="422" y="190" width="6" height="5" rx="0.5" fill="rgba(255,255,255,0.15)"/><rect x="440" y="190" width="6" height="5" rx="0.5" fill="rgba(255,255,255,0.15)"/><rect x="441" y="176" width="5" height="8" rx="1" fill="var(--load)" opacity="0.5"/></g><text x="434" y="268" class="vm" style="fill:var(--load)" id="vl"></text><text x="434" y="190" class="vl">${L.load}</text><text x="434" y="288" class="vd" id="dl"></text></g>
+<g id="nLoad" class="ct"><g id="loadIcon" transform="translate(434,225) scale(1.65) translate(-434,-188)"><path d="M416,188 L434,174 L452,188 Z" fill="var(--load)" opacity="0.8"/><rect x="420" y="187" width="28" height="18" rx="1" fill="var(--load)" opacity="0.6"/><rect x="430" y="195" width="8" height="10" rx="1" fill="rgba(0,0,0,0.3)"/><rect x="422" y="190" width="6" height="5" rx="0.5" fill="rgba(255,255,255,0.15)"/><rect x="440" y="190" width="6" height="5" rx="0.5" fill="rgba(255,255,255,0.15)"/><rect x="441" y="176" width="5" height="8" rx="1" fill="var(--load)" opacity="0.5"/></g><text x="434" y="268" class="vm" style="fill:var(--load)" id="vl"></text><text x="470" y="225" class="vl" style="text-anchor:start">${L.load}</text><text x="434" y="288" class="vd" id="dl"></text></g>
 <g id="nBat" class="ct"><g id="batIcon" transform="translate(250,400) scale(2.05) translate(-248,-351)"><rect x="232" y="342.5" width="32" height="17" rx="5.5" fill="var(--batt)"/><rect id="bl" x="232" y="342.5" width="32" height="17" fill="var(--batf)" clip-path="url(#bat-clip)"/><rect x="264.5" y="346.5" width="4" height="9" rx="2" fill="var(--batt)"/><svg id="bpA" x="232" y="342.5" width="32" height="17" viewBox="232 342.5 32 17" preserveAspectRatio="xMinYMin slice"><text id="bp" x="248" y="355.7" font-family="-apple-system,sans-serif" font-size="13.5" font-weight="800" fill="var(--batn)" text-anchor="middle">--</text></svg><svg id="bpB" x="264" y="342.5" width="0" height="17" viewBox="264 342.5 0.01 17" preserveAspectRatio="xMinYMin slice"><text id="bp2" x="248" y="355.7" font-family="-apple-system,sans-serif" font-size="13.5" font-weight="800" fill="var(--batf)" text-anchor="middle">--</text></svg><path id="bbolt" d="M260.1,345.8 L255.7,352 L258.9,352 L257.1,356.8 L262.5,349.9 L259.3,349.9 Z" fill="#fff" style="display:none"/></g><text x="250" y="432" class="vm" style="fill:var(--solar)" id="vb"></text><text x="250" y="372" class="vl">${L.battery}</text><text x="316" y="394" class="vc" id="bv" text-anchor="start"></text><text x="316" y="406" class="vc" id="bt" text-anchor="start"></text><text x="250" y="452" class="vd" id="db"></text><text x="250" y="468" class="vc" id="br" style="fill:var(--t1)"></text></g>
 <g id="nEV" class="ct" style="display:none"><path class="fl" d="M434,302 L434,362"/><path id="fe" class="fa" d="M434,302 L434,362" pathLength="100" opacity="0"/><text x="434" y="372" class="vl">${L.ev}</text><g id="evIcon" transform="translate(434,398) scale(1.65) translate(-434,-398)"><path d="M419.5,402.5 Q419.3,398.2 424,397.1 Q426.5,391.6 432,390.9 L437,390.9 Q442.3,391.3 445.3,395.2 Q449.1,396.1 449.4,399.6 Q449.6,402.5 446.6,402.5 L422.4,402.5 Q419.6,402.5 419.5,402.5 Z" fill="var(--load)" opacity="0.8"/><path d="M427.6,395.9 Q429.1,392.6 432.6,392.3 L433.6,392.3 L433.6,395.9 Z" fill="rgba(0,0,0,0.35)"/><path d="M435.1,392.3 L436.9,392.3 Q440.4,392.7 442.4,395.9 L435.1,395.9 Z" fill="rgba(0,0,0,0.35)"/><circle cx="426" cy="402.4" r="3.1" fill="rgba(0,0,0,0.55)"/><circle cx="426" cy="402.4" r="1.4" fill="rgba(255,255,255,0.35)"/><circle cx="442.3" cy="402.4" r="3.1" fill="rgba(0,0,0,0.55)"/><circle cx="442.3" cy="402.4" r="1.4" fill="rgba(255,255,255,0.35)"/><path id="evbolt" d="M452.5,391 L450.5,396 L453.5,396 L451.5,401" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.3)" stroke-width="0.5"/></g><text x="434" y="440" class="vm" style="fill:var(--green)" id="ve"></text><g id="evPill" style="display:none"><rect x="420.5" y="450.5" width="24" height="12" rx="4" fill="var(--batt)"/><rect id="evl" x="420.5" y="450.5" width="0" height="12" fill="var(--batf)" clip-path="url(#ev-clip)"/><rect x="444.9" y="453.3" width="3" height="6.4" rx="1.5" fill="var(--batt)"/><svg id="evA" x="420.5" y="450.5" width="24" height="12" viewBox="420.5 450.5 24 12" preserveAspectRatio="xMinYMin slice"><text id="evsoc" x="432.5" y="459.8" font-family="-apple-system,sans-serif" font-size="9.5" font-weight="800" fill="var(--batn)" text-anchor="middle"></text></svg><svg id="evB" x="444.5" y="450.5" width="0" height="12" viewBox="444.5 450.5 0.01 12" preserveAspectRatio="xMinYMin slice"><text id="evsoc2" x="432.5" y="459.8" font-family="-apple-system,sans-serif" font-size="9.5" font-weight="800" fill="var(--batf)" text-anchor="middle"></text></svg></g><text x="434" y="476" class="vd" id="de"></text></g>
+<g id="nExtra1" class="ct" style="display:none">
+<path class="fl" d="M434,204 L434,160 L381,160"/>
+<path id="fex1" class="fa" d="M434,204 L434,160 L381,160" pathLength="100" opacity="0"/>
+<text x="369" y="138" class="vl" id="ex1lbl" font-size="8"></text>
+<g id="ex1Icon" transform="translate(369,160) scale(1.05)">
+<g data-t="appliance" style="display:none"><rect x="-9" y="-10" width="18" height="20" rx="2" fill="var(--load)" opacity="0.6"/><circle cx="0" cy="2" r="6" fill="none" stroke="var(--load)" stroke-width="1.4" opacity="0.9"/><circle cx="0" cy="2" r="3" fill="var(--load)" opacity="0.4"/><rect x="-6" y="-8" width="4" height="2" rx="0.5" fill="var(--load)" opacity="0.5"/><circle cx="-6.5" cy="-8" r="0.9" fill="var(--load)" opacity="0.8"/></g>
+<g data-t="heatpump" style="display:none"><rect x="-10" y="-7" width="20" height="14" rx="2" fill="var(--load)" opacity="0.6"/><circle cx="0" cy="0" r="5" fill="none" stroke="var(--load)" stroke-width="1.1" opacity="0.9"/><line x1="0" y1="-5" x2="0" y2="5" stroke="var(--load)" stroke-width="1" opacity="0.7"/><line x1="-5" y1="0" x2="5" y2="0" stroke="var(--load)" stroke-width="1" opacity="0.7"/></g>
+<g data-t="garage" style="display:none"><path d="M-11,-2 L0,-11 L11,-2 Z" fill="var(--load)" opacity="0.8"/><rect x="-9" y="-2" width="18" height="12" rx="1" fill="var(--load)" opacity="0.6"/><line x1="-9" y1="1" x2="9" y2="1" stroke="rgba(0,0,0,0.3)" stroke-width="0.8"/><line x1="-9" y1="4" x2="9" y2="4" stroke="rgba(0,0,0,0.3)" stroke-width="0.8"/><line x1="-9" y1="7" x2="9" y2="7" stroke="rgba(0,0,0,0.3)" stroke-width="0.8"/></g>
+<g data-t="generic" style="display:none"><path d="M1,-10 L-7,3 L-1,3 L-3,10 L8,-3 L2,-3 Z" fill="var(--load)" opacity="0.8"/></g>
+</g>
+<text x="369" y="183" class="vm" style="fill:var(--load);font-size:13px" id="ex1val"></text>
+</g>
+<g id="nExtra2" class="ct" style="display:none">
+<path class="fl" d="M434,204 L434,160 L434,112"/>
+<path id="fex2" class="fa" d="M434,204 L434,160 L434,112" pathLength="100" opacity="0"/>
+<text x="434" y="78" class="vl" id="ex2lbl" font-size="8"></text>
+<g id="ex2Icon" transform="translate(434,100) scale(1.05)">
+<g data-t="appliance" style="display:none"><rect x="-9" y="-10" width="18" height="20" rx="2" fill="var(--load)" opacity="0.6"/><circle cx="0" cy="2" r="6" fill="none" stroke="var(--load)" stroke-width="1.4" opacity="0.9"/><circle cx="0" cy="2" r="3" fill="var(--load)" opacity="0.4"/><rect x="-6" y="-8" width="4" height="2" rx="0.5" fill="var(--load)" opacity="0.5"/><circle cx="-6.5" cy="-8" r="0.9" fill="var(--load)" opacity="0.8"/></g>
+<g data-t="heatpump" style="display:none"><rect x="-10" y="-7" width="20" height="14" rx="2" fill="var(--load)" opacity="0.6"/><circle cx="0" cy="0" r="5" fill="none" stroke="var(--load)" stroke-width="1.1" opacity="0.9"/><line x1="0" y1="-5" x2="0" y2="5" stroke="var(--load)" stroke-width="1" opacity="0.7"/><line x1="-5" y1="0" x2="5" y2="0" stroke="var(--load)" stroke-width="1" opacity="0.7"/></g>
+<g data-t="garage" style="display:none"><path d="M-11,-2 L0,-11 L11,-2 Z" fill="var(--load)" opacity="0.8"/><rect x="-9" y="-2" width="18" height="12" rx="1" fill="var(--load)" opacity="0.6"/><line x1="-9" y1="1" x2="9" y2="1" stroke="rgba(0,0,0,0.3)" stroke-width="0.8"/><line x1="-9" y1="4" x2="9" y2="4" stroke="rgba(0,0,0,0.3)" stroke-width="0.8"/><line x1="-9" y1="7" x2="9" y2="7" stroke="rgba(0,0,0,0.3)" stroke-width="0.8"/></g>
+<g data-t="generic" style="display:none"><path d="M1,-10 L-7,3 L-1,3 L-3,10 L8,-3 L2,-3 Z" fill="var(--load)" opacity="0.8"/></g>
+</g>
+<text x="410" y="100" style="fill:var(--load);font-size:13px;font-weight:600;text-anchor:end;dominant-baseline:middle" id="ex2val"></text>
+</g>
+<g id="nExtra3" class="ct" style="display:none">
+<path class="fl" d="M434,204 L434,160 L487,160"/>
+<path id="fex3" class="fa" d="M434,204 L434,160 L487,160" pathLength="100" opacity="0"/>
+<text x="499" y="138" class="vl" id="ex3lbl" font-size="8"></text>
+<g id="ex3Icon" transform="translate(499,160) scale(1.05)">
+<g data-t="appliance" style="display:none"><rect x="-9" y="-10" width="18" height="20" rx="2" fill="var(--load)" opacity="0.6"/><circle cx="0" cy="2" r="6" fill="none" stroke="var(--load)" stroke-width="1.4" opacity="0.9"/><circle cx="0" cy="2" r="3" fill="var(--load)" opacity="0.4"/><rect x="-6" y="-8" width="4" height="2" rx="0.5" fill="var(--load)" opacity="0.5"/><circle cx="-6.5" cy="-8" r="0.9" fill="var(--load)" opacity="0.8"/></g>
+<g data-t="heatpump" style="display:none"><rect x="-10" y="-7" width="20" height="14" rx="2" fill="var(--load)" opacity="0.6"/><circle cx="0" cy="0" r="5" fill="none" stroke="var(--load)" stroke-width="1.1" opacity="0.9"/><line x1="0" y1="-5" x2="0" y2="5" stroke="var(--load)" stroke-width="1" opacity="0.7"/><line x1="-5" y1="0" x2="5" y2="0" stroke="var(--load)" stroke-width="1" opacity="0.7"/></g>
+<g data-t="garage" style="display:none"><path d="M-11,-2 L0,-11 L11,-2 Z" fill="var(--load)" opacity="0.8"/><rect x="-9" y="-2" width="18" height="12" rx="1" fill="var(--load)" opacity="0.6"/><line x1="-9" y1="1" x2="9" y2="1" stroke="rgba(0,0,0,0.3)" stroke-width="0.8"/><line x1="-9" y1="4" x2="9" y2="4" stroke="rgba(0,0,0,0.3)" stroke-width="0.8"/><line x1="-9" y1="7" x2="9" y2="7" stroke="rgba(0,0,0,0.3)" stroke-width="0.8"/></g>
+<g data-t="generic" style="display:none"><path d="M1,-10 L-7,3 L-1,3 L-3,10 L8,-3 L2,-3 Z" fill="var(--load)" opacity="0.8"/></g>
+</g>
+<text x="499" y="183" class="vm" style="fill:var(--load);font-size:13px" id="ex3val"></text>
+</g>
 <linearGradient id="augrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#10b981"/><stop offset="1" stop-color="#a3e635"/></linearGradient><g id="nAutarky" class="ct"><text id="au-label" x="479" y="10" class="aul">${L.autarky}</text><circle class="au-track" cx="500" cy="10" r="15" fill="none" stroke-width="1.5"/><g transform="rotate(-90 500 10)" fill="none" stroke-width="1.5" stroke-linecap="butt"><circle id="au-s" cx="500" cy="10" r="15" stroke="var(--green)" pathLength="100" stroke-dasharray="0 100"/><circle id="au-b" cx="500" cy="10" r="15" stroke="var(--orange)" pathLength="100" stroke-dasharray="0 100"/><circle id="au-g" cx="500" cy="10" r="15" stroke="var(--red)" pathLength="100" stroke-dasharray="0 100"/></g><text x="500" y="5" id="va" font-family="-apple-system,sans-serif" font-size="8.5" font-weight="800" fill="var(--t1)" text-anchor="middle" dominant-baseline="middle"></text><g id="au-leaf" transform="translate(495.4,9.9) scale(0.4)" fill="none" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6"/></g><circle id="au-hit" cx="500" cy="10" r="17" fill="transparent" pointer-events="all"/></g>
 </g></svg>
 <div class="sr" style="margin-top:4px">
@@ -841,7 +958,7 @@ svg{width:100%;height:auto;display:block}
 
 _$(id){return this.shadowRoot.getElementById(id);}
 _moreInfo(entityId){if(!entityId)return;this.dispatchEvent(new CustomEvent('hass-more-info',{detail:{entityId},bubbles:true,composed:true}));}
-_setupClicks(){const c=this._c;const bind=(id,entity)=>{const el=this._$(id);if(el&&entity)el.addEventListener('click',()=>this._moreInfo(entity));};bind('nSolar',c.solar);bind('nGrid',c.grid);bind('nLoad',c.load);bind('nBat',c.battery||c.soc);bind('nEV',c.ev_power||c.ev_soc);const hit=this._$('srhit'),sg=this._$('sunRing');if(hit&&sg)hit.addEventListener('click',(e)=>{e.stopPropagation();sg.classList.add('srshow');clearTimeout(this._srT);this._srT=setTimeout(()=>sg.classList.remove('srshow'),3000);});const auHit=this._$('au-hit'),auG=this._$('nAutarky');if(auHit&&auG)auHit.addEventListener('click',(e)=>{e.stopPropagation();auG.classList.add('aushow');clearTimeout(this._auT);this._auT=setTimeout(()=>auG.classList.remove('aushow'),3000);});const pv1=this._$('pv1hit');if(pv1)pv1.addEventListener('click',(e)=>{e.stopPropagation();this._moreInfo(c.solar);});const pv2=this._$('pv2hit');if(pv2)pv2.addEventListener('click',(e)=>{e.stopPropagation();this._moreInfo(c.solar2);});}
+_setupClicks(){const c=this._c;const bind=(id,entity)=>{const el=this._$(id);if(el&&entity)el.addEventListener('click',()=>this._moreInfo(entity));};bind('nSolar',c.solar);bind('nGrid',c.grid);bind('nLoad',c.load);bind('nBat',c.battery||c.soc);bind('nEV',c.ev_power||c.ev_soc);bind('nExtra1',c.extra1_power);bind('nExtra2',c.extra2_power);bind('nExtra3',c.extra3_power);const hit=this._$('srhit'),sg=this._$('sunRing');if(hit&&sg)hit.addEventListener('click',(e)=>{e.stopPropagation();sg.classList.add('srshow');clearTimeout(this._srT);this._srT=setTimeout(()=>sg.classList.remove('srshow'),3000);});const auHit=this._$('au-hit'),auG=this._$('nAutarky');if(auHit&&auG)auHit.addEventListener('click',(e)=>{e.stopPropagation();auG.classList.add('aushow');clearTimeout(this._auT);this._auT=setTimeout(()=>auG.classList.remove('aushow'),3000);});const pv1=this._$('pv1hit');if(pv1)pv1.addEventListener('click',(e)=>{e.stopPropagation();this._moreInfo(c.solar);});const pv2=this._$('pv2hit');if(pv2)pv2.addEventListener('click',(e)=>{e.stopPropagation();this._moreInfo(c.solar2);});}
 _setupTooltips(){
   const self=this;
   const setup=(svgParent,cursorId,dotId,tipId,dataKey,color)=>{
@@ -951,7 +1068,7 @@ this._$('db').textContent=L.charge+' '+this._fmtE(dC)+' '+L.discharge+' '+this._
 const solF=sol??0,batF=bat??0,gridF=grid??0,loadF=load??0;
 const maxP=Math.max(solF,Math.abs(batF),Math.abs(gridF),loadF);
 const syncSpd=maxP>10?this._spd(maxP):3;
-if(this._syncSpd<=0||Math.abs(syncSpd-this._syncSpd)/this._syncSpd>0.1){this._syncSpd=syncSpd;const spd=syncSpd.toFixed(1)+'s';['fs','fg','fb','fh','fe'].forEach(id=>{const el=this._$(id);if(el)el.style.setProperty('--spd',spd);});this._resync=true;}
+if(this._syncSpd<=0||Math.abs(syncSpd-this._syncSpd)/this._syncSpd>0.1){this._syncSpd=syncSpd;const spd=syncSpd.toFixed(1)+'s';['fs','fg','fb','fh','fe','fex1','fex2','fex3'].forEach(id=>{const el=this._$(id);if(el)el.style.setProperty('--spd',spd);});this._resync=true;}
 this._sf(this._$('fs'),'s',solF,'fd','var(--green)','0.8');
 this._sf(this._$('fg'),'g',gridF,gridF>0?'fr':'fL',gridF>0?'var(--red)':'var(--green)','0.7');
 this._sf(this._$('fb'),'b',batF,batF<0?'fd':'fu',batF<0?'var(--green)':'var(--solar)','0.75');
@@ -997,8 +1114,30 @@ if(nEV){
   }else{nEV.style.display='none';}
 }
 
+// Extra consumer nodes (1-3) — generic slots, each with a selectable icon
+const iconLbl={appliance:L.appliance,heatpump:L.heatpump,garage:L.garage,generic:L.extra};
+[1,2,3].forEach(n=>{
+  const nEl=this._$('nExtra'+n);
+  if(!nEl)return;
+  const pKey=c['extra'+n+'_power'];
+  if(pKey){
+    nEl.style.display='';
+    const v=this._gv(pKey);
+    const abs=v!==null?Math.abs(v):0;
+    this._tween('ex'+n+'val',v!==null?abs:null,val=>this._fmt(val));
+    const iconType=c['extra'+n+'_icon']||'generic';
+    const lbl=this._$('ex'+n+'lbl');if(lbl)lbl.textContent=(c['extra'+n+'_name']||iconLbl[iconType]||L.extra).toUpperCase();
+    this._sf(this._$('fex'+n),'ex'+n,abs,'fd','var(--green)','0.75');
+    const iconGroup=this._$('ex'+n+'Icon');
+    if(iconGroup)Array.from(iconGroup.children).forEach(ch=>{ch.style.display=(ch.getAttribute('data-t')===iconType)?'':'none';});
+    const dim=abs>10?'1':'0.25';
+    if(iconGroup)iconGroup.style.opacity=dim;
+    const valEl=this._$('ex'+n+'val');if(valEl)valEl.style.opacity=dim;
+  }else{nEl.style.display='none';}
+});
+
 // Phase lock — restart all flow animations in the same frame so pulses relay through the inverter
-if(this._resync){this._resync=false;const els=['fs','fg','fb','fh','fe'].map(id=>this._$(id)).filter(Boolean);els.forEach(el=>{el.style.animation='none';});void this.offsetWidth;els.forEach(el=>{el.style.animation='';const half='-'+(this._syncSpd/2).toFixed(2)+'s';let d='0s';if(el.id==='fh')d=half;else if(el.id==='fb'&&this._fs['b']==='fd')d=half;else if(el.id==='fg'&&this._fs['g']==='fL')d=half;el.style.animationDelay=d;});}
+if(this._resync){this._resync=false;const els=['fs','fg','fb','fh','fe','fex1','fex2','fex3'].map(id=>this._$(id)).filter(Boolean);els.forEach(el=>{el.style.animation='none';});void this.offsetWidth;els.forEach(el=>{el.style.animation='';const half='-'+(this._syncSpd/2).toFixed(2)+'s';let d='0s';if(el.id==='fh')d=half;else if(el.id==='fb'&&this._fs['b']==='fd')d=half;else if(el.id==='fg'&&this._fs['g']==='fL')d=half;el.style.animationDelay=d;});}
 
 const batCap=c.battery_capacity??5120;const shuSoc=c.shutdown_soc??20;
 const brEl=this._$('br');
@@ -1026,6 +1165,16 @@ if(wtv!==null||whv!==null){
   if(wdiv)wdiv.style.display=(wtv!==null&&whv!==null)?'':'none';
 }else{
   if(wicons)wicons.style.display='none';
+}
+
+const prv=this._gv(c.price_sensor);
+const priceIcons=this._$('priceicons');const prEl=this._$('pr');
+if(c.price_sensor&&prv!==null){
+  if(priceIcons)priceIcons.style.display='';
+  const prU=(this._h&&this._h.states[c.price_sensor]&&this._h.states[c.price_sensor].attributes&&this._h.states[c.price_sensor].attributes.unit_of_measurement)||'';
+  if(prEl)prEl.textContent=prv.toFixed(2)+(prU?' '+prU:'');
+}else{
+  if(priceIcons)priceIcons.style.display='none';
 }
 
 const _led=(id,on,color)=>{const el=this._$(id);if(!el)return;el.setAttribute('fill',on?color:'rgba(255,255,255,0.12)');if(on)el.setAttribute('class','led-on');else el.removeAttribute('class');};
