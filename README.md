@@ -196,6 +196,21 @@ LEDs blink when active and remain dim when inactive.
 
 ## Changelog
 
+## v1.3.26
+
+- **Extra consumer nodes.** Three generic, configurable consumer slots
+  (`extra1`/`extra2`/`extra3`) branching from the home node in a compact cross
+  layout. Each has an optional power sensor (node hidden when empty), a custom
+  name, and a selectable icon (Appliances, Heat Pump, Garage/Shed, Generic).
+  Replaces the old fixed appliance/heat-pump/garage consumers, existing
+  `appliance_power`/`heatpump_power`/`garage_power` configs migrate
+  automatically, no changes needed.
+- **Electricity price widget.** Optional badge showing the current price from
+  any sensor, auto-formatted with the sensor's own unit (e.g. `1.23 SEK/kWh`).
+  Configured via `price_sensor`.
+- **Swedish (`sv`) translation.** Full translation, selectable in the visual
+  editor alongside the existing 8 languages.
+
 ## v1.3.25
 
 - **Self-sufficiency ring split by source.** The autarky mini-ring is now
