@@ -209,7 +209,7 @@ LEDs blink when active and remain dim when inactive.
 ## v1.3.26
 
 - **Extra consumption nodes.** Appliances, garage, heat pump, and a spare
-  "extra" node — each with its own power entity, icon, label, and flow to
+  "extra" node, each with its own power entity, icon, label, and flow to
   the home.
 - **Energy price display** with per-source price icons.
 - **Click-through more-info.** Tapping a node opens its Home Assistant
