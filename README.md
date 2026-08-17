@@ -53,7 +53,6 @@ Select your brand in the visual editor. Entities and polarity are configured aut
 * Performance-optimized: entity diffing, paused updates in hidden tabs
 * Animated value transitions, smooth count-up on power and self-sufficiency changes
 * Gradient-filled sparkline areas
-* EV SOC shown as a mini iOS-style pill (green while charging)
 * Respects `prefers-reduced-motion` (all animations disabled)
 * Fully translated visual editor (all 9 languages)
 * One-click entity auto-detection (HA Energy Dashboard + power sensor heuristics)
