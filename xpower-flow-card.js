@@ -1,10 +1,27 @@
 // xPower Flow Card — Modern power flow card for solar hybrid inverters
 // Copyright (C) 2025 BTNBx — MIT License
-const V='1.3.26';
+const V='1.3.27';
 
 /* ═══════════════════════════════════════
    CHANGELOG
    ═══════════════════════════════════════
+v1.3.27
+   - Autarky ring: slices now glide when the mix changes and the centre %
+     counts up/down like the power values (both honour reduced motion).
+   - Home flow bands use a fixed order (solar, battery, grid).
+v1.3.26
+   - **Extra consumer nodes.** Three generic, configurable consumer slots
+     (`extra1`/`extra2`/`extra3`) branching from the home node in a compact cross
+     layout. Each has an optional power sensor (node hidden when empty), a custom
+     name, and a selectable icon (Appliances, Heat Pump, Garage/Shed, Generic).
+     Replaces the old fixed appliance/heat-pump/garage consumers, existing
+     `appliance_power`/`heatpump_power`/`garage_power` configs migrate
+     automatically, no changes needed.
+  - **Electricity price widget.** Optional badge showing the current price from
+    any sensor, auto-formatted with the sensor's own unit (e.g. `1.23 SEK/kWh`).
+    Configured via `price_sensor`.
+  - **Swedish (`sv`) translation.** Full translation, selectable in the visual
+    editor alongside the existing 8 languages.
 v1.3.25
    - Autarky mini-ring now split by source feeding the home: green = solar,
      amber = battery, red = grid. Ring always fills to 100%; centre % stays
@@ -860,7 +877,7 @@ svg{width:100%;height:auto;display:block}
 .ib{fill:rgba(255,255,255,0.02);stroke:rgba(255,255,255,0.06);stroke-width:1}
 .il{fill:rgba(255,255,255,0.35);font-size:12px;font-weight:600;letter-spacing:0.05em;text-anchor:middle;dominant-baseline:middle}
 .au{fill:white;font-size:9px;font-weight:600;letter-spacing:0.04em;text-anchor:middle;dominant-baseline:middle}
-.au-pill{rx:8;ry:8;transition:fill 0.5s ease}
+.au-pill{rx:8;ry:8;transition:fill 0.5s ease}#au-s,#au-b,#au-g{transition:stroke-dasharray .6s cubic-bezier(.33,1,.68,1),stroke-dashoffset .6s cubic-bezier(.33,1,.68,1)}:host(.rm) #au-s,:host(.rm) #au-b,:host(.rm) #au-g{transition:none}
 .au-track{stroke:rgba(255,255,255,0.10)}
 :host(.light) .au-track{stroke:rgba(0,0,0,0.10)}
 .aul{fill:var(--t1);font-size:8.5px;font-weight:600;letter-spacing:0.02em;text-anchor:end;dominant-baseline:middle;opacity:0;transition:opacity 0.25s ease}
@@ -1074,7 +1091,7 @@ this._sf(this._$('fg'),'g',gridF,gridF>0?'fr':'fL',gridF>0?'var(--red)':'var(--g
 this._sf(this._$('fb'),'b',batF,batF<0?'fd':'fu',batF<0?'var(--green)':'var(--solar)','0.75');
 const solContrib=solF>0?solF:0;const batContrib=batF>0?batF:0;const gridContrib=gridF>0?gridF:0;
 const _gImp=gridF>0?gridF:0,_bDis=batF>0?batF:0,_sToH=Math.max(0,loadF-_gImp-_bDis),_feed=_gImp+_bDis+_sToH;
-{const _sc=[[_sToH,'#66BB6A'],[_bDis,'#FFA726'],[_gImp,'#EF5350']].sort((a,b)=>a[0]-b[0]);let _ac=0;for(let _i=0;_i<3;_i++){const _f=_feed>0?_sc[_i][0]/_feed*100:0;const _p0=this._$('hs'+(_i*2)),_p1=this._$('hs'+(_i*2+1));if(_p0){_p0.setAttribute('offset',_ac.toFixed(2)+'%');_p0.setAttribute('stop-color',_sc[_i][1]);}_ac+=_f;if(_p1){_p1.setAttribute('offset',_ac.toFixed(2)+'%');_p1.setAttribute('stop-color',_sc[_i][1]);}}}
+{const _sc=[[_sToH,'#66BB6A'],[_bDis,'#FFA726'],[_gImp,'#EF5350']];let _ac=0;for(let _i=0;_i<3;_i++){const _f=_feed>0?_sc[_i][0]/_feed*100:0;const _p0=this._$('hs'+(_i*2)),_p1=this._$('hs'+(_i*2+1));if(_p0){_p0.setAttribute('offset',_ac.toFixed(2)+'%');_p0.setAttribute('stop-color',_sc[_i][1]);}_ac+=_f;if(_p1){_p1.setAttribute('offset',_ac.toFixed(2)+'%');_p1.setAttribute('stop-color',_sc[_i][1]);}}}
 this._sf(this._$('fh'),'h',loadF,'fr','url(#hsrc)','0.75');
 
 // EV node — visible only when ev_power/ev_soc configured
@@ -1151,7 +1168,7 @@ if(batF>RUNTIME_MIN_W&&socVal>shuSoc){
 
 const gridImp=gridF>0?gridF:0;
 const au=loadF>0?Math.max(0,Math.min(100,((loadF-gridImp)/loadF)*100)):0;
-{const _va=this._$('va'),_vs=au.toFixed(0)+'%';_va.textContent=_vs;_va.setAttribute('font-size',_vs.length>=4?6.8:8.5);}
+this._tween('va',au,v=>{const _va=this._$('va'),t=Math.round(v)+'%';if(_va)_va.setAttribute('font-size',t.length>=4?6.8:8.5);return t;});
 const _batDis=batF>0?batF:0;const _solH=Math.max(0,loadF-gridImp-_batDis);const _tot=gridImp+_batDis+_solH;const _seg=(el,st,ln)=>{if(!el)return;const l=Math.max(0,ln);el.setAttribute('stroke-dasharray',l.toFixed(2)+' '+(100-l).toFixed(2));el.setAttribute('stroke-dashoffset',(-st).toFixed(2));};const auS=this._$('au-s'),auB=this._$('au-b'),auG=this._$('au-g');if(_tot>0){const fS=_solH/_tot*100,fB=_batDis/_tot*100,fG=gridImp/_tot*100;_seg(auS,0,fS);_seg(auB,fS,fB);_seg(auG,fS+fB,fG);}else{_seg(auS,0,0);_seg(auB,0,0);_seg(auG,0,0);}const auLeaf=this._$('au-leaf');if(auLeaf)auLeaf.setAttribute('stroke',au>=25?'#34d399':'#EF5350');
 
 const wtv=this._gv(c.weather_temp);const whv=this._gv(c.weather_humidity);
