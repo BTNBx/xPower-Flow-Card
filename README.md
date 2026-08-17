@@ -24,7 +24,9 @@ Select your brand in the visual editor. Entities and polarity are configured aut
 * Configurable battery and grid polarity sign conventions
 * Dual MPPT support - configure two solar strings independently
 * Optional EV charging node with animated flow, blinking bolt, SOC and daily energy
+* Extra consumption nodes — appliances, garage, heat pump, and custom loads, each with its own power sensor, icon, and label
 * Animated pulse flow lines with speed proportional to power output
+* Inverter → home flow coloured by the mix feeding the home (solar green / battery amber / grid red)
 * Color-coded values: solar (green), grid (red), home (cyan), battery (yellow)
 * Inverter icon with 4 status LEDs indicating active energy flows
 * Battery runtime estimation with shutdown SOC and ETA
@@ -32,7 +34,7 @@ Select your brand in the visual editor. Entities and polarity are configured aut
 * 24-hour sparkline charts with Catmull-Rom interpolation, updated every 5 minutes
 * Sparkline tooltips showing power and timestamp on hover
 * Auto-scaling Y-axis on all sparklines
-* Circular self-sufficiency ring — color-coded arc, centered %, leaf glyph, and hover/tap label
+* Circular self-sufficiency ring — split by the source feeding the home (solar / battery / grid), centered %, leaf glyph, sliding slice transitions, and hover/tap label
 * Daily totals for import, export, and production in kWh
 * Trend arrows for rising, falling, or stable values
 * Graceful handling of unavailable sensors (`--`)
@@ -44,17 +46,18 @@ Select your brand in the visual editor. Entities and polarity are configured aut
 * Three-phase grid voltage display (L1/L2/L3)
 * Split battery charge/discharge sensors for Solis/Modbus setups
 * Daily energy cost overlay (import cost / export earnings)
+* Optional energy price display driven by a tariff sensor (with price icons)
 * Grid status indicator dot (on-grid / off-grid)
 * Click any node to open its more-info dialog — dual-MPPT opens each string (PV1/PV2) separately
 * Full theming via CSS custom properties (`--xpf-*`)
 * Performance-optimized: entity diffing, paused updates in hidden tabs
-* Animated value transitions, smooth count-up on power changes
+* Animated value transitions, smooth count-up on power and self-sufficiency changes
 * Gradient-filled sparkline areas
 * EV SOC shown as a mini iOS-style pill (green while charging)
 * Respects `prefers-reduced-motion` (all animations disabled)
-* Fully translated visual editor (all 8 languages)
+* Fully translated visual editor (all 9 languages)
 * One-click entity auto-detection (HA Energy Dashboard + power sensor heuristics)
-* Live entity validation in the editor missing entities flagged in red
+* Live entity validation in the editor — missing entities flagged in red
 * `prefers-color-scheme` theme fallback when HA theme info is absent
 
 ## Installation
@@ -171,6 +174,27 @@ weather_humidity: sensor.my_outdoor_humidity
 | `extra{1,2,3}_power` | | Power sensor for each extra-consumer node (optional; node hidden when empty) |
 | `extra{1,2,3}_name` | | Custom label for each extra-consumer node (falls back to the icon's name) |
 | `extra{1,2,3}_icon` | `appliance` / `heatpump` / `garage` | Icon per node: `appliance`, `heatpump`, `garage`, `generic` |
+
+## Extra consumption nodes & energy price
+
+Set in YAML (not exposed in the visual editor yet).
+
+### Extra consumption nodes
+Up to three extra loads branch off the home node. Each appears only when its `*_power` entity is set.
+
+| Option | Description |
+| --- | --- |
+| `extra1_power`, `extra2_power`, `extra3_power` | Power sensor for the extra load (required to show the node) |
+| `extra1_name`, `extra2_name`, `extra3_name` | Optional label (falls back to the icon's default name) |
+| `extra1_icon`, `extra2_icon`, `extra3_icon` | Icon type — `appliance`, `heatpump`, or `garage` (defaults: 1 = appliance, 2 = heatpump, 3 = garage) |
+
+Shorthand aliases also work and map to the three slots: `appliance_power` → extra1, `heatpump_power` → extra2, `garage_power` → extra3 (each with a matching `*_name`).
+
+### Energy price
+| Option | Description |
+| --- | --- |
+| `price_sensor` | Sensor holding the current energy price; shown with a price icon |
+| `import_cost`, `export_cost` | Import cost / export earnings rates for the daily cost overlay |
 
 ### Polarity Guide
 
