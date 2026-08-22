@@ -1,213 +1,14 @@
 // xPower Flow Card — Modern power flow card for solar hybrid inverters
 // Copyright (C) 2025 BTNBx — MIT License
-const V='1.3.27';
+const V='1.3.29';
 
 /* ═══════════════════════════════════════
-   CHANGELOG
+   CHANGELOG — full history in README
    ═══════════════════════════════════════
-v1.3.27
-   - Autarky ring: slices now glide when the mix changes and the centre %
-     counts up/down like the power values (both honour reduced motion).
-   - Home flow bands use a fixed order (solar, battery, grid).
-v1.3.26
-   - Extra consumption nodes: appliances, garage, heat pump, and a spare
-     "extra" node — each with its own power entity, icon, label, and flow
-     to the home.
-   - Energy price display with per-source price icons.
-   - Click a node to open its Home Assistant more-info dialog.
-   - Swedish (sv) translation added.
-   - Thanks to @Cm0n89 for this contribution.
-v1.3.25
-   - Autarky mini-ring now split by source feeding the home: green = solar,
-     amber = battery, red = grid. Ring always fills to 100%; centre % stays
-     self-sufficiency (solar + battery share).
-   - Inverter->home flow line now split into the same source bands, ordered
-     smallest share (at inverter) to largest (at home); same pulse animation.
-v1.3.23
-   - Fix: grid-export flow phase — resync compared 'fl' but the class is 'fL',
-     so the -T/2 outlet delay never applied while exporting. Corrected to 'fL'.
-   - Solar node (single MPPT): daily kWh and PV voltage enlarged to match the
-     grid node (13px / 11px) and nudged right (x 314 -> 330) to clear the sun.
-v1.3.22
-   - Autarky badge redesigned as a circular mini-ring (replaces the corner
-     pill): green→lime progress arc, centered %, leaf glyph below, and the
-     "Autossuficiência" label hidden — revealed on hover (desktop) or tap
-     (mobile, 3s). Level colors kept (amber ≥50, orange ≥25, red <25); ≥90 glow.
-v1.3.21
-   - Fix: 24h sparklines floated above the panel bottom when header text
-     wrapped (narrow layouts equalize panel heights); .sb svg margin-top
-     4px -> auto pins each chart to the bottom of its panel.
-v1.3.20
-   - Solar day ring: 270° arc (r=36) around the sun icon, sunrise→sunset
-     progress with amber gradient + position dot (opacity pulse only).
-     Sunrise/sunset times at the arc ends. Uses sun.sun (config: sun_entity),
-     hidden below horizon. Editor field added (8 languages).
-   - PV1/PV2 side info: centered columns (title / power / voltage) with
-     amber inward arrows outside the values. Single-MPPT keeps daily kWh right.
-   - SOLAR label y -2 → -10; viewBox top 0 → -8 (dot clearance at solar noon).
-v1.3.19
-    Visual:
-        - Main SVG viewBox height 487 -> 470: kills the dead band under the battery node (content ends ~463).
-          Scales with width, so the phone gap shrinks proportionally. Compact mode unaffected — nothing sits
-          below y=470. Also v1.4.7 gap fix used mm by mistake (4mm ~ 15px); now 4px.
-v1.3.18
-    Animation:
-        - -T/2 outlet delay now applied to ALL flows leaving the inverter, not just Home:
-          battery while charging (fd) and grid while exporting (fl). Discharge/import stay inlet-phased.
-v1.3.17
-    Animation:
-        - True pass-through relay: Home outlet delayed -T/2 so its pulse departs the inverter the instant
-          the inlet pulse front arrives (was: departed only after inlet fully drained). Home -> EV keeps
-          zero delay, which now chains exactly off the pulse arriving at Home.
-v1.3.16
-    Fixes:
-        - Dual-color SOC numbers invisible on iOS (WebKit ignores clip-path on SVG <text>, layers cancel out).
-          Replaced text clip-paths with nested <svg> viewport cropping — battery + EV pill. Desktop unchanged.
-v1.3.15
-    Visual:
-        - Gap between battery node and sparklines reduced 16px -> 8px
-v1.3.14
-    Visual:
-        - Power values normalized to ~15px from each icon's visual edge (solar 82->81, grid 268->265)
-v1.3.13
-    Features:
-        - New option `grid_threshold` (W, default 0): grid readings below it count as 0 —
-          value dims, flow stops, icon goes inactive, autarky unaffected by standby draw
-v1.3.12
-    Visual:
-        - Removed green pulse on the battery fill while charging (dimming made the number hard to read);
-          solid green fill + bolt remain
-v1.3.11
-    Fixes:
-        - Battery no longer shows green charging state at 100% SOC (residual standby draw kept it green)
-v1.3.10
-    Fixes:
-        - Battery node alignment: icon group now centers on the pill body (values below no longer look shifted right)
-        - Battery power/daily/runtime rows moved up 8px — gap to icon now matches the Home node
-v1.3.9
-    Fixes:
-        - Flows/LEDs frozen when the OS has "reduce motion" enabled — v1.4.0 honored it unconditionally.
-          Now gated by new config `animations`: 'auto' (default, follow OS) or 'always' (ignore OS).
-          Applied via :host(.rm) class instead of a hard @media rule; tween respects the same setting.
-v1.3.8
-    Features:
-        - Editor: one-click entity auto-detection (HA Energy Dashboard prefs + power-sensor heuristics)
-        - Editor: live entity validation — unknown entity ids get red border + warning
-        - Editor: field labels translated in all 8 languages
-        - EV SOC displayed as a mini iOS pill (matches battery, green while charging)
-    Visual:
-        - Smooth count-up tween on all main power values (600ms, cubic ease-out)
-        - Sparkline areas now use vertical gradient fills
-    Accessibility:
-        - prefers-reduced-motion honored: all animations off, values update instantly
-        - prefers-color-scheme fallback for theme auto-detection when HA theme info is absent
-v1.3.7
-    Visual:
-        - Battery pill height reduced 20 -> 17, number 15 -> 13.5
-        - iOS dual-color number: part covered by the fill is dark, uncovered part inverts to the fill color
-          (two clipped text layers synced to the level width)
-v1.3.6
-    Visual:
-        - Battery number enlarged 13 -> 15
-v1.3.5
-    Visual:
-        - iOS charging state: white number + white bolt inside the green pill (number shifts left to fit bolt)
-v1.3.4
-    Fixes:
-        - Battery number enlarged (10.5 -> 13) and truly centered — dominant-baseline dropped (Safari/iOS
-          renders it inconsistently), replaced with fixed baseline offset
-v1.3.3
-    Fixes:
-        - Battery nub moved flush against the pill (was 2px gap)
-v1.3.2
-    Visual:
-        - Battery icon now true iOS style: solid pill, level fill clipped by rounded shape, plain number (no %)
-        - Theme-aware: white fill/dark number on dark theme, inverted on light; state colors green/orange/red kept
-v1.3.1
-    Visual:
-        - EV icon replaced with Tesla-style fastback silhouette (single smooth body curve, flush wheels)
-v1.3.0
-    Animation:
-        - Relay-synced flows: all lines share one duration and phase — pulses arrive at the inverter,
-          and only then does the pulse depart toward Home (Home -> EV chained the same way)
-        - Inlet 0.75x speed factor removed (equal duration required for phase sync)
-        - All flow animations restart in the same frame on any direction/speed change (phase lock)
-v1.2.9
-    Fixes:
-        - Battery node: removed vertical gap between power value and daily charge/discharge row (leftover from removed SOC row)
-v1.2.8
-    Visual:
-        - Battery SOC color states: fill + inner % text turn orange at shutdown_soc+15, red at shutdown_soc
-        - Charging keeps green fill with white text
-v1.2.7
-    Visual:
-        - Battery icon redesigned iPhone-style: SOC percentage rendered inside the icon over the fill level
-        - Icon enlarged (scale 1.70 -> 2.05); standalone SOC text row removed; daily/runtime rows moved up
-v1.2.6
-    Features:
-        - EV charging node (bottom-right, below Home): car icon, charge power, optional SOC + daily energy
-        - New optional entities: ev_power, ev_soc, daily_ev (editor + YAML); node hidden when not configured
-        - Animated Home -> EV flow (green), blinking bolt while charging; click opens more-info
-v1.2.5
-    Performance:
-        - hass setter now diffs configured entity states — DOM update skipped when nothing relevant changed
-        - Updates + history polling paused while tab hidden; instant refresh on return (visibilitychange)
-    Fixes:
-        - Sparklines: history bucketed by timestamp into 48 uniform 30-min slots — fixes time-axis distortion
-          and wrong tooltip times caused by significant_changes_only irregular sampling
-        - Editor: identical config echo from HA no longer re-renders (input focus preserved)
-        - Autarky >=90% glow implemented via SVG filter (previous CSS box-shadow was dead code on SVG)
-    Features:
-        - Battery runtime: charging now shows time-to-100% ETA (mirrors discharge estimate)
-        - getGridOptions() for HA sections view sizing
-v1.2.4
-    Fixes:
-        - Dual-MPPT crash: removed dead branch referencing dS before declaration (ReferenceError blanked the card)
-        - Autarky badge label now translated (was hard-coded PT)
-        - Build: outputs to dist/ (no longer overwrites source); release workflow uses npm install + uploads dist/ artifact
-    Changed:
-        - inverter_name HTML-escaped before SVG injection
-        - hass-more-info dispatched as CustomEvent
-            ──────────────────────────────────────────────────────── */
-
-/* ════════════════════════════════════════════════════════
-    v1.2.3
-   Fixes:
-   - Solis polarity: bat_polarity changed to 'negative' (modbus reports charging as positive,
-     same convention as Deye/Sunsynk — no inversion needed)
-   - LCD inverter display: now shows load power (home consumption) instead of sum of all flows
-   Features:
-   v1.2.2:
-   - Fix: PV daily/voltage text spacing from sun icon
-   - Dual MPPT layout: PV1 left of sun (▸ arrow), PV2 right (◂ arrow),
-     each with own voltage below; symmetrical layout
-   v1.2.1:
-   - Fix: PV1/PV2 + voltage text overlapped sun icon (CSS .vd text-anchor:middle
-     overrides SVG presentation attribute; now inline style)
-   - Solis/modbus: optional split battery_charge + battery_discharge sensors
-     (both positive); card computes discharge-charge, bypasses polarity flag
-   - Three-phase grid voltage: optional grid_voltage_l2/l3, shown as L1/L2/L3 V
-   - Victron dual MPPT: added pv1_power + pv2_power entity fields in preset;
-     Solar node shows per-MPPT power breakdown when both sensors configured
-   Visual:
-   - Sub-labels font sizes increased: .vc 9.5px→11px, .vd 12px→13px, .vc battery 9.5px→11px
-   ════════════════════════════════════════════════════════ */
-
-/* ────────────────────────────────────────────────────────
-    v1.2.0
-   Visual:
-   - Autarky badge moved to top-right corner
-   - Badge size reduced 15% (55x40 -> 47x34)
-   - Badge green softened — border/fill use low-alpha rgba instead of solid #66BB6A;
-     status threshold colors (>=80/50/25%) also toned down
-   - Added 8mm spacing between battery data and sparklines row
-   Animation:
-   - Inlet flows (solar/grid/battery -> inverter) run at 75% of base speed — faster
-   - Outlet flow (inverter -> home) runs at base speed — slower
-   - Visual effect of energy accumulating at the inverter before flowing out to home
-   CSS Custom Properties:
-   - --xpf-flow-width  flow line stroke width (default: 3)
-   - --xpf-dash-size   dash segment size (default: 100; low value e.g. 8 = dot effect)
+v1.3.29
+   - Auto power-unit detection: sensors reporting kW/MW are converted
+     to W (power_unit: auto|W|kW, default auto). Fixes dull nodes and
+     frozen flows when the inverter reports kilowatts.
    ═══════════════════════════════════════ */
 
 /* ═══════════════════════════════════════
@@ -443,7 +244,8 @@ const DEFAULTS={
   import_cost:'',export_cost:'',
   compact:false,
   theme:'auto',
-  animations:'auto'
+  animations:'auto',
+  power_unit:'auto'
 };
 
 const ENTITY_FIELDS=[
@@ -502,6 +304,7 @@ class XPowerFlowCardEditor extends HTMLElement{
     cfg.theme=this.querySelector('#ed-theme').value;
     cfg.compact=this.querySelector('#ed-compact').value==='true';
     cfg.animations=this.querySelector('#ed-anim').value;
+    cfg.power_unit=this.querySelector('#ed-punit').value;
     const gthVal=parseInt(this.querySelector('#ed-gth').value,10);
     cfg.grid_threshold=isNaN(gthVal)?0:gthVal;
     const fsVal=parseInt(this.querySelector('#ed-fsize').value,10);
@@ -668,6 +471,14 @@ class XPowerFlowCardEditor extends HTMLElement{
           </select>
         </div>
         <div class="field">
+          <label>Power unit</label>
+          <select id="ed-punit" style="${selStyle}">
+            <option value="auto" ${(c.power_unit||'auto')==='auto'?'selected':''}>Auto</option>
+            <option value="W" ${c.power_unit==='W'?'selected':''}>W</option>
+            <option value="kW" ${c.power_unit==='kW'?'selected':''}>kW</option>
+          </select>
+        </div>
+        <div class="field">
           <label>Values font (px)</label>
           <input type="number" id="ed-fsize" min="10" max="48" value="${c.font_size??24}">
         </div>
@@ -793,6 +604,7 @@ _gv(e){
   const v=parseFloat(s);
   return isNaN(v)?null:v;
 }
+_gp(e){const v=this._gv(e);if(v===null)return null;const m=this._c.power_unit||'auto';if(m==='W')return v;if(m==='kW')return v*1000;const u=(this._h.states[e].attributes?.unit_of_measurement||'').toLowerCase();return u==='kw'?v*1000:u==='mw'?v*1000000:v;}
 _gs(e){return e&&this._h&&this._h.states[e]?this._h.states[e].state:'';}
 _fmt(v){if(v===null)return this._lang.unavailable;const a=Math.abs(v);return a>=1000?(a/1000).toFixed(1)+' kW':a.toFixed(0)+' W';}
 _sunRing(c){const g=this._$('sunRing');if(!g)return;const eid=c.sun_entity||'sun.sun';const st=this._h&&this._h.states?this._h.states[eid]:null;
@@ -838,7 +650,7 @@ _bucket(arr,t0,t1,n){
 
 async _loadHistory(){if(this._histLoading||!this._h)return;this._histLoading=true;try{const now=new Date();const start=new Date(now.getTime()-24*60*60*1000);const iso=encodeURIComponent(start.toISOString());const entities=encodeURIComponent([this._c.solar,this._c.load,this._c.grid,this._c.battery].filter(Boolean).join(','));if(!entities)return;const url='history/period/'+iso+'?filter_entity_id='+entities+'&minimal_response&no_attributes&significant_changes_only';const res=await this._h.callApi('GET',url);if(!res||!res.length)return;for(const series of res){if(!series.length)continue;const eid=series[0].entity_id;const pts=this._bucket(series,start.getTime(),now.getTime(),HIST_POINTS);const mx=pts.length?Math.max(...pts)||1:1;if(eid===this._c.solar){this._hist.solar=pts;this._histMax.solar=mx;}else if(eid===this._c.load){this._hist.load=pts;this._histMax.load=mx;}else if(eid===this._c.grid){this._hist.grid=pts;this._histMax.grid=mx;}else if(eid===this._c.battery){this._hist.battery=pts;this._histMax.battery=mx;}}this._drawSparks();}catch(e){console.warn('xPower history:',e);}finally{this._histLoading=false;}}
 
-_render(){const L=this._lang;const INV=String(this._c.inverter_name||'').replace(/[<>&]/g,m=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[m]));const s=this.shadowRoot;s.innerHTML=`<style>
+_render(){this._elc={};const L=this._lang;const INV=String(this._c.inverter_name||'').replace(/[<>&]/g,m=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[m]));const s=this.shadowRoot;s.innerHTML=`<style>
 :host{--solar:var(--xpf-solar,#FFB300);--battery:var(--xpf-battery,#7C4DFF);--grid:var(--xpf-grid,#42A5F5);--load:var(--xpf-load,#26C6DA);--green:var(--xpf-green,#66BB6A);--red:var(--xpf-red,#EF5350);--orange:var(--xpf-orange,#FFA726);--t1:var(--xpf-text,rgba(255,255,255,0.92));--t3:var(--xpf-text-secondary,rgba(255,255,255,0.45));--xpf-r:var(--xpf-radius,20px);--xpf-vm-size:var(--xpf-font-size,${this._c.font_size||24}px);--flow-w:var(--xpf-flow-width,3);--flow-dash:var(--xpf-dash-size,100);--batf:#fff;--batn:#111;--batt:rgba(255,255,255,0.22)}
 :host(.light){--t1:var(--xpf-text,rgba(0,0,0,0.85));--t3:var(--xpf-text-secondary,rgba(0,0,0,0.45));--batf:rgba(0,0,0,0.85);--batn:#fff;--batt:rgba(0,0,0,0.12)}
 :host(.light) ha-card{background:var(--xpf-bg,rgba(255,255,255,0.92));border-color:rgba(0,0,0,0.08)}
@@ -968,7 +780,7 @@ svg{width:100%;height:auto;display:block}
 <div class="sb sbt"><div class="sb-header"><span class="sl">${L.bat24}</span><span class="sv" id="hy"></span></div><svg viewBox="0 0 200 55" preserveAspectRatio="none"><defs><linearGradient id="sgd-b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(124,77,255,0.30)"/><stop offset="1" stop-color="rgba(124,77,255,0)"/></linearGradient></defs><path id="hb2a"/><path id="hb2"/><line class="cursor" id="cb" x1="0" y1="0" x2="0" y2="55"/><circle class="cursor-dot" id="db2" cx="0" cy="0" r="3"/></svg><span class="sb-tip" id="tb"></span></div>
 </div></ha-card>`;this._setupTooltips();this._setupClicks();}
 
-_$(id){return this.shadowRoot.getElementById(id);}
+_$(id){let c=this._elc;if(!c)c=this._elc={};let el=c[id];if(el&&el.isConnected)return el;el=this.shadowRoot.getElementById(id);c[id]=el;return el;}
 _moreInfo(entityId){if(!entityId)return;this.dispatchEvent(new CustomEvent('hass-more-info',{detail:{entityId},bubbles:true,composed:true}));}
 _setupClicks(){const c=this._c;const bind=(id,entity)=>{const el=this._$(id);if(el&&entity)el.addEventListener('click',()=>this._moreInfo(entity));};bind('nSolar',c.solar);bind('nGrid',c.grid);bind('nLoad',c.load);bind('nBat',c.battery||c.soc);bind('nEV',c.ev_power||c.ev_soc);bind('nExtra1',c.extra1_power);bind('nExtra2',c.extra2_power);bind('nExtra3',c.extra3_power);const hit=this._$('srhit'),sg=this._$('sunRing');if(hit&&sg)hit.addEventListener('click',(e)=>{e.stopPropagation();sg.classList.add('srshow');clearTimeout(this._srT);this._srT=setTimeout(()=>sg.classList.remove('srshow'),3000);});const auHit=this._$('au-hit'),auG=this._$('nAutarky');if(auHit&&auG)auHit.addEventListener('click',(e)=>{e.stopPropagation();auG.classList.add('aushow');clearTimeout(this._auT);this._auT=setTimeout(()=>auG.classList.remove('aushow'),3000);});const pv1=this._$('pv1hit');if(pv1)pv1.addEventListener('click',(e)=>{e.stopPropagation();this._moreInfo(c.solar);});const pv2=this._$('pv2hit');if(pv2)pv2.addEventListener('click',(e)=>{e.stopPropagation();this._moreInfo(c.solar2);});}
 _setupTooltips(){
@@ -1013,15 +825,15 @@ _drawSparks(){this._spark('hs','hsa',this._hist.solar);this._spark('hl','hla',th
 _update(){if(!this._h||!this.shadowRoot.getElementById('vs'))return;
 const c=this._c,L=this._lang;
 
-const sol1=this._gv(c.solar);
-const sol2=this._gv(c.solar2);
+const sol1=this._gp(c.solar);
+const sol2=this._gp(c.solar2);
 const sol=sol1!==null&&sol2!==null?sol1+sol2:sol1!==null?sol1:sol2;
-const batCh=this._gv(c.battery_charge);
-const batDis=this._gv(c.battery_discharge);
-const bat=(batCh!==null||batDis!==null)?(batDis??0)-(batCh??0):this._norm(this._gv(c.battery),'bat');
+const batCh=this._gp(c.battery_charge);
+const batDis=this._gp(c.battery_discharge);
+const bat=(batCh!==null||batDis!==null)?(batDis??0)-(batCh??0):this._norm(this._gp(c.battery),'bat');
 const soc=this._gv(c.soc);
-let grid=this._norm(this._gv(c.grid),'grid');const gth=Number(c.grid_threshold)||0;if(grid!==null&&Math.abs(grid)<gth)grid=0;
-const load=this._gv(c.load);
+let grid=this._norm(this._gp(c.grid),'grid');const gth=Number(c.grid_threshold)||0;if(grid!==null&&Math.abs(grid)<gth)grid=0;
+const load=this._gp(c.load);
 const temp=this._gv(c.temperature);
 const gv=this._gv(c.grid_voltage);
 const gv2=this._gv(c.grid_voltage_l2);
@@ -1094,7 +906,7 @@ const nEV=this._$('nEV');
 if(nEV){
   if(c.ev_power||c.ev_soc){
     nEV.style.display='';
-    const evV=this._gv(c.ev_power);
+    const evV=this._gp(c.ev_power);
     const evAbs=evV!==null?Math.abs(evV):0;
     this._tween('ve',evV!==null?evAbs:null,v=>this._fmt(v));
     const evSoc=this._gv(c.ev_soc);
@@ -1134,7 +946,7 @@ const iconLbl={appliance:L.appliance,heatpump:L.heatpump,garage:L.garage,generic
   const pKey=c['extra'+n+'_power'];
   if(pKey){
     nEl.style.display='';
-    const v=this._gv(pKey);
+    const v=this._gp(pKey);
     const abs=v!==null?Math.abs(v):0;
     this._tween('ex'+n+'val',v!==null?abs:null,val=>this._fmt(val));
     const iconType=c['extra'+n+'_icon']||'generic';
