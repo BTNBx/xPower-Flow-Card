@@ -1,9 +1,9 @@
 // xPower Flow Card — Modern power flow card for solar hybrid inverters
 // Copyright (C) 2025 BTNBx — MIT License
-const V='1.3.29';
+const V='1.3.28';
 
 /* ═══════════════════════════════════════
-   CHANGELOG — full history in README
+   CHANGELOG — full history in CHANGELOG.md
    ═══════════════════════════════════════
 v1.3.29
    - Auto power-unit detection: sensors reporting kW/MW are converted
