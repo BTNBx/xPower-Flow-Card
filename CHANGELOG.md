@@ -403,6 +403,10 @@ daily_ev: sensor.wallbox_today    # kWh (optional)
 - Inverter icon redesigned with 4 dynamic LEDs.
 - Color-coded power values introduced.
 
+### v1.0.2,v1.0.3, v1.0.4, v1.0.5, v1.0.6, v1.0.7, v1.0.8
+
+- Bug fixing.
+
 ### v1.0.2
 
 - Initial public release.
