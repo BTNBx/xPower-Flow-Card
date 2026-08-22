@@ -1,3 +1,14 @@
+## v1.3.28
+
+- **Auto power-unit detection.** Power sensors reporting kW/MW are now
+  converted to W automatically (`power_unit: auto|W|kW`, default `auto`).
+  Fixes dull/inactive-looking nodes and frozen flow animations on
+  inverters that report power in kilowatts (e.g. Sigenergy).
+- **Performance: cached element lookups.** Shadow-DOM element references
+  are now cached instead of re-queried on every update (~100
+  `getElementById` calls removed per tick). Most noticeable on always-on
+  panels and dashboards running several cards at once.
+
 ## v1.3.27
 
 - **Autarky ring, smoother transitions.** The coloured slices now glide
