@@ -170,20 +170,17 @@ v1.2.4
     Changed:
         - inverter_name HTML-escaped before SVG injection
         - hass-more-info dispatched as CustomEvent
-            ──────────────────────────────────────────────────────── */
-
-/* ════════════════════════════════════════════════════════
-    v1.2.3
+v1.2.3
    Fixes:
    - Solis polarity: bat_polarity changed to 'negative' (modbus reports charging as positive,
      same convention as Deye/Sunsynk — no inversion needed)
    - LCD inverter display: now shows load power (home consumption) instead of sum of all flows
    Features:
-   v1.2.2:
+v1.2.2:
    - Fix: PV daily/voltage text spacing from sun icon
    - Dual MPPT layout: PV1 left of sun (▸ arrow), PV2 right (◂ arrow),
      each with own voltage below; symmetrical layout
-   v1.2.1:
+v1.2.1:
    - Fix: PV1/PV2 + voltage text overlapped sun icon (CSS .vd text-anchor:middle
      overrides SVG presentation attribute; now inline style)
    - Solis/modbus: optional split battery_charge + battery_discharge sensors
@@ -193,10 +190,7 @@ v1.2.4
      Solar node shows per-MPPT power breakdown when both sensors configured
    Visual:
    - Sub-labels font sizes increased: .vc 9.5px→11px, .vd 12px→13px, .vc battery 9.5px→11px
-   ════════════════════════════════════════════════════════ */
-
-/* ────────────────────────────────────────────────────────
-    v1.2.0
+v1.2.0
    Visual:
    - Autarky badge moved to top-right corner
    - Badge size reduced 15% (55x40 -> 47x34)
