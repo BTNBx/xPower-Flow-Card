@@ -1,7 +1,4 @@
-═══════════════════════════════════════
-   CHANGELOG
-═══════════════════════════════════════
- v1.3.28
+v1.3.28
    - Auto power-unit detection. Power sensors reporting kW/MW are now
      converted to W automatically (`power_unit: auto|W|kW`, default `auto`).
      Fixes dull/inactive-looking nodes and frozen flow animations on
