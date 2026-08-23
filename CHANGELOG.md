@@ -1,3 +1,12 @@
+## v1.3.29
+   - Battery 24h graph now uses net charge/discharge when split
+     battery_charge / battery_discharge entities are configured,
+     instead of only the single battery power sensor (fixes a flat
+     or empty battery sparkline on Growatt and similar split setups).
+   - **Trend arrows redesigned:** crisp SVG chevrons beside each value,
+     coloured per node, animate on value change (honours reduced
+     motion). New option arrow_style: chevron (default) | arrow.
+
 ## v1.3.28
 
 - **Auto power-unit detection.** Power sensors reporting kW/MW are now
