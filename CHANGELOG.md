@@ -1,3 +1,5 @@
+## v1.3.31
+   - Home node icon restored to the default theme colour.
 ## v1.3.30
    - Trend indicators now default to arrows (arrow_style: arrow).
      Set arrow_style: chevron to restore the previous chevrons.
