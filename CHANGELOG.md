@@ -1,3 +1,10 @@
+v1.3.30
+   - Trend indicators now default to arrows (arrow_style: arrow).
+     Set arrow_style: chevron to restore the previous chevrons.
+   - CASA (home) label centred above the house icon, matching the
+     other node labels.
+   - New option temp_unit: auto | C | F. Temperatures now follow the
+     sensor's own unit (auto) or can be forced/converted to °C or °F.
 ## v1.3.29
    - Battery 24h graph now uses net charge/discharge when split
      battery_charge / battery_discharge entities are configured,
