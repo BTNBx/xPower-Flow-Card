@@ -1,18 +1,17 @@
 // xPower Flow Card — Modern power flow card for solar hybrid inverters
 // Copyright (C) 2025 BTNBx — MIT License
-const V='1.3.29';
+const V='1.3.30';
 
 /* ═══════════════════════════════════════
    CHANGELOG — full history in CHANGELOG.md
    ═══════════════════════════════════════
-v1.3.29
-   - Battery 24h graph now uses net charge/discharge when split
-     battery_charge / battery_discharge entities are configured,
-     instead of only the single battery power sensor (fixes a flat
-     or empty battery sparkline on Growatt and similar split setups).
-   - Trend arrows redesigned: crisp SVG chevrons beside each value,
-     coloured per node, animate on value change (honours reduced
-     motion). New option arrow_style: chevron (default) | arrow.
+v1.3.30
+   - Trend indicators now default to arrows (arrow_style: arrow).
+     Set arrow_style: chevron to restore the previous chevrons.
+   - CASA (home) label centred above the house icon, matching the
+     other node labels.
+   - New option temp_unit: auto | C | F. Temperatures now follow the
+     sensor's own unit (auto) or can be forced/converted to °C or °F.
    ═══════════════════════════════════════ */
 
 /* ═══════════════════════════════════════
@@ -249,8 +248,9 @@ const DEFAULTS={
   compact:false,
   theme:'auto',
   animations:'auto',
-  arrow_style:'chevron',
-  power_unit:'auto'
+  arrow_style:'arrow',
+  power_unit:'auto',
+  temp_unit:'auto'
 };
 
 const ENTITY_FIELDS=[
@@ -312,6 +312,7 @@ class XPowerFlowCardEditor extends HTMLElement{
     cfg.compact=this.querySelector('#ed-compact').value==='true';
     cfg.animations=this.querySelector('#ed-anim').value;
     cfg.power_unit=this.querySelector('#ed-punit').value;
+    cfg.temp_unit=this.querySelector('#ed-tunit').value;
     const gthVal=parseInt(this.querySelector('#ed-gth').value,10);
     cfg.grid_threshold=isNaN(gthVal)?0:gthVal;
     const fsVal=parseInt(this.querySelector('#ed-fsize').value,10);
@@ -486,6 +487,14 @@ class XPowerFlowCardEditor extends HTMLElement{
           </select>
         </div>
         <div class="field">
+          <label>Temp. unit</label>
+          <select id="ed-tunit" style="${selStyle}">
+            <option value="auto" ${(c.temp_unit||'auto')==='auto'?'selected':''}>Auto</option>
+            <option value="C" ${c.temp_unit==='C'?'selected':''}>°C</option>
+            <option value="F" ${c.temp_unit==='F'?'selected':''}>°F</option>
+          </select>
+        </div>
+        <div class="field">
           <label>Values font (px)</label>
           <input type="number" id="ed-fsize" min="10" max="48" value="${c.font_size??24}">
         </div>
@@ -613,6 +622,7 @@ _gv(e){
 }
 _gp(e){const v=this._gv(e);if(v===null)return null;const m=this._c.power_unit||'auto';if(m==='W')return v;if(m==='kW')return v*1000;const u=(this._h.states[e].attributes?.unit_of_measurement||'').toLowerCase();return u==='kw'?v*1000:u==='mw'?v*1000000:v;}
 _gs(e){return e&&this._h&&this._h.states[e]?this._h.states[e].state:'';}
+_temp(e){const v=this._gv(e);if(v===null)return null;const st=this._h.states[e];const su=((st&&st.attributes&&st.attributes.unit_of_measurement)||'').toUpperCase();const srcF=su.indexOf('F')>-1;const u=this._c.temp_unit||'auto';let val,unit;if(u==='F'){val=srcF?v:v*9/5+32;unit='\u00B0F';}else if(u==='C'){val=srcF?(v-32)*5/9:v;unit='\u00B0C';}else{val=v;unit=srcF?'\u00B0F':'\u00B0C';}return val.toFixed(0)+unit;}
 _fmt(v){if(v===null)return this._lang.unavailable;const a=Math.abs(v);return a>=1000?(a/1000).toFixed(1)+' kW':a.toFixed(0)+' W';}
 _sunRing(c){const g=this._$('sunRing');if(!g)return;const eid=c.sun_entity||'sun.sun';const st=this._h&&this._h.states?this._h.states[eid]:null;
 if(!st||st.state!=='above_horizon'||!st.attributes||!st.attributes.next_rising||!st.attributes.next_setting){g.style.display='none';return;}
@@ -741,7 +751,7 @@ svg{width:100%;height:auto;display:block}
 <g id="nSolar" class="ct"><g id="sunRing" style="display:none">${SUNTICKS}<path id="srhit" d="M224.5,63.5 A36,36 0 1 1 275.5,63.5" fill="none" stroke="transparent" stroke-width="16" pointer-events="stroke" style="cursor:pointer"/><text id="srx" x="215" y="66" class="srt" style="text-anchor:end"></text><text id="ssx" x="285" y="66" class="srt" style="text-anchor:start"></text></g><g id="sunG"><circle cx="250" cy="38" r="28" fill="url(#sunhl)"/><circle cx="250" cy="38" r="19" fill="url(#sundisc)"/></g><text x="250" y="81" class="vm" style="fill:var(--green)" id="vs"></text><text x="250" y="-10" class="vl">${L.solar}</text><text id="dst1" x="186" y="22" class="pvh"></text><text id="ds1" x="186" y="34" class="pvv"></text><text id="pv1" x="186" y="46" class="pvu"></text><text id="dst" x="314" y="22" class="pvh"></text><text id="ds" x="314" y="34" class="pvv"></text><text id="pv" x="314" y="46" class="pvu"></text><path id="arl" d="M162,31 L162,37 L168,34 Z" fill="#FFD54F" opacity="0.85" style="display:none"/><path id="arr" d="M338,31 L338,37 L332,34 Z" fill="#FFD54F" opacity="0.85" style="display:none"/><rect id="pv1hit" x="164" y="14" width="44" height="40" fill="transparent" pointer-events="all" style="display:none;cursor:pointer"/><rect id="pv2hit" x="292" y="14" width="44" height="40" fill="transparent" pointer-events="all" style="display:none;cursor:pointer"/></g>
 <g><g transform="translate(250,225) scale(1.65)"><rect x="-19" y="-19" width="38" height="38" rx="5" fill="url(#ivbody)" stroke="rgba(0,0,0,0.18)" stroke-width="0.5"/><rect x="-11" y="18" width="4.5" height="2.4" rx="0.8" fill="rgba(0,0,0,0.35)"/><rect x="-2.25" y="18" width="4.5" height="2.4" rx="0.8" fill="rgba(0,0,0,0.35)"/><rect x="6.5" y="18" width="4.5" height="2.4" rx="0.8" fill="rgba(0,0,0,0.35)"/><rect x="-11" y="-4.6" width="22" height="9.2" rx="4.6" fill="url(#ivpill)"/><circle id="led1" cx="-4" cy="-0.6" r="1.15" fill="rgba(255,255,255,0.12)"/><circle id="led2" cx="0" cy="-0.6" r="1.15" fill="rgba(255,255,255,0.12)"/><circle id="led3" cx="4" cy="-0.6" r="1.15" fill="rgba(255,255,255,0.12)"/><rect id="ivbar" x="-3" y="2.6" width="6" height="0.9" rx="0.45" fill="#E4002B"/></g>${INV?'<text x="250" y="272" class="il">'+INV+'</text>':''}<text x="296" y="264" class="vc" id="tp" text-anchor="start"></text></g>
 <g id="nGrid" class="ct"><g id="gridIcon" transform="translate(66,225) scale(1.65) translate(-66,-196)"><rect x="64" y="181" width="4" height="30" rx="1" fill="var(--red)" opacity="0.7"/><rect x="54" y="183" width="24" height="3" rx="1" fill="var(--red)" opacity="0.6"/><rect x="57" y="192" width="18" height="2.5" rx="1" fill="var(--red)" opacity="0.5"/><path d="M60,211 L64,199 L68,199 L72,211" fill="var(--red)" opacity="0.4"/><circle cx="56" cy="184" r="1.5" fill="var(--red)" opacity="0.8"/><circle cx="76" cy="184" r="1.5" fill="var(--red)" opacity="0.8"/><circle cx="58" cy="193" r="1.2" fill="var(--red)" opacity="0.7"/><circle cx="74" cy="193" r="1.2" fill="var(--red)" opacity="0.7"/><line x1="54" y1="184" x2="46" y2="181" stroke="var(--red)" stroke-width="0.8" opacity="0.3"/><line x1="78" y1="184" x2="86" y2="181" stroke="var(--red)" stroke-width="0.8" opacity="0.3"/></g><text x="66" y="265" class="vm" style="fill:var(--red)" id="vg"></text><text x="66" y="190" class="vl">${L.grid}</text><text x="66" y="286" class="vc" id="gv"></text><circle id="gsd" cx="92" cy="189" r="4" fill="rgba(255,255,255,0.12)"/><text x="66" y="300" class="vd" id="dg"></text></g>
-<g id="nLoad" class="ct"><g id="loadIcon" transform="translate(434,225) scale(1.65) translate(-434,-188)"><path d="M416,188 L434,174 L452,188 Z" fill="var(--load)" opacity="0.8"/><rect x="420" y="187" width="28" height="18" rx="1" fill="var(--load)" opacity="0.6"/><rect x="430" y="195" width="8" height="10" rx="1" fill="rgba(0,0,0,0.3)"/><rect x="422" y="190" width="6" height="5" rx="0.5" fill="rgba(255,255,255,0.15)"/><rect x="440" y="190" width="6" height="5" rx="0.5" fill="rgba(255,255,255,0.15)"/><rect x="441" y="176" width="5" height="8" rx="1" fill="var(--load)" opacity="0.5"/></g><text x="434" y="268" class="vm" style="fill:var(--load)" id="vl"></text><text x="470" y="225" class="vl" style="text-anchor:start">${L.load}</text><text x="434" y="288" class="vd" id="dl"></text></g>
+<g id="nLoad" class="ct"><g id="loadIcon" transform="translate(434,225) scale(1.65) translate(-434,-188)"><path d="M416,188 L434,174 L452,188 Z" fill="#C85A34"/><rect x="420" y="187" width="28" height="18" rx="1" fill="#FFFFFF" stroke="rgba(0,0,0,0.12)" stroke-width="0.6"/><rect x="430" y="195" width="8" height="10" rx="1" fill="#A84A28"/><rect x="422" y="190" width="6" height="5" rx="0.5" fill="#AED9EE"/><rect x="440" y="190" width="6" height="5" rx="0.5" fill="#AED9EE"/><rect x="441" y="176" width="5" height="8" rx="1" fill="#A84A28"/></g><text x="434" y="268" class="vm" style="fill:var(--load)" id="vl"></text><text x="434" y="190" class="vl">${L.load}</text><text x="434" y="288" class="vd" id="dl"></text></g>
 <g id="nBat" class="ct"><g id="batIcon" transform="translate(250,400) scale(2.05) translate(-248,-351)"><rect x="232" y="342.5" width="32" height="17" rx="5.5" fill="var(--batt)"/><rect id="bl" x="232" y="342.5" width="32" height="17" fill="var(--batf)" clip-path="url(#bat-clip)"/><rect x="264.5" y="346.5" width="4" height="9" rx="2" fill="var(--batt)"/><svg id="bpA" x="232" y="342.5" width="32" height="17" viewBox="232 342.5 32 17" preserveAspectRatio="xMinYMin slice"><text id="bp" x="248" y="355.7" font-family="-apple-system,sans-serif" font-size="13.5" font-weight="800" fill="var(--batn)" text-anchor="middle">--</text></svg><svg id="bpB" x="264" y="342.5" width="0" height="17" viewBox="264 342.5 0.01 17" preserveAspectRatio="xMinYMin slice"><text id="bp2" x="248" y="355.7" font-family="-apple-system,sans-serif" font-size="13.5" font-weight="800" fill="var(--batf)" text-anchor="middle">--</text></svg><path id="bbolt" d="M260.1,345.8 L255.7,352 L258.9,352 L257.1,356.8 L262.5,349.9 L259.3,349.9 Z" fill="#fff" style="display:none"/></g><text x="250" y="432" class="vm" style="fill:var(--solar)" id="vb"></text><text id="meas" class="vm" x="0" y="-999" visibility="hidden"></text><g id="as" data-vx="250" data-vy="81"><g><path fill="none" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/><path fill="none" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" style="display:none"/></g></g><g id="ag" data-vx="66" data-vy="265"><g><path fill="none" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/><path fill="none" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" style="display:none"/></g></g><g id="al" data-vx="434" data-vy="268"><g><path fill="none" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/><path fill="none" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" style="display:none"/></g></g><g id="ab" data-vx="250" data-vy="432"><g><path fill="none" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/><path fill="none" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" style="display:none"/></g></g><text x="250" y="372" class="vl">${L.battery}</text><text x="316" y="394" class="vc" id="bv" text-anchor="start"></text><text x="316" y="406" class="vc" id="bt" text-anchor="start"></text><text x="250" y="452" class="vd" id="db"></text><text x="250" y="468" class="vc" id="br" style="fill:var(--t1)"></text></g>
 <g id="nEV" class="ct" style="display:none"><path class="fl" d="M434,302 L434,362"/><path id="fe" class="fa" d="M434,302 L434,362" pathLength="100" opacity="0"/><text x="434" y="372" class="vl">${L.ev}</text><g id="evIcon" transform="translate(434,398) scale(1.65) translate(-434,-398)"><path d="M419.5,402.5 Q419.3,398.2 424,397.1 Q426.5,391.6 432,390.9 L437,390.9 Q442.3,391.3 445.3,395.2 Q449.1,396.1 449.4,399.6 Q449.6,402.5 446.6,402.5 L422.4,402.5 Q419.6,402.5 419.5,402.5 Z" fill="var(--load)" opacity="0.8"/><path d="M427.6,395.9 Q429.1,392.6 432.6,392.3 L433.6,392.3 L433.6,395.9 Z" fill="rgba(0,0,0,0.35)"/><path d="M435.1,392.3 L436.9,392.3 Q440.4,392.7 442.4,395.9 L435.1,395.9 Z" fill="rgba(0,0,0,0.35)"/><circle cx="426" cy="402.4" r="3.1" fill="rgba(0,0,0,0.55)"/><circle cx="426" cy="402.4" r="1.4" fill="rgba(255,255,255,0.35)"/><circle cx="442.3" cy="402.4" r="3.1" fill="rgba(0,0,0,0.55)"/><circle cx="442.3" cy="402.4" r="1.4" fill="rgba(255,255,255,0.35)"/><path id="evbolt" d="M452.5,391 L450.5,396 L453.5,396 L451.5,401" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.3)" stroke-width="0.5"/></g><text x="434" y="440" class="vm" style="fill:var(--green)" id="ve"></text><g id="evPill" style="display:none"><rect x="420.5" y="450.5" width="24" height="12" rx="4" fill="var(--batt)"/><rect id="evl" x="420.5" y="450.5" width="0" height="12" fill="var(--batf)" clip-path="url(#ev-clip)"/><rect x="444.9" y="453.3" width="3" height="6.4" rx="1.5" fill="var(--batt)"/><svg id="evA" x="420.5" y="450.5" width="24" height="12" viewBox="420.5 450.5 24 12" preserveAspectRatio="xMinYMin slice"><text id="evsoc" x="432.5" y="459.8" font-family="-apple-system,sans-serif" font-size="9.5" font-weight="800" fill="var(--batn)" text-anchor="middle"></text></svg><svg id="evB" x="444.5" y="450.5" width="0" height="12" viewBox="444.5 450.5 0.01 12" preserveAspectRatio="xMinYMin slice"><text id="evsoc2" x="432.5" y="459.8" font-family="-apple-system,sans-serif" font-size="9.5" font-weight="800" fill="var(--batf)" text-anchor="middle"></text></svg></g><text x="434" y="476" class="vd" id="de"></text></g>
 <g id="nExtra1" class="ct" style="display:none">
@@ -867,12 +877,12 @@ const socVal=soc??0;
 const bpEl=this._$('bp'),bp2El=this._$('bp2');const bpTxt=soc!==null?String(Math.round(soc)):L.unavailable;if(bpEl)bpEl.textContent=bpTxt;if(bp2El)bp2El.textContent=bpTxt;
 const shu=c.shutdown_soc??20;let batC='var(--batf)',bpC='var(--batn)';if(soc!==null&&socVal<=shu){batC='#EF5350';bpC='#fff';}else if(soc!==null&&socVal<=shu+15){batC='#FFA726';bpC='#111';}const ch=bat!==null&&bat<-10&&socVal<100;if(ch){batC='#4CD964';bpC='#fff';}const bw=32*(socVal/100);const blEl=this._$('bl');if(blEl){blEl.setAttribute('width',bw.toFixed(1));blEl.setAttribute('fill',batC);blEl.removeAttribute('class');}const bA=this._$('bpA'),bB=this._$('bpB');if(bA){bA.setAttribute('width',bw.toFixed(2));bA.setAttribute('viewBox','232 342.5 '+Math.max(bw,0.01).toFixed(2)+' 17');}if(bB){const rw=32-bw;bB.setAttribute('x',(232+bw).toFixed(2));bB.setAttribute('width',rw.toFixed(2));bB.setAttribute('viewBox',(232+bw).toFixed(2)+' 342.5 '+Math.max(rw,0.01).toFixed(2)+' 17');}const bx=ch?'245':'248';if(bpEl){bpEl.setAttribute('fill',bpC);bpEl.setAttribute('x',bx);}if(bp2El){bp2El.setAttribute('fill',batC);bp2El.setAttribute('x',bx);}const bboltEl=this._$('bbolt');if(bboltEl)bboltEl.style.display=ch?'':'none';
 
-if(temp!==null)this._$('tp').textContent=temp.toFixed(0)+'\u00B0C';else this._$('tp').textContent='';
+if(temp!==null)this._$('tp').textContent=this._temp(c.temperature);else this._$('tp').textContent='';
 if(pvv!==null&&pvv2!==null){this._$('pv1').textContent=pvv.toFixed(0)+'V';this._$('pv').textContent=pvv2.toFixed(0)+'V';}else if(pvv!==null){this._$('pv1').textContent='';this._$('pv').textContent=pvv.toFixed(0)+'V';}else if(pvv2!==null){this._$('pv1').textContent='';this._$('pv').textContent=pvv2.toFixed(0)+'V';}else{this._$('pv1').textContent='';this._$('pv').textContent='';}
 const gvTxt=gv!==null?(gv2!==null&&gv3!==null?gv.toFixed(0)+'/'+gv2.toFixed(0)+'/'+gv3.toFixed(0)+'V':gv.toFixed(0)+'V'):null;
 if(gvTxt!==null&&freq!==null)this._$('gv').textContent=gvTxt+' \u00B7 '+freq.toFixed(1)+'Hz';else if(gvTxt!==null)this._$('gv').textContent=gvTxt;else if(freq!==null)this._$('gv').textContent=freq.toFixed(1)+'Hz';else this._$('gv').textContent='';
 if(bv!==null)this._$('bv').textContent=bv.toFixed(1)+'V';else this._$('bv').textContent='';
-const bt=this._gv(c.battery_temperature);if(bt!==null)this._$('bt').textContent=bt.toFixed(0)+'\u00B0C';else this._$('bt').textContent='';
+const btS=this._temp(c.battery_temperature);this._$('bt').textContent=btS===null?'':btS;
 
 const dS=this._gv(c.daily_solar)??0,dI=this._gv(c.daily_import)??0,dE=this._gv(c.daily_export)??0,dL=this._gv(c.daily_load)??0,dC=this._gv(c.daily_charge)??0,dD=this._gv(c.daily_discharge)??0;
 // Solar node: if dual MPPT, show per-MPPT power above daily kWh
@@ -996,7 +1006,7 @@ const wicons=this._$('wicons');const wdrop=this._$('wdrop');const wdiv=this._$('
 const wtEl=this._$('wt');const whEl=this._$('wh');
 if(wtv!==null||whv!==null){
   if(wicons)wicons.style.display='';
-  if(wtEl)wtEl.textContent=wtv!==null?wtv.toFixed(0)+'\u00B0C':'';
+  if(wtEl)wtEl.textContent=wtv!==null?this._temp(c.weather_temp):'';
   if(whEl)whEl.textContent=whv!==null?whv.toFixed(0)+'%':'';
   if(wdrop)wdrop.style.display=whv!==null?'':'none';
   if(wdiv)wdiv.style.display=(wtv!==null&&whv!==null)?'':'none';
