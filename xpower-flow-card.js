@@ -1,17 +1,12 @@
 // xPower Flow Card — Modern power flow card for solar hybrid inverters
 // Copyright (C) 2025 BTNBx — MIT License
-const V='1.3.30';
+const V='1.3.31';
 
 /* ═══════════════════════════════════════
    CHANGELOG — full history in CHANGELOG.md
    ═══════════════════════════════════════
-v1.3.30
-   - Trend indicators now default to arrows (arrow_style: arrow).
-     Set arrow_style: chevron to restore the previous chevrons.
-   - CASA (home) label centred above the house icon, matching the
-     other node labels.
-   - New option temp_unit: auto | C | F. Temperatures now follow the
-     sensor's own unit (auto) or can be forced/converted to °C or °F.
+v1.3.31
+   - Home node icon restored to the default theme colour.
    ═══════════════════════════════════════ */
 
 /* ═══════════════════════════════════════
