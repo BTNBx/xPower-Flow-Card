@@ -1,4 +1,4 @@
-v1.3.30
+## v1.3.30
    - Trend indicators now default to arrows (arrow_style: arrow).
      Set arrow_style: chevron to restore the previous chevrons.
    - CASA (home) label centred above the house icon, matching the
