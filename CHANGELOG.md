@@ -1,3 +1,18 @@
+## v1.3.32
+   - **Performance: animations pause off-screen.** Flow, LED and battery
+     animations now pause (and state updates are skipped) while the card
+     is scrolled out of view or on an inactive tab. Noticeable CPU/battery
+     saving on mobile and on dashboards with several cards.
+   - **Performance: no redundant DOM writes.** Attributes, text and styles
+     are only written when the value actually changes (~90 SVG writes per
+     update reduced to only the ones that changed).
+   - **Performance: cached text measurements.** Trend-arrow positioning no
+     longer forces a layout on every update.
+   - **Performance: theme only re-evaluated when `hass.themes` changes**
+     (previously on every state update); system colour-scheme changes are
+     still picked up.
+   - Sun ring ticks only redrawn when the lit count changes.
+   - Removed unused defs/CSS (glow filter, sunSpin, srPulse).
 ## v1.3.31
    - Home node icon restored to the default theme colour.
 ## v1.3.30
