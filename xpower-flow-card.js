@@ -5,14 +5,18 @@ const V='1.3.32';
 /* ═══════════════════════════════════════
    CHANGELOG — full history in CHANGELOG.md
    ═══════════════════════════════════════
-v1.3.32
-   - Performance: flow/LED animations and updates pause while the card is
-     scrolled out of view (IntersectionObserver).
-   - Performance: DOM writes are skipped when the value is unchanged.
-   - Performance: text-width measurements cached (no forced layouts per update).
-   - Performance: theme re-evaluated only when hass.themes changes.
-   - Performance: sun ring ticks only updated when the lit count changes.
-   - Removed unused defs/CSS (glow filter, sunSpin, srPulse).
+## v1.3.25
+
+**Performance**
+
+- `ha-card` now uses `contain: layout paint style` and the main SVG is promoted to its own compositor layer (`will-change: transform`) flow and LED animations no longer repaint the whole card (incl. the 40px box-shadow) every frame
+- Flow resync no longer forces a synchronous reflow (`offsetWidth` hack removed); animations are restarted via the Web Animations API
+- Value tweens (solar/battery/grid/load/EV/extras) now share a single `requestAnimationFrame` loop instead of one loop per value
+- `hass` setter diffing uses a precomputed, deduplicated entity list built in `setConfig`
+- Solar day ring skips recomputation unless `sun.sun` attributes or the current minute change
+- Node hover uses `opacity` instead of `filter: brightness()` (avoids a filter layer on hover)
+
+No visual changes.
    ═══════════════════════════════════════ */
 
 /* ═══════════════════════════════════════
@@ -564,7 +568,7 @@ class XPowerFlowCardEditor extends HTMLElement{
 customElements.define('xpower-flow-card-editor',XPowerFlowCardEditor);
 
 class XPowerFlowCard extends HTMLElement{
-constructor(){super();this.attachShadow({mode:'open'});this._c={};this._h=null;this._prev={solar:0,bat:0,grid:0,load:0};this._hist={solar:[],load:[],grid:[],battery:[]};this._histMax={solar:1,load:1,grid:1,battery:1};this._fs={};this._histTimer=null;this._histLastLoad=0;this._histLoading=false;this._syncSpd=0;this._resync=false;this._rafId=null;this._twv={};this._twr={};this._rm=!!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);this._mq=window.matchMedia?window.matchMedia('(prefers-color-scheme: light)'):null;this._onMq=()=>this._applyTheme();this._mwc=new Map();this._io=null;this._vis=true;this._srTk=null;this._srLit=-1;this._onVis=()=>{if(!document.hidden&&this._h){this._histLastLoad=0;this._schedule();}};}
+constructor(){super();this.attachShadow({mode:'open'});this._c={};this._h=null;this._prev={solar:0,bat:0,grid:0,load:0};this._hist={solar:[],load:[],grid:[],battery:[]};this._histMax={solar:1,load:1,grid:1,battery:1};this._fs={};this._histTimer=null;this._histLastLoad=0;this._histLoading=false;this._syncSpd=0;this._resync=false;this._rafId=null;this._twv={};this._twq={};this._twRaf=null;this._entList=[];this._srKey='';this._rm=!!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);this._mq=window.matchMedia?window.matchMedia('(prefers-color-scheme: light)'):null;this._onMq=()=>this._applyTheme();this._mwc=new Map();this._io=null;this._vis=true;this._srTk=null;this._srLit=-1;this._onVis=()=>{if(!document.hidden&&this._h){this._histLastLoad=0;this._schedule();}};}
 
 static getConfigElement(){return document.createElement('xpower-flow-card-editor');}
 static getStubConfig(){return{...DEFAULTS};}
@@ -577,6 +581,7 @@ setConfig(c){
   if(!c.extra2_power&&c.heatpump_power){this._c.extra2_power=c.heatpump_power;this._c.extra2_name=c.heatpump_name||'';this._c.extra2_icon='heatpump';}
   if(!c.extra3_power&&c.garage_power){this._c.extra3_power=c.garage_power;this._c.extra3_name=c.garage_name||'';this._c.extra3_icon='garage';}
   this._lang=LANG[this._c.language]||LANG.pt;
+  this._entList=[...new Set(ENT_KEYS.map(k=>this._c[k]).filter(Boolean))];
   this._render();
   if(this._h){this._applyTheme();this._schedule();}
 }
@@ -594,7 +599,7 @@ disconnectedCallback(){
   if(this._mq&&this._mq.removeEventListener)this._mq.removeEventListener('change',this._onMq);
   if(this._io){this._io.disconnect();this._io=null;}this._vis=true;this.classList.remove('off');
   if(this._histTimer){clearInterval(this._histTimer);this._histTimer=null;}
-  if(this._rafId){cancelAnimationFrame(this._rafId);this._rafId=null;}Object.values(this._twr).forEach(r=>{if(r)cancelAnimationFrame(r);});this._twr={};
+  if(this._rafId){cancelAnimationFrame(this._rafId);this._rafId=null;}if(this._twRaf){cancelAnimationFrame(this._twRaf);this._twRaf=null;}this._twq={};
 }
 
 set hass(h){
@@ -628,7 +633,7 @@ _schedule(){if(!this._rafId)this._rafId=requestAnimationFrame(()=>{this._rafId=n
 _dirty(o,n){
   if(!o)return true;
   if(o===n)return false;
-  for(const k of ENT_KEYS){const e=this._c[k];if(e&&o.states[e]!==n.states[e])return true;}
+  const os=o.states,ns=n.states;for(const e of this._entList){if(os[e]!==ns[e])return true;}
   return false;
 }
 
@@ -645,9 +650,9 @@ _temp(e){const v=this._gv(e);if(v===null)return null;const st=this._h.states[e];
 _fmt(v){if(v===null)return this._lang.unavailable;const a=Math.abs(v);return a>=1000?(a/1000).toFixed(1)+' kW':a.toFixed(0)+' W';}
 _sunRing(c){const g=this._$('sunRing');if(!g)return;const eid=c.sun_entity||'sun.sun';const st=this._h&&this._h.states?this._h.states[eid]:null;
 if(!st||st.state!=='above_horizon'||!st.attributes||!st.attributes.next_rising||!st.attributes.next_setting){this._ss(g,'display','none');return;}
+const now=Date.now();const key=st.attributes.next_setting+'|'+st.attributes.next_rising+'|'+Math.floor(now/60000);if(key===this._srKey)return;this._srKey=key;
 const set=new Date(st.attributes.next_setting).getTime();
 const rise=new Date(st.attributes.next_rising).getTime()-86400000;
-const now=Date.now();
 if(!(set>rise)){this._ss(g,'display','none');return;}
 const p=Math.min(1,Math.max(0,(now-rise)/(set-rise)));
 this._ss(g,'display','');
@@ -689,7 +694,7 @@ _bucket(arr,t0,t1,n){
 
 async _loadHistory(){if(this._histLoading||!this._h)return;this._histLoading=true;try{const c=this._c;const now=new Date();const start=new Date(now.getTime()-24*60*60*1000);const iso=encodeURIComponent(start.toISOString());const list=[c.solar,c.load,c.grid,c.battery,c.battery_charge,c.battery_discharge].filter(Boolean);const uniq=[...new Set(list)];if(!uniq.length)return;const entities=encodeURIComponent(uniq.join(','));const url='history/period/'+iso+'?filter_entity_id='+entities+'&minimal_response&no_attributes&significant_changes_only';const res=await this._h.callApi('GET',url);if(!res||!res.length)return;const t0=start.getTime(),t1=now.getTime();const byId={};for(const series of res){if(series.length)byId[series[0].entity_id]=this._bucket(series,t0,t1,HIST_POINTS);}const setSpark=(key,pts)=>{if(!pts)return;this._hist[key]=pts;this._histMax[key]=pts.length?Math.max(...pts)||1:1;};setSpark('solar',byId[c.solar]);setSpark('load',byId[c.load]);setSpark('grid',byId[c.grid]);const bch=byId[c.battery_charge],bdis=byId[c.battery_discharge];if(bch||bdis){const n=HIST_POINTS,net=new Array(n);for(let i=0;i<n;i++){const d=bdis?bdis[i]:0,g=bch?bch[i]:0;net[i]=Math.abs(d-g);}setSpark('battery',net);}else{setSpark('battery',byId[c.battery]);}this._drawSparks();}catch(e){console.warn('xPower history:',e);}finally{this._histLoading=false;}}
 
-_render(){this._elc={};this._mwc=new Map();this._srTk=null;this._srLit=-1;const L=this._lang;const INV=String(this._c.inverter_name||'').replace(/[<>&]/g,m=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[m]));const s=this.shadowRoot;s.innerHTML=`<style>
+_render(){this._elc={};this._mwc=new Map();this._srTk=null;this._srLit=-1;this._srKey='';const L=this._lang;const INV=String(this._c.inverter_name||'').replace(/[<>&]/g,m=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[m]));const s=this.shadowRoot;s.innerHTML=`<style>
 :host{--solar:var(--xpf-solar,#FFB300);--battery:var(--xpf-battery,#7C4DFF);--grid:var(--xpf-grid,#42A5F5);--load:var(--xpf-load,#26C6DA);--green:var(--xpf-green,#66BB6A);--red:var(--xpf-red,#EF5350);--orange:var(--xpf-orange,#FFA726);--t1:var(--xpf-text,rgba(255,255,255,0.92));--t3:var(--xpf-text-secondary,rgba(255,255,255,0.45));--xpf-r:var(--xpf-radius,20px);--xpf-vm-size:var(--xpf-font-size,${this._c.font_size||24}px);--flow-w:var(--xpf-flow-width,3);--flow-dash:var(--xpf-dash-size,100);--batf:#fff;--batn:#111;--batt:rgba(255,255,255,0.22)}
 :host(.light){--t1:var(--xpf-text,rgba(0,0,0,0.85));--t3:var(--xpf-text-secondary,rgba(0,0,0,0.45));--batf:rgba(0,0,0,0.85);--batn:#fff;--batt:rgba(0,0,0,0.12)}
 :host(.light) ha-card{background:var(--xpf-bg,rgba(255,255,255,0.92));border-color:rgba(0,0,0,0.08)}
@@ -698,7 +703,7 @@ _render(){this._elc={};this._mwc=new Map();this._srTk=null;this._srLit=-1;const 
 :host(.light) .ib{fill:rgba(0,0,0,0.03);stroke:rgba(0,0,0,0.08)}
 :host(.light) .sb{background:var(--xpf-sparkline-bg,rgba(0,0,0,0.02));border-color:rgba(0,0,0,0.06)}
 :host(.light) .sl{opacity:0.4}
-ha-card{background:var(--xpf-bg,rgba(12,14,24,0.92));border:1px solid rgba(255,255,255,0.06);border-radius:var(--xpf-r);box-shadow:var(--xpf-shadow,0 2px 40px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.04));padding:var(--xpf-padding,6px 8px 6px);position:relative;overflow:hidden;font-family:-apple-system,sans-serif;--ha-card-background:transparent;--ha-card-border-width:0;--ha-card-border-radius:var(--xpf-r);--ha-card-box-shadow:none;transition:border-color 1.5s ease}
+ha-card{background:var(--xpf-bg,rgba(12,14,24,0.92));border:1px solid rgba(255,255,255,0.06);border-radius:var(--xpf-r);box-shadow:var(--xpf-shadow,0 2px 40px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.04));padding:var(--xpf-padding,6px 8px 6px);position:relative;overflow:hidden;contain:layout paint style;font-family:-apple-system,sans-serif;--ha-card-background:transparent;--ha-card-border-width:0;--ha-card-border-radius:var(--xpf-r);--ha-card-box-shadow:none;transition:border-color 1.5s ease}
 ha-card::before{content:'';position:absolute;top:-1px;left:20%;right:20%;height:1px;background:linear-gradient(90deg,transparent,rgba(124,77,255,0.25),transparent)}
 svg{width:100%;height:auto;display:block}
 .fl{fill:none;stroke:rgba(255,255,255,0.04);stroke-width:2;stroke-linecap:round}
@@ -727,7 +732,7 @@ svg{width:100%;height:auto;display:block}
 :host(.light) .au-track{stroke:rgba(0,0,0,0.10)}
 .aul{fill:var(--t1);font-size:8.5px;font-weight:600;letter-spacing:0.02em;text-anchor:end;dominant-baseline:middle;opacity:0;transition:opacity 0.25s ease}
 #nAutarky:hover .aul,#nAutarky.aushow .aul{opacity:1}
-.ct{cursor:pointer}.ct:hover{filter:brightness(1.2)}
+#main{will-change:transform}.ct{cursor:pointer}.ct:hover{opacity:.85}
 
 
 .wt{fill:var(--t3);font-size:11px;font-weight:500;text-anchor:start;dominant-baseline:middle;font-family:-apple-system,sans-serif}
@@ -750,7 +755,7 @@ svg{width:100%;height:auto;display:block}
 .ss #hs{fill:none;stroke:rgba(102,187,106,0.7);stroke-width:1.2}.sc #hl{fill:none;stroke:rgba(38,198,218,0.7);stroke-width:1.2}.sg #hg{fill:none;stroke:rgba(66,165,245,0.7);stroke-width:1.2}.sbt #hb2{fill:none;stroke:rgba(124,77,255,0.7);stroke-width:1.2}
 .ss #hsa{fill:url(#sgd-s);stroke:none}.sc #hla{fill:url(#sgd-l);stroke:none}.sg #hga{fill:url(#sgd-g);stroke:none}.sbt #hb2a{fill:url(#sgd-b);stroke:none}
 </style>
-<ha-card id="xcard"><svg viewBox="0 -8 526 478"><defs><linearGradient id="sunrg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#FF8F00"/><stop offset="1" stop-color="#FFD54F"/></linearGradient><clipPath id="bat-clip"><rect x="232" y="342.5" width="32" height="17" rx="5.5"/></clipPath><clipPath id="ev-clip"><rect x="420.5" y="450.5" width="24" height="12" rx="4"/></clipPath><radialGradient id="sundisc" cx="38%" cy="34%" r="72%"><stop offset="0" stop-color="#FFE082"/><stop offset="0.55" stop-color="#FFC107"/><stop offset="1" stop-color="#FF9800"/></radialGradient><radialGradient id="sunhl" cx="50%" cy="50%" r="50%"><stop offset="0.55" stop-color="#FFC107" stop-opacity="0.30"/><stop offset="1" stop-color="#FFC107" stop-opacity="0"/></radialGradient><linearGradient id="ivbody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#E9ECEF"/></linearGradient><linearGradient id="ivpill" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#34373B"/><stop offset="0.55" stop-color="#2B2E31"/><stop offset="0.56" stop-color="#3C4045"/><stop offset="1" stop-color="#2B2E31"/></linearGradient><linearGradient id="hsrc" gradientUnits="userSpaceOnUse" x1="287.4" y1="225" x2="395" y2="225"><stop id="hs0" offset="0%" stop-color="#66BB6A"/><stop id="hs1" offset="60%" stop-color="#66BB6A"/><stop id="hs2" offset="60%" stop-color="#FFA726"/><stop id="hs3" offset="60%" stop-color="#FFA726"/><stop id="hs4" offset="60%" stop-color="#EF5350"/><stop id="hs5" offset="100%" stop-color="#EF5350"/></linearGradient></defs><g transform="translate(25.5,10) scale(0.95)">
+<ha-card id="xcard"><svg id="main" viewBox="0 -8 526 478"><defs><linearGradient id="sunrg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#FF8F00"/><stop offset="1" stop-color="#FFD54F"/></linearGradient><clipPath id="bat-clip"><rect x="232" y="342.5" width="32" height="17" rx="5.5"/></clipPath><clipPath id="ev-clip"><rect x="420.5" y="450.5" width="24" height="12" rx="4"/></clipPath><radialGradient id="sundisc" cx="38%" cy="34%" r="72%"><stop offset="0" stop-color="#FFE082"/><stop offset="0.55" stop-color="#FFC107"/><stop offset="1" stop-color="#FF9800"/></radialGradient><radialGradient id="sunhl" cx="50%" cy="50%" r="50%"><stop offset="0.55" stop-color="#FFC107" stop-opacity="0.30"/><stop offset="1" stop-color="#FFC107" stop-opacity="0"/></radialGradient><linearGradient id="ivbody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#E9ECEF"/></linearGradient><linearGradient id="ivpill" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#34373B"/><stop offset="0.55" stop-color="#2B2E31"/><stop offset="0.56" stop-color="#3C4045"/><stop offset="1" stop-color="#2B2E31"/></linearGradient><linearGradient id="hsrc" gradientUnits="userSpaceOnUse" x1="287.4" y1="225" x2="395" y2="225"><stop id="hs0" offset="0%" stop-color="#66BB6A"/><stop id="hs1" offset="60%" stop-color="#66BB6A"/><stop id="hs2" offset="60%" stop-color="#FFA726"/><stop id="hs3" offset="60%" stop-color="#FFA726"/><stop id="hs4" offset="60%" stop-color="#EF5350"/><stop id="hs5" offset="100%" stop-color="#EF5350"/></linearGradient></defs><g transform="translate(25.5,10) scale(0.95)">
 <g id="wicons" style="display:none" transform="translate(-20,0)">
 <rect class="wb" x="-2" y="-4" width="86" height="20"/>
 <g transform="translate(0,1)"><rect x="6" y="0" width="2.5" height="7" rx="1.2" fill="none" stroke="var(--t3)" stroke-width="0.7"/><circle cx="7.2" cy="9" r="2.5" fill="none" stroke="var(--t3)" stroke-width="0.7"/><line x1="7.2" y1="3" x2="7.2" y2="7" stroke="var(--red)" stroke-width="1" stroke-linecap="round"/><circle cx="7.2" cy="9" r="1.2" fill="var(--red)"/></g>
@@ -856,7 +861,8 @@ _setupTooltips(){
 }
 _spd(p){const a=Math.abs(p);if(a<10)return 0;let s=Math.max(ANIM_MIN_SPD,ANIM_MAX_SPD-(a/ANIM_MAX_W)*(ANIM_MAX_SPD-ANIM_MIN_SPD));if(a>=3000)s*=0.4;else if(a>=2000)s*=0.6;else if(a>=1000)s*=0.8;return s;}
 _sf(el,id,p,d,c,o){if(!el)return;if(Math.abs(p)<10){this._sa(el,'opacity','0');return;}this._sa(el,'stroke',c);this._sa(el,'opacity',o);if(this._fs[id]!==d){this._fs[id]=d;el.setAttribute('class','fa '+d);this._resync=true;}}
-_tween(id,target,fmt){const el=this._$(id);if(!el)return;if(target===null||(this._rm&&this._c.animations!=='always')){el.textContent=fmt(target);this._twv[id]=target;return;}const from=this._twv[id];if(from===undefined||from===null||Math.abs(target-from)<1){el.textContent=fmt(target);this._twv[id]=target;return;}if(this._twr[id])cancelAnimationFrame(this._twr[id]);const t0=performance.now(),dur=600;const step=t=>{let k=Math.min(1,(t-t0)/dur);k=1-Math.pow(1-k,3);const v=from+(target-from)*k;el.textContent=fmt(v);if(k<1)this._twr[id]=requestAnimationFrame(step);else{this._twr[id]=null;this._twv[id]=target;}};this._twr[id]=requestAnimationFrame(step);}
+_tween(id,target,fmt){const el=this._$(id);if(!el)return;if(target===null||(this._rm&&this._c.animations!=='always')){delete this._twq[id];el.textContent=fmt(target);this._twv[id]=target;return;}const from=this._twv[id];if(from===undefined||from===null||Math.abs(target-from)<1){delete this._twq[id];el.textContent=fmt(target);this._twv[id]=target;return;}this._twq[id]={el,from,to:target,fmt,t0:performance.now()};if(!this._twRaf)this._twRaf=requestAnimationFrame(t=>this._twStep(t));}
+_twStep(t){this._twRaf=null;const q=this._twq;let live=false;for(const id in q){const w=q[id];let k=Math.min(1,(t-w.t0)/600);k=1-Math.pow(1-k,3);w.el.textContent=w.fmt(w.from+(w.to-w.from)*k);if(k<1)live=true;else{this._twv[id]=w.to;delete q[id];}}if(live)this._twRaf=requestAnimationFrame(t2=>this._twStep(t2));}
 _spark(id,aid,data){const el=this._$(id);const af=this._$(aid);if(!el||!data.length)return;const w=200,h=55,py=2,max=Math.max(...data)||1;const pts=data.map((v,i)=>[(i/(data.length-1))*w,py+(1-v/max)*(h-py*2)]);if(pts.length<2)return;const tension=0.3;const cp=(p0,p1,p2,t)=>[p1[0]+(p2[0]-p0[0])*t,p1[1]+(p2[1]-p0[1])*t];let d='M'+pts[0][0].toFixed(1)+','+pts[0][1].toFixed(1);for(let i=0;i<pts.length-1;i++){const p0=pts[Math.max(0,i-1)];const p1=pts[i];const p2=pts[i+1];const p3=pts[Math.min(pts.length-1,i+2)];const c1=cp(p0,p1,p2,tension);const c2=[p2[0]-(p3[0]-p1[0])*tension,p2[1]-(p3[1]-p1[1])*tension];d+=' C'+c1[0].toFixed(1)+','+c1[1].toFixed(1)+' '+c2[0].toFixed(1)+','+c2[1].toFixed(1)+' '+p2[0].toFixed(1)+','+p2[1].toFixed(1);}el.setAttribute('d',d);if(af){af.setAttribute('d',d+'L'+w+','+h+'L0,'+h+'Z');}}
 _drawSparks(){this._spark('hs','hsa',this._hist.solar);this._spark('hl','hla',this._hist.load);this._spark('hg','hga',this._hist.grid);this._spark('hb2','hb2a',this._hist.battery);}
 
@@ -1003,7 +1009,7 @@ const iconLbl={appliance:L.appliance,heatpump:L.heatpump,garage:L.garage,generic
 });
 
 // Phase lock — restart all flow animations in the same frame so pulses relay through the inverter
-if(this._resync){this._resync=false;const els=['fs','fg','fb','fh','fe','fex1','fex2','fex3'].map(id=>this._$(id)).filter(Boolean);els.forEach(el=>{el.style.animation='none';});void this.offsetWidth;els.forEach(el=>{el.style.animation='';const half='-'+(this._syncSpd/2).toFixed(2)+'s';let d='0s';if(el.id==='fh')d=half;else if(el.id==='fb'&&this._fs['b']==='fd')d=half;else if(el.id==='fg'&&this._fs['g']==='fL')d=half;el.style.animationDelay=d;});}
+if(this._resync){this._resync=false;const els=['fs','fg','fb','fh','fe','fex1','fex2','fex3'].map(id=>this._$(id)).filter(Boolean);const half='-'+(this._syncSpd/2).toFixed(2)+'s';els.forEach(el=>{let d='0s';if(el.id==='fh')d=half;else if(el.id==='fb'&&this._fs['b']==='fd')d=half;else if(el.id==='fg'&&this._fs['g']==='fL')d=half;el.style.animationDelay=d;if(el.getAnimations)el.getAnimations().forEach(a=>{a.currentTime=0;});});}
 
 const batCap=c.battery_capacity??5120;const shuSoc=c.shutdown_soc??20;
 const brEl=this._$('br');
