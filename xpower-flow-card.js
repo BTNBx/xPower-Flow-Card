@@ -1,11 +1,11 @@
 // xPower Flow Card — Modern power flow card for solar hybrid inverters
 // Copyright (C) 2025 BTNBx — MIT License
-const V='1.3.32';
+const V='1.3.33';
 
 /* ═══════════════════════════════════════
    CHANGELOG — full history in CHANGELOG.md
    ═══════════════════════════════════════
-## v1.3.25
+## v1.3.33
 
 **Performance**
 
