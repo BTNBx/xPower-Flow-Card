@@ -1,3 +1,15 @@
+## v1.3.25
+
+**Performance**
+
+- `ha-card` now uses `contain: layout paint style` and the main SVG is promoted to its own compositor layer (`will-change: transform`) flow and LED animations no longer repaint the whole card (incl. the 40px box-shadow) every frame
+- Flow resync no longer forces a synchronous reflow (`offsetWidth` hack removed); animations are restarted via the Web Animations API
+- Value tweens (solar/battery/grid/load/EV/extras) now share a single `requestAnimationFrame` loop instead of one loop per value
+- `hass` setter diffing uses a precomputed, deduplicated entity list built in `setConfig`
+- Solar day ring skips recomputation unless `sun.sun` attributes or the current minute change
+- Node hover uses `opacity` instead of `filter: brightness()` (avoids a filter layer on hover)
+
+No visual changes.
 ## v1.3.32
    - **Performance: animations pause off-screen.** Flow, LED and battery
      animations now pause (and state updates are skipped) while the card
