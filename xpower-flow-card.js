@@ -1,23 +1,18 @@
 // xPower Flow Card — Modern power flow card for solar hybrid inverters
 // Copyright (C) 2025 BTNBx — MIT License
-const V='1.3.33';
+const V='1.3.34';
 
 /* ═══════════════════════════════════════
    CHANGELOG — full history in CHANGELOG.md
    ═══════════════════════════════════════
-## v1.3.33
+## v1.3.34
 
-**Performance**
+**Self-sufficiency donut**
 
-- `ha-card` now uses `contain: layout paint style` and the main SVG is promoted to its own compositor layer (`will-change: transform`) flow and LED animations no longer repaint the whole card (incl. the 40px box-shadow) every frame
-- Flow resync no longer forces a synchronous reflow (`offsetWidth` hack removed); animations are restarted via the Web Animations API
-- Value tweens (solar/battery/grid/load/EV/extras) now share a single `requestAnimationFrame` loop instead of one loop per value
-- `hass` setter diffing uses a precomputed, deduplicated entity list built in `setConfig`
-- Solar day ring skips recomputation unless `sun.sun` attributes or the current minute change
-- Node hover uses `opacity` instead of `filter: brightness()` (avoids a filter layer on hover)
-
-No visual changes.
-   ═══════════════════════════════════════ */
+- The mini autarky ring is now a donut split by source feeding the home: green = solar, amber = battery, red = grid
+- Each slice carries its own icon (leaf / battery / plug), oriented radially with the base towards the centre; icons hide when a slice is below 15%
+- Slices and icons animate smoothly when proportions change (respects reduced motion)
+*/
 
 /* ═══════════════════════════════════════
    xPower Flow Card — i18n
@@ -728,7 +723,7 @@ svg{width:100%;height:auto;display:block}
 .il{fill:rgba(255,255,255,0.35);font-size:12px;font-weight:600;letter-spacing:0.05em;text-anchor:middle;dominant-baseline:middle}
 .au{fill:white;font-size:9px;font-weight:600;letter-spacing:0.04em;text-anchor:middle;dominant-baseline:middle}
 .au-pill{rx:8;ry:8;transition:fill 0.5s ease}#au-s,#au-b,#au-g{transition:stroke-dasharray .6s cubic-bezier(.33,1,.68,1),stroke-dashoffset .6s cubic-bezier(.33,1,.68,1)}:host(.rm) #au-s,:host(.rm) #au-b,:host(.rm) #au-g{transition:none}
-.au-track{stroke:rgba(255,255,255,0.10)}
+.au-track{stroke:rgba(255,255,255,0.10)}.au-ic{fill:none;stroke:#fff;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;transform-origin:0 0;transition:transform .6s cubic-bezier(.33,1,.68,1),opacity .3s ease;pointer-events:none}.au-ic.hide{opacity:0}:host(.rm) .au-ic{transition:none}
 :host(.light) .au-track{stroke:rgba(0,0,0,0.10)}
 .aul{fill:var(--t1);font-size:8.5px;font-weight:600;letter-spacing:0.02em;text-anchor:end;dominant-baseline:middle;opacity:0;transition:opacity 0.25s ease}
 #nAutarky:hover .aul,#nAutarky.aushow .aul{opacity:1}
@@ -814,7 +809,7 @@ svg{width:100%;height:auto;display:block}
 </g>
 <text x="499" y="183" class="vm" style="fill:var(--load);font-size:13px" id="ex3val"></text>
 </g>
-<linearGradient id="augrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#10b981"/><stop offset="1" stop-color="#a3e635"/></linearGradient><g id="nAutarky" class="ct"><text id="au-label" x="479" y="10" class="aul">${L.autarky}</text><circle class="au-track" cx="500" cy="10" r="15" fill="none" stroke-width="1.5"/><g transform="rotate(-90 500 10)" fill="none" stroke-width="1.5" stroke-linecap="butt"><circle id="au-s" cx="500" cy="10" r="15" stroke="var(--green)" pathLength="100" stroke-dasharray="0 100"/><circle id="au-b" cx="500" cy="10" r="15" stroke="var(--orange)" pathLength="100" stroke-dasharray="0 100"/><circle id="au-g" cx="500" cy="10" r="15" stroke="var(--red)" pathLength="100" stroke-dasharray="0 100"/></g><text x="500" y="5" id="va" font-family="-apple-system,sans-serif" font-size="8.5" font-weight="800" fill="var(--t1)" text-anchor="middle" dominant-baseline="middle"></text><g id="au-leaf" transform="translate(495.4,9.9) scale(0.4)" fill="none" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6"/></g><circle id="au-hit" cx="500" cy="10" r="17" fill="transparent" pointer-events="all"/></g>
+<linearGradient id="augrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#10b981"/><stop offset="1" stop-color="#a3e635"/></linearGradient><g id="nAutarky" class="ct"><text id="au-label" x="479" y="10" class="aul">${L.autarky}</text><circle class="au-track" cx="500" cy="10" r="13" fill="none" stroke-width="8"/><g transform="rotate(-90 500 10)" fill="none" stroke-width="8" stroke-linecap="butt"><circle id="au-s" cx="500" cy="10" r="13" stroke="var(--green)" pathLength="100" stroke-dasharray="0 100"/><circle id="au-b" cx="500" cy="10" r="13" stroke="var(--orange)" pathLength="100" stroke-dasharray="0 100"/><circle id="au-g" cx="500" cy="10" r="13" stroke="var(--red)" pathLength="100" stroke-dasharray="0 100"/></g><g id="au-is" class="au-ic hide"><g transform="translate(-3.6 -3.6) scale(0.3)"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></g></g><g id="au-ib" class="au-ic hide"><g transform="translate(-3.6 -3.6) scale(0.3)"><rect x="2" y="6" width="16" height="12" rx="2"/><path d="M22 14v-4"/><path d="M6 14v-4"/><path d="M10 14v-4"/></g></g><g id="au-ig" class="au-ic hide"><g transform="translate(-3.6 -3.6) scale(0.3)"><path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8Z"/></g></g><text x="500" y="10" id="va" font-family="-apple-system,sans-serif" font-size="8.5" font-weight="800" fill="var(--t1)" text-anchor="middle" dominant-baseline="middle"></text><circle id="au-hit" cx="500" cy="10" r="18" fill="transparent" pointer-events="all"/></g>
 </g></svg>
 <div class="sr" style="margin-top:4px">
 <div class="sb sg"><div class="sb-header"><span class="sl">${L.grid24}</span><span class="sv" id="hz"></span></div><svg viewBox="0 0 200 55" preserveAspectRatio="none"><defs><linearGradient id="sgd-g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(66,165,245,0.30)"/><stop offset="1" stop-color="rgba(66,165,245,0)"/></linearGradient></defs><path id="hga"/><path id="hg"/><line class="cursor" id="cg" x1="0" y1="0" x2="0" y2="55"/><circle class="cursor-dot" id="dg2" cx="0" cy="0" r="3"/></svg><span class="sb-tip" id="tg"></span></div>
@@ -1024,7 +1019,7 @@ if(batF>RUNTIME_MIN_W&&socVal>shuSoc){
 const gridImp=gridF>0?gridF:0;
 const au=loadF>0?Math.max(0,Math.min(100,((loadF-gridImp)/loadF)*100)):0;
 this._tween('va',au,v=>{const _va=this._$('va'),t=Math.round(v)+'%';if(_va)this._sa(_va,'font-size',t.length>=4?6.8:8.5);return t;});
-const _batDis=batF>0?batF:0;const _solH=Math.max(0,loadF-gridImp-_batDis);const _tot=gridImp+_batDis+_solH;const _seg=(el,st,ln)=>{if(!el)return;const l=Math.max(0,ln);this._sa(el,'stroke-dasharray',l.toFixed(2)+' '+(100-l).toFixed(2));this._sa(el,'stroke-dashoffset',(-st).toFixed(2));};const auS=this._$('au-s'),auB=this._$('au-b'),auG=this._$('au-g');if(_tot>0){const fS=_solH/_tot*100,fB=_batDis/_tot*100,fG=gridImp/_tot*100;_seg(auS,0,fS);_seg(auB,fS,fB);_seg(auG,fS+fB,fG);}else{_seg(auS,0,0);_seg(auB,0,0);_seg(auG,0,0);}const auLeaf=this._$('au-leaf');if(auLeaf)this._sa(auLeaf,'stroke',au>=25?'#34d399':'#EF5350');
+const _batDis=batF>0?batF:0;const _solH=Math.max(0,loadF-gridImp-_batDis);const _tot=gridImp+_batDis+_solH;const _AUI={s:{rot:-42,rad:1,pos:.5},b:{rot:92,rad:1,pos:.51},g:{rot:-44,rad:63/62,pos:.5}};const _seg=(k,st,ln)=>{const el=this._$('au-'+k),ic=this._$('au-i'+k);const l=Math.max(0,ln);if(el){this._sa(el,'stroke-dasharray',l.toFixed(2)+' '+(100-l).toFixed(2));this._sa(el,'stroke-dashoffset',(-st).toFixed(2));}if(ic){const o=_AUI[k],mid=-90+(st+l*o.pos)*3.6,a=mid*Math.PI/180,rr=13*o.rad;this._ss(ic,'transform','translate('+(500+rr*Math.cos(a)).toFixed(2)+'px,'+(10+rr*Math.sin(a)).toFixed(2)+'px) rotate('+(mid+90+o.rot).toFixed(1)+'deg)');ic.classList.toggle('hide',l<15);}};if(_tot>0){const fS=_solH/_tot*100,fB=_batDis/_tot*100,fG=gridImp/_tot*100;_seg('s',0,fS);_seg('b',fS,fB);_seg('g',fS+fB,fG);}else{_seg('s',0,0);_seg('b',0,0);_seg('g',0,0);}
 
 const wtv=this._gv(c.weather_temp);const whv=this._gv(c.weather_humidity);
 const wicons=this._$('wicons');const wdrop=this._$('wdrop');const wdiv=this._$('wdiv');
