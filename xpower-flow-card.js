@@ -5,13 +5,9 @@ const V='1.3.34';
 /* ═══════════════════════════════════════
    CHANGELOG — full history in CHANGELOG.md
    ═══════════════════════════════════════
-## v1.3.34
+## v1.3.35
 
-**Self-sufficiency donut**
-
-- The mini autarky ring is now a donut split by source feeding the home: green = solar, amber = battery, red = grid
-- Each slice carries its own icon (leaf / battery / plug), oriented radially with the base towards the centre; icons hide when a slice is below 15%
-- Slices and icons animate smoothly when proportions change (respects reduced motion)
+- Bug fixing
 */
 
 /* ═══════════════════════════════════════
@@ -723,7 +719,7 @@ svg{width:100%;height:auto;display:block}
 .il{fill:rgba(255,255,255,0.35);font-size:12px;font-weight:600;letter-spacing:0.05em;text-anchor:middle;dominant-baseline:middle}
 .au{fill:white;font-size:9px;font-weight:600;letter-spacing:0.04em;text-anchor:middle;dominant-baseline:middle}
 .au-pill{rx:8;ry:8;transition:fill 0.5s ease}#au-s,#au-b,#au-g{transition:stroke-dasharray .6s cubic-bezier(.33,1,.68,1),stroke-dashoffset .6s cubic-bezier(.33,1,.68,1)}:host(.rm) #au-s,:host(.rm) #au-b,:host(.rm) #au-g{transition:none}
-.au-track{stroke:rgba(255,255,255,0.10)}.au-ic{fill:none;stroke:#fff;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;transform-origin:0 0;transition:transform .6s cubic-bezier(.33,1,.68,1),opacity .3s ease;pointer-events:none}.au-ic.hide{opacity:0}:host(.rm) .au-ic{transition:none}
+.au-track{stroke:rgba(255,255,255,0.10)}.au-ic{fill:none;stroke:#fff;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;transform-box:view-box;transform-origin:0px 8px;transition:transform .6s cubic-bezier(.33,1,.68,1),opacity .3s ease;pointer-events:none}.au-ic.hide{opacity:0}:host(.rm) .au-ic{transition:none}
 :host(.light) .au-track{stroke:rgba(0,0,0,0.10)}
 .aul{fill:var(--t1);font-size:8.5px;font-weight:600;letter-spacing:0.02em;text-anchor:end;dominant-baseline:middle;opacity:0;transition:opacity 0.25s ease}
 #nAutarky:hover .aul,#nAutarky.aushow .aul{opacity:1}
@@ -809,7 +805,7 @@ svg{width:100%;height:auto;display:block}
 </g>
 <text x="499" y="183" class="vm" style="fill:var(--load);font-size:13px" id="ex3val"></text>
 </g>
-<linearGradient id="augrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#10b981"/><stop offset="1" stop-color="#a3e635"/></linearGradient><g id="nAutarky" class="ct"><text id="au-label" x="479" y="10" class="aul">${L.autarky}</text><circle class="au-track" cx="500" cy="10" r="13" fill="none" stroke-width="8"/><g transform="rotate(-90 500 10)" fill="none" stroke-width="8" stroke-linecap="butt"><circle id="au-s" cx="500" cy="10" r="13" stroke="var(--green)" pathLength="100" stroke-dasharray="0 100"/><circle id="au-b" cx="500" cy="10" r="13" stroke="var(--orange)" pathLength="100" stroke-dasharray="0 100"/><circle id="au-g" cx="500" cy="10" r="13" stroke="var(--red)" pathLength="100" stroke-dasharray="0 100"/></g><g id="au-is" class="au-ic hide"><g transform="translate(-3.6 -3.6) scale(0.3)"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></g></g><g id="au-ib" class="au-ic hide"><g transform="translate(-3.6 -3.6) scale(0.3)"><rect x="2" y="6" width="16" height="12" rx="2"/><path d="M22 14v-4"/><path d="M6 14v-4"/><path d="M10 14v-4"/></g></g><g id="au-ig" class="au-ic hide"><g transform="translate(-3.6 -3.6) scale(0.3)"><path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8Z"/></g></g><text x="500" y="10" id="va" font-family="-apple-system,sans-serif" font-size="8.5" font-weight="800" fill="var(--t1)" text-anchor="middle" dominant-baseline="middle"></text><circle id="au-hit" cx="500" cy="10" r="18" fill="transparent" pointer-events="all"/></g>
+<linearGradient id="augrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#10b981"/><stop offset="1" stop-color="#a3e635"/></linearGradient><g id="nAutarky" class="ct"><text id="au-label" x="479" y="10" class="aul">${L.autarky}</text><circle class="au-track" cx="500" cy="10" r="13.5" fill="none" stroke-width="7"/><g transform="rotate(-90 500 10)" fill="none" stroke-width="7" stroke-linecap="butt"><circle id="au-s" cx="500" cy="10" r="13.5" stroke="var(--green)" pathLength="100" stroke-dasharray="0 100"/><circle id="au-b" cx="500" cy="10" r="13.5" stroke="var(--orange)" pathLength="100" stroke-dasharray="0 100"/><circle id="au-g" cx="500" cy="10" r="13.5" stroke="var(--red)" pathLength="100" stroke-dasharray="0 100"/></g><g id="au-is" class="au-ic hide"><g transform="translate(-3.36 -3.36) scale(0.28)"><path d="M5 21c.5-4.5 2.5-8 7-10"/><path d="M9 18c6.218 0 10.5-3.288 11-12v-2h-4.014c-9 0-11.986 4-12 9c0 1 0 3 2 5h3z"/></g></g><g id="au-ib" class="au-ic hide"><g transform="translate(-3.36 -3.36) scale(0.28)"><path d="M6 7h11a2 2 0 0 1 2 2v.5a.5.5 0 0 0 .5.5a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5.5a.5.5 0 0 0-.5.5v.5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2"/><path d="M7 10v4"/><path d="M10 10v4"/><path d="M13 10v4"/></g></g><g id="au-ig" class="au-ic hide"><g transform="translate(-3.36 -3.36) scale(0.28)"><path d="M9.785 6l8.215 8.215l-2.054 2.054a5.81 5.81 0 1 1-8.215-8.215z"/><path d="M4 20l3.5-3.5"/><path d="M15 4l-3.5 3.5"/><path d="M20 9l-3.5 3.5"/></g></g><text x="500" y="10" id="va" font-family="-apple-system,sans-serif" font-size="7.6" font-weight="800" fill="var(--t1)" text-anchor="middle" dominant-baseline="middle"></text><circle id="au-hit" cx="500" cy="10" r="18" fill="transparent" pointer-events="all"/></g>
 </g></svg>
 <div class="sr" style="margin-top:4px">
 <div class="sb sg"><div class="sb-header"><span class="sl">${L.grid24}</span><span class="sv" id="hz"></span></div><svg viewBox="0 0 200 55" preserveAspectRatio="none"><defs><linearGradient id="sgd-g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(66,165,245,0.30)"/><stop offset="1" stop-color="rgba(66,165,245,0)"/></linearGradient></defs><path id="hga"/><path id="hg"/><line class="cursor" id="cg" x1="0" y1="0" x2="0" y2="55"/><circle class="cursor-dot" id="dg2" cx="0" cy="0" r="3"/></svg><span class="sb-tip" id="tg"></span></div>
@@ -1018,8 +1014,8 @@ if(batF>RUNTIME_MIN_W&&socVal>shuSoc){
 
 const gridImp=gridF>0?gridF:0;
 const au=loadF>0?Math.max(0,Math.min(100,((loadF-gridImp)/loadF)*100)):0;
-this._tween('va',au,v=>{const _va=this._$('va'),t=Math.round(v)+'%';if(_va)this._sa(_va,'font-size',t.length>=4?6.8:8.5);return t;});
-const _batDis=batF>0?batF:0;const _solH=Math.max(0,loadF-gridImp-_batDis);const _tot=gridImp+_batDis+_solH;const _AUI={s:{rot:-42,rad:1,pos:.5},b:{rot:92,rad:1,pos:.51},g:{rot:-44,rad:63/62,pos:.5}};const _seg=(k,st,ln)=>{const el=this._$('au-'+k),ic=this._$('au-i'+k);const l=Math.max(0,ln);if(el){this._sa(el,'stroke-dasharray',l.toFixed(2)+' '+(100-l).toFixed(2));this._sa(el,'stroke-dashoffset',(-st).toFixed(2));}if(ic){const o=_AUI[k],mid=-90+(st+l*o.pos)*3.6,a=mid*Math.PI/180,rr=13*o.rad;this._ss(ic,'transform','translate('+(500+rr*Math.cos(a)).toFixed(2)+'px,'+(10+rr*Math.sin(a)).toFixed(2)+'px) rotate('+(mid+90+o.rot).toFixed(1)+'deg)');ic.classList.toggle('hide',l<15);}};if(_tot>0){const fS=_solH/_tot*100,fB=_batDis/_tot*100,fG=gridImp/_tot*100;_seg('s',0,fS);_seg('b',fS,fB);_seg('g',fS+fB,fG);}else{_seg('s',0,0);_seg('b',0,0);_seg('g',0,0);}
+this._tween('va',au,v=>{const _va=this._$('va'),t=Math.round(v)+'%';if(_va)this._sa(_va,'font-size',t.length>=4?5.8:7.6);return t;});
+const _batDis=batF>0?batF:0;const _solH=Math.max(0,loadF-gridImp-_batDis);const _tot=gridImp+_batDis+_solH;const _AUI={s:{rot:-42,rad:1,pos:.5},b:{rot:92,rad:1,pos:.51},g:{rot:-44,rad:63/62,pos:.5}};const _seg=(k,st,ln)=>{const el=this._$('au-'+k),ic=this._$('au-i'+k);const l=Math.max(0,ln);if(el){this._sa(el,'stroke-dasharray',l.toFixed(2)+' '+(100-l).toFixed(2));this._sa(el,'stroke-dashoffset',(-st).toFixed(2));}if(ic){const o=_AUI[k],mid=l>=99.5?-90:-90+(st+l*o.pos)*3.6,a=mid*Math.PI/180,rr=13.5*o.rad;this._ss(ic,'transform','translate('+(500+rr*Math.cos(a)).toFixed(2)+'px,'+(10+rr*Math.sin(a)).toFixed(2)+'px) rotate('+(mid+90+o.rot).toFixed(1)+'deg)');ic.classList.toggle('hide',l<15);}};if(_tot>0){const fS=_solH/_tot*100,fB=_batDis/_tot*100,fG=gridImp/_tot*100;_seg('s',0,fS);_seg('b',fS,fB);_seg('g',fS+fB,fG);}else{_seg('s',0,0);_seg('b',0,0);_seg('g',0,0);}
 
 const wtv=this._gv(c.weather_temp);const whv=this._gv(c.weather_humidity);
 const wicons=this._$('wicons');const wdrop=this._$('wdrop');const wdiv=this._$('wdiv');
