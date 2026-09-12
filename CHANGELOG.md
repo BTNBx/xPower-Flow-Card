@@ -1,3 +1,10 @@
+## v1.3.34
+
+**Self-sufficiency donut**
+
+- The mini autarky ring is now a donut split by source feeding the home: green = solar, amber = battery, red = grid
+- Each slice carries its own icon (leaf / battery / plug), oriented radially with the base towards the centre; icons hide when a slice is below 15%
+- Slices and icons animate smoothly when proportions change (respects reduced motion)
 ## v1.3.33
 
 **Performance**
