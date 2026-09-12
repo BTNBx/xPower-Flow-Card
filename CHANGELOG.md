@@ -1,3 +1,10 @@
+## v1.3.36
+
+**Self-sufficiency donut, polish**
+
+- Icons no longer overflow the ring, reduced to `scale(0.23)` with stroke width 3, so they sit fully inside the band
+- Percentage text shrunk to 6.6 (5.2 for `100%`) so wider digits like 7/8 no longer touch the inner edge of the ring
+- Leaf/battery/plug icons now animated via SVG `transform` attribute with a rAF tween (600ms ease-out), fixing WebKit/iOS misplacing the icon due to `transform-origin` quirks on SVG
 ## v1.3.35
 
 - Bug fixing
