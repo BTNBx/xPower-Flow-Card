@@ -1,17 +1,13 @@
 // xPower Flow Card — Modern power flow card for solar hybrid inverters
 // Copyright (C) 2025 BTNBx — MIT License
-const V='1.3.34';
+const V='1.3.35';
 
 /* ═══════════════════════════════════════
    CHANGELOG — full history in CHANGELOG.md
    ═══════════════════════════════════════
-## v1.3.34
+## v1.3.35
 
-**Self-sufficiency donut**
-
-- The mini autarky ring is now a donut split by source feeding the home: green = solar, amber = battery, red = grid
-- Each slice carries its own icon (leaf / battery / plug), oriented radially with the base towards the centre; icons hide when a slice is below 15%
-- Slices and icons animate smoothly when proportions change (respects reduced motion)
+- Bug fixing
 */
 
 /* ═══════════════════════════════════════
