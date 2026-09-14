@@ -1,3 +1,12 @@
+## v1.3.37
+
+**Self-sufficiency donut, redesign**
+
+- Ring enlarged (`r` 13.5 -> 22) and thinned (`stroke-width` 7 -> 5) for clear legibility on phones; badge recentred to `498,30` and kept fully inside the viewBox
+- Single static leaf glyph pinned in the centre above the percentage, replacing the three leaf/battery/plug icons that orbited each segment
+- Percentage font scaled up to match the larger ring (10.8, 8.5 for `100%`)
+- Segment split (green solar/orange battery/red grid) and the 0.6s smooth transitions retained
+- `_auMove` helper and the `.au-ic` CSS rule are now unused
 ## v1.3.36
 
 **Self-sufficiency donut (polish)**
