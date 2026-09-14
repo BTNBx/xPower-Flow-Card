@@ -1,17 +1,19 @@
 // xPower Flow Card — Modern power flow card for solar hybrid inverters
 // Copyright (C) 2025 BTNBx — MIT License
-const V='1.3.36';
+const V='1.3.37';
 
 /* ═══════════════════════════════════════
    CHANGELOG — full history in CHANGELOG.md
    ═══════════════════════════════════════
-## v1.3.36
+## v1.3.37
 
-**Self-sufficiency donut, polish**
+**Self-sufficiency donut, redesign**
 
-- Icons no longer overflow the ring, reduced to `scale(0.23)` with stroke width 3, so they sit fully inside the band
-- Percentage text shrunk to 6.6 (5.2 for `100%`) so wider digits like 7/8 no longer touch the inner edge of the ring
-- Leaf/battery/plug icons now animated via SVG `transform` attribute with a rAF tween (600ms ease-out), fixing WebKit/iOS misplacing the icon due to `transform-origin` quirks on SVG
+- Ring enlarged (`r` 13.5 -> 22) and thinned (`stroke-width` 7 -> 5) for clear legibility on phones; badge recentred to `498,30` and kept fully inside the viewBox
+- Single static leaf glyph pinned in the centre above the percentage, replacing the three leaf/battery/plug icons that orbited each segment
+- Percentage font scaled up to match the larger ring (10.8, 8.5 for `100%`)
+- Segment split (green solar/orange battery/red grid) and the 0.6s smooth transitions retained
+- `_auMove` helper and the `.au-ic` CSS rule are now unused
 */
 
 /* ═══════════════════════════════════════
@@ -809,7 +811,7 @@ svg{width:100%;height:auto;display:block}
 </g>
 <text x="499" y="183" class="vm" style="fill:var(--load);font-size:13px" id="ex3val"></text>
 </g>
-<linearGradient id="augrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#10b981"/><stop offset="1" stop-color="#a3e635"/></linearGradient><g id="nAutarky" class="ct"><text id="au-label" x="479" y="10" class="aul">${L.autarky}</text><circle class="au-track" cx="500" cy="10" r="13.5" fill="none" stroke-width="7"/><g transform="rotate(-90 500 10)" fill="none" stroke-width="7" stroke-linecap="butt"><circle id="au-s" cx="500" cy="10" r="13.5" stroke="var(--green)" pathLength="100" stroke-dasharray="0 100"/><circle id="au-b" cx="500" cy="10" r="13.5" stroke="var(--orange)" pathLength="100" stroke-dasharray="0 100"/><circle id="au-g" cx="500" cy="10" r="13.5" stroke="var(--red)" pathLength="100" stroke-dasharray="0 100"/></g><g id="au-is" class="au-ic hide"><g transform="translate(-2.76 -2.76) scale(0.23)"><path d="M5 21c.5-4.5 2.5-8 7-10"/><path d="M9 18c6.218 0 10.5-3.288 11-12v-2h-4.014c-9 0-11.986 4-12 9c0 1 0 3 2 5h3z"/></g></g><g id="au-ib" class="au-ic hide"><g transform="translate(-2.76 -2.76) scale(0.23)"><path d="M6 7h11a2 2 0 0 1 2 2v.5a.5.5 0 0 0 .5.5a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5.5a.5.5 0 0 0-.5.5v.5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2"/><path d="M7 10v4"/><path d="M10 10v4"/><path d="M13 10v4"/></g></g><g id="au-ig" class="au-ic hide"><g transform="translate(-2.76 -2.76) scale(0.23)"><path d="M9.785 6l8.215 8.215l-2.054 2.054a5.81 5.81 0 1 1-8.215-8.215z"/><path d="M4 20l3.5-3.5"/><path d="M15 4l-3.5 3.5"/><path d="M20 9l-3.5 3.5"/></g></g><text x="500" y="10" id="va" font-family="-apple-system,sans-serif" font-size="6.6" font-weight="800" fill="var(--t1)" text-anchor="middle" dominant-baseline="middle"></text><circle id="au-hit" cx="500" cy="10" r="18" fill="transparent" pointer-events="all"/></g>
+<linearGradient id="augrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#10b981"/><stop offset="1" stop-color="#a3e635"/></linearGradient><g id="nAutarky" class="ct"><text id="au-label" x="470" y="30" class="aul">${L.autarky}</text><circle class="au-track" cx="498" cy="30" r="22" fill="none" stroke-width="5"/><g transform="rotate(-90 498 30)" fill="none" stroke-width="5" stroke-linecap="butt"><circle id="au-s" cx="498" cy="30" r="22" stroke="var(--green)" pathLength="100" stroke-dasharray="0 100"/><circle id="au-b" cx="498" cy="30" r="22" stroke="var(--orange)" pathLength="100" stroke-dasharray="0 100"/><circle id="au-g" cx="498" cy="30" r="22" stroke="var(--red)" pathLength="100" stroke-dasharray="0 100"/></g><g id="au-leaf" transform="translate(498 22.8)" fill="none" stroke="var(--green)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><g transform="translate(-4.5 -4.5) scale(0.375)"><path d="M5 21c.5-4.5 2.5-8 7-10"/><path d="M9 18c6.218 0 10.5-3.288 11-12v-2h-4.014c-9 0-11.986 4-12 9c0 1 0 3 2 5h3z"/></g></g><text x="498" y="35" id="va" font-family="-apple-system,sans-serif" font-size="10.8" font-weight="800" fill="var(--t1)" text-anchor="middle" dominant-baseline="middle"></text><circle id="au-hit" cx="498" cy="30" r="26" fill="transparent" pointer-events="all"/></g>
 </g></svg>
 <div class="sr" style="margin-top:4px">
 <div class="sb sg"><div class="sb-header"><span class="sl">${L.grid24}</span><span class="sv" id="hz"></span></div><svg viewBox="0 0 200 55" preserveAspectRatio="none"><defs><linearGradient id="sgd-g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(66,165,245,0.30)"/><stop offset="1" stop-color="rgba(66,165,245,0)"/></linearGradient></defs><path id="hga"/><path id="hg"/><line class="cursor" id="cg" x1="0" y1="0" x2="0" y2="55"/><circle class="cursor-dot" id="dg2" cx="0" cy="0" r="3"/></svg><span class="sb-tip" id="tg"></span></div>
@@ -1019,8 +1021,8 @@ if(batF>RUNTIME_MIN_W&&socVal>shuSoc){
 
 const gridImp=gridF>0?gridF:0;
 const au=loadF>0?Math.max(0,Math.min(100,((loadF-gridImp)/loadF)*100)):0;
-this._tween('va',au,v=>{const _va=this._$('va'),t=Math.round(v)+'%';if(_va)this._sa(_va,'font-size',t.length>=4?5.2:6.6);return t;});
-const _batDis=batF>0?batF:0;const _solH=Math.max(0,loadF-gridImp-_batDis);const _tot=gridImp+_batDis+_solH;const _AUI={s:{rot:-42,rad:1,pos:.5},b:{rot:92,rad:1,pos:.51},g:{rot:-44,rad:63/62,pos:.5}};const _seg=(k,st,ln)=>{const el=this._$('au-'+k),ic=this._$('au-i'+k);const l=Math.max(0,ln);if(el){this._sa(el,'stroke-dasharray',l.toFixed(2)+' '+(100-l).toFixed(2));this._sa(el,'stroke-dashoffset',(-st).toFixed(2));}if(ic){const o=_AUI[k],mid=l>=99.5?-90:-90+(st+l*o.pos)*3.6,a=mid*Math.PI/180,rr=13.5*o.rad;this._auMove(ic,500+rr*Math.cos(a),10+rr*Math.sin(a),mid+90+o.rot);ic.classList.toggle('hide',l<15);}};if(_tot>0){const fS=_solH/_tot*100,fB=_batDis/_tot*100,fG=gridImp/_tot*100;_seg('s',0,fS);_seg('b',fS,fB);_seg('g',fS+fB,fG);}else{_seg('s',0,0);_seg('b',0,0);_seg('g',0,0);}
+this._tween('va',au,v=>{const _va=this._$('va'),t=Math.round(v)+'%';if(_va)this._sa(_va,'font-size',t.length>=4?8.5:10.8);return t;});
+const _batDis=batF>0?batF:0;const _solH=Math.max(0,loadF-gridImp-_batDis);const _tot=gridImp+_batDis+_solH;const _seg=(k,st,ln)=>{const el=this._$('au-'+k),l=Math.max(0,ln);if(el){this._sa(el,'stroke-dasharray',l.toFixed(2)+' '+(100-l).toFixed(2));this._sa(el,'stroke-dashoffset',(-st).toFixed(2));}};if(_tot>0){const fS=_solH/_tot*100,fB=_batDis/_tot*100,fG=gridImp/_tot*100;_seg('s',0,fS);_seg('b',fS,fB);_seg('g',fS+fB,fG);}else{_seg('s',0,0);_seg('b',0,0);_seg('g',0,0);}
 
 const wtv=this._gv(c.weather_temp);const whv=this._gv(c.weather_humidity);
 const wicons=this._$('wicons');const wdrop=this._$('wdrop');const wdiv=this._$('wdiv');
