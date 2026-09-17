@@ -3,7 +3,7 @@
 **Sparklines, optional shared scale**
 
 - New optional config `sparkline_shared_scale` (default `false`): when `true`, the four 24h sparklines normalise to one common peak across solar/load/grid/battery, so their heights are comparable and a near-zero grid renders as a low flat line instead of a full-height wave
-- Default behaviour unchanged — each sparkline still auto-scales to its own peak, which keeps each shape legible for reading patterns
+- Default behaviour unchanged, each sparkline still auto-scales to its own peak, which keeps each shape legible for reading patterns
 ## v1.3.37
 
 **Self-sufficiency donut, redesign**
