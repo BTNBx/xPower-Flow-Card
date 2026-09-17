@@ -1,19 +1,16 @@
 // xPower Flow Card — Modern power flow card for solar hybrid inverters
 // Copyright (C) 2025 BTNBx — MIT License
-const V='1.3.37';
+const V='1.3.38';
 
 /* ═══════════════════════════════════════
    CHANGELOG — full history in CHANGELOG.md
    ═══════════════════════════════════════
-## v1.3.37
+## v1.3.38
 
-**Self-sufficiency donut, redesign**
+**Sparklines, optional shared scale**
 
-- Ring enlarged (`r` 13.5 -> 22) and thinned (`stroke-width` 7 -> 5) for clear legibility on phones; badge recentred to `498,30` and kept fully inside the viewBox
-- Single static leaf glyph pinned in the centre above the percentage, replacing the three leaf/battery/plug icons that orbited each segment
-- Percentage font scaled up to match the larger ring (10.8, 8.5 for `100%`)
-- Segment split (green solar/orange battery/red grid) and the 0.6s smooth transitions retained
-- `_auMove` helper and the `.au-ic` CSS rule are now unused
+- New optional config `sparkline_shared_scale` (default `false`): when `true`, the four 24h sparklines normalise to one common peak across solar/load/grid/battery, so their heights are comparable and a near-zero grid renders as a low flat line instead of a full-height wave
+- Default behaviour unchanged — each sparkline still auto-scales to its own peak, which keeps each shape legible for reading patterns
 */
 
 /* ═══════════════════════════════════════
@@ -811,7 +808,7 @@ svg{width:100%;height:auto;display:block}
 </g>
 <text x="499" y="183" class="vm" style="fill:var(--load);font-size:13px" id="ex3val"></text>
 </g>
-<linearGradient id="augrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#10b981"/><stop offset="1" stop-color="#a3e635"/></linearGradient><g id="nAutarky" class="ct"><text id="au-label" x="470" y="30" class="aul">${L.autarky}</text><circle class="au-track" cx="498" cy="30" r="22" fill="none" stroke-width="5"/><g transform="rotate(-90 498 30)" fill="none" stroke-width="5" stroke-linecap="butt"><circle id="au-s" cx="498" cy="30" r="22" stroke="var(--green)" pathLength="100" stroke-dasharray="0 100"/><circle id="au-b" cx="498" cy="30" r="22" stroke="var(--orange)" pathLength="100" stroke-dasharray="0 100"/><circle id="au-g" cx="498" cy="30" r="22" stroke="var(--red)" pathLength="100" stroke-dasharray="0 100"/></g><g id="au-leaf" transform="translate(498 22.8)" fill="none" stroke="var(--green)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><g transform="translate(-4.5 -4.5) scale(0.375)"><path d="M5 21c.5-4.5 2.5-8 7-10"/><path d="M9 18c6.218 0 10.5-3.288 11-12v-2h-4.014c-9 0-11.986 4-12 9c0 1 0 3 2 5h3z"/></g></g><text x="498" y="35" id="va" font-family="-apple-system,sans-serif" font-size="10.8" font-weight="800" fill="var(--t1)" text-anchor="middle" dominant-baseline="middle"></text><circle id="au-hit" cx="498" cy="30" r="26" fill="transparent" pointer-events="all"/></g>
+<linearGradient id="augrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#10b981"/><stop offset="1" stop-color="#a3e635"/></linearGradient><g id="nAutarky" class="ct"><text id="au-label" x="481" y="8" class="aul">${L.autarky}</text><circle class="au-track" cx="498" cy="8" r="11" fill="none" stroke-width="2"/><g transform="rotate(-90 498 8)" fill="none" stroke-width="2" stroke-linecap="butt"><circle id="au-s" cx="498" cy="8" r="11" stroke="var(--green)" pathLength="100" stroke-dasharray="0 100"/><circle id="au-b" cx="498" cy="8" r="11" stroke="var(--orange)" pathLength="100" stroke-dasharray="0 100"/><circle id="au-g" cx="498" cy="8" r="11" stroke="var(--red)" pathLength="100" stroke-dasharray="0 100"/></g><g id="au-leaf" transform="translate(498 4)" fill="none" stroke="var(--green)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><g transform="translate(-2.25 -2.25) scale(0.1875)"><path d="M5 21c.5-4.5 2.5-8 7-10"/><path d="M9 18c6.218 0 10.5-3.288 11-12v-2h-4.014c-9 0-11.986 4-12 9c0 1 0 3 2 5h3z"/></g></g><text x="498" y="10.5" id="va" font-family="-apple-system,sans-serif" font-size="7" font-weight="800" fill="var(--t1)" text-anchor="middle" dominant-baseline="middle"></text><circle id="au-hit" cx="498" cy="8" r="15" fill="transparent" pointer-events="all"/></g>
 </g></svg>
 <div class="sr" style="margin-top:4px">
 <div class="sb sg"><div class="sb-header"><span class="sl">${L.grid24}</span><span class="sv" id="hz"></span></div><svg viewBox="0 0 200 55" preserveAspectRatio="none"><defs><linearGradient id="sgd-g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(66,165,245,0.30)"/><stop offset="1" stop-color="rgba(66,165,245,0)"/></linearGradient></defs><path id="hga"/><path id="hg"/><line class="cursor" id="cg" x1="0" y1="0" x2="0" y2="55"/><circle class="cursor-dot" id="dg2" cx="0" cy="0" r="3"/></svg><span class="sb-tip" id="tg"></span></div>
@@ -861,8 +858,8 @@ _sf(el,id,p,d,c,o){if(!el)return;if(Math.abs(p)<10){this._sa(el,'opacity','0');r
 _auMove(el,x,y,a){const set=(x,y,a)=>{el.setAttribute('transform','translate('+x.toFixed(2)+' '+y.toFixed(2)+') rotate('+a.toFixed(1)+')');el.__au={x,y,a};};const f=el.__au;if(!f||(this._rm&&this._c.animations!=='always')||(Math.abs(f.x-x)<.05&&Math.abs(f.y-y)<.05&&Math.abs(f.a-a)<.5)){set(x,y,a);return;}if(el.__auR)cancelAnimationFrame(el.__auR);const t0=performance.now(),fx=f.x,fy=f.y,fa=f.a,da=((a-fa+540)%360)-180;const step=t=>{let p=Math.min(1,(t-t0)/600);const e=1-Math.pow(1-p,3);set(fx+(x-fx)*e,fy+(y-fy)*e,fa+da*e);if(p<1)el.__auR=requestAnimationFrame(step);else el.__auR=null;};el.__auR=requestAnimationFrame(step);}
 _tween(id,target,fmt){const el=this._$(id);if(!el)return;if(target===null||(this._rm&&this._c.animations!=='always')){delete this._twq[id];el.textContent=fmt(target);this._twv[id]=target;return;}const from=this._twv[id];if(from===undefined||from===null||Math.abs(target-from)<1){delete this._twq[id];el.textContent=fmt(target);this._twv[id]=target;return;}this._twq[id]={el,from,to:target,fmt,t0:performance.now()};if(!this._twRaf)this._twRaf=requestAnimationFrame(t=>this._twStep(t));}
 _twStep(t){this._twRaf=null;const q=this._twq;let live=false;for(const id in q){const w=q[id];let k=Math.min(1,(t-w.t0)/600);k=1-Math.pow(1-k,3);w.el.textContent=w.fmt(w.from+(w.to-w.from)*k);if(k<1)live=true;else{this._twv[id]=w.to;delete q[id];}}if(live)this._twRaf=requestAnimationFrame(t2=>this._twStep(t2));}
-_spark(id,aid,data){const el=this._$(id);const af=this._$(aid);if(!el||!data.length)return;const w=200,h=55,py=2,max=Math.max(...data)||1;const pts=data.map((v,i)=>[(i/(data.length-1))*w,py+(1-v/max)*(h-py*2)]);if(pts.length<2)return;const tension=0.3;const cp=(p0,p1,p2,t)=>[p1[0]+(p2[0]-p0[0])*t,p1[1]+(p2[1]-p0[1])*t];let d='M'+pts[0][0].toFixed(1)+','+pts[0][1].toFixed(1);for(let i=0;i<pts.length-1;i++){const p0=pts[Math.max(0,i-1)];const p1=pts[i];const p2=pts[i+1];const p3=pts[Math.min(pts.length-1,i+2)];const c1=cp(p0,p1,p2,tension);const c2=[p2[0]-(p3[0]-p1[0])*tension,p2[1]-(p3[1]-p1[1])*tension];d+=' C'+c1[0].toFixed(1)+','+c1[1].toFixed(1)+' '+c2[0].toFixed(1)+','+c2[1].toFixed(1)+' '+p2[0].toFixed(1)+','+p2[1].toFixed(1);}el.setAttribute('d',d);if(af){af.setAttribute('d',d+'L'+w+','+h+'L0,'+h+'Z');}}
-_drawSparks(){this._spark('hs','hsa',this._hist.solar);this._spark('hl','hla',this._hist.load);this._spark('hg','hga',this._hist.grid);this._spark('hb2','hb2a',this._hist.battery);}
+_spark(id,aid,data,mx){const el=this._$(id);const af=this._$(aid);if(!el||!data.length)return;const w=200,h=55,py=2,max=mx||Math.max(...data)||1;const pts=data.map((v,i)=>[(i/(data.length-1))*w,py+(1-v/max)*(h-py*2)]);if(pts.length<2)return;const tension=0.3;const cp=(p0,p1,p2,t)=>[p1[0]+(p2[0]-p0[0])*t,p1[1]+(p2[1]-p0[1])*t];let d='M'+pts[0][0].toFixed(1)+','+pts[0][1].toFixed(1);for(let i=0;i<pts.length-1;i++){const p0=pts[Math.max(0,i-1)];const p1=pts[i];const p2=pts[i+1];const p3=pts[Math.min(pts.length-1,i+2)];const c1=cp(p0,p1,p2,tension);const c2=[p2[0]-(p3[0]-p1[0])*tension,p2[1]-(p3[1]-p1[1])*tension];d+=' C'+c1[0].toFixed(1)+','+c1[1].toFixed(1)+' '+c2[0].toFixed(1)+','+c2[1].toFixed(1)+' '+p2[0].toFixed(1)+','+p2[1].toFixed(1);}el.setAttribute('d',d);if(af){af.setAttribute('d',d+'L'+w+','+h+'L0,'+h+'Z');}}
+_drawSparks(){const H=this._hist;let mx=0;if(this._c.sparkline_shared_scale){for(const k of ['solar','load','grid','battery']){const a=H[k];if(a&&a.length){const m=Math.max(...a);if(m>mx)mx=m;}}mx=mx||1;}const M=mx||undefined;this._spark('hs','hsa',H.solar,M);this._spark('hl','hla',H.load,M);this._spark('hg','hga',H.grid,M);this._spark('hb2','hb2a',H.battery,M);}
 
 _update(){if(!this._h||!this.shadowRoot.getElementById('vs'))return;
 const c=this._c,L=this._lang;
@@ -1021,7 +1018,7 @@ if(batF>RUNTIME_MIN_W&&socVal>shuSoc){
 
 const gridImp=gridF>0?gridF:0;
 const au=loadF>0?Math.max(0,Math.min(100,((loadF-gridImp)/loadF)*100)):0;
-this._tween('va',au,v=>{const _va=this._$('va'),t=Math.round(v)+'%';if(_va)this._sa(_va,'font-size',t.length>=4?8.5:10.8);return t;});
+this._tween('va',au,v=>{const _va=this._$('va'),t=Math.round(v)+'%';if(_va)this._sa(_va,'font-size',t.length>=4?6:7);return t;});
 const _batDis=batF>0?batF:0;const _solH=Math.max(0,loadF-gridImp-_batDis);const _tot=gridImp+_batDis+_solH;const _seg=(k,st,ln)=>{const el=this._$('au-'+k),l=Math.max(0,ln);if(el){this._sa(el,'stroke-dasharray',l.toFixed(2)+' '+(100-l).toFixed(2));this._sa(el,'stroke-dashoffset',(-st).toFixed(2));}};if(_tot>0){const fS=_solH/_tot*100,fB=_batDis/_tot*100,fG=gridImp/_tot*100;_seg('s',0,fS);_seg('b',fS,fB);_seg('g',fS+fB,fG);}else{_seg('s',0,0);_seg('b',0,0);_seg('g',0,0);}
 
 const wtv=this._gv(c.weather_temp);const whv=this._gv(c.weather_humidity);
