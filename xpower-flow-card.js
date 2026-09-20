@@ -1,16 +1,23 @@
 // xPower Flow Card — Modern power flow card for solar hybrid inverters
 // Copyright (C) 2025 BTNBx — MIT License
-const V='1.3.38';
+const V='1.3.39';
 
 /* ═══════════════════════════════════════
    CHANGELOG — full history in CHANGELOG.md
    ═══════════════════════════════════════
-## v1.3.38
+## v1.3.39
 
-**Sparklines, optional shared scale**
+**Self-sufficiency moves to the card frame**
 
-- New optional config `sparkline_shared_scale` (default `false`): when `true`, the four 24h sparklines normalise to one common peak across solar/load/grid/battery, so their heights are comparable and a near-zero grid renders as a low flat line instead of a full-height wave
-- Default behaviour unchanged — each sparkline still auto-scales to its own peak, which keeps each shape legible for reading patterns
+- The donut badge is gone; the card's own frame is now the indicator, a rounded-rect path traced over the border, split green solar / orange battery / red grid in the same proportions, starting at the top centre and running clockwise
+- Path is rebuilt from the card's live width, height and radius via `ResizeObserver`, so it follows any dashboard column width and any `--xpf-radius` override
+- Hovering or tapping the frame reveals the leaf and the percentage where the donut used to sit; it fades out 0.6s after the pointer leaves, or 3s after a tap
+- `ha-card` border set to transparent; the dynamic border colour it used to carry is now redundant
+
+**Fix: `sparkline_shared_scale` had no effect (#13)**
+
+- Added `sparkline_shared_scale` to `DEFAULTS`; `setConfig` only copies keys present there, so the option was silently dropped and the shared scale never applied
+- Sparkline tooltip dot now uses the same scale as the drawn curve, so it stays on the line when the shared scale is enabled
 */
 
 /* ═══════════════════════════════════════
@@ -244,7 +251,7 @@ const DEFAULTS={
   extra2_power:'',extra2_name:'',extra2_icon:'heatpump',
   extra3_power:'',extra3_name:'',extra3_icon:'garage',
   import_cost:'',export_cost:'',
-  compact:false,
+  compact:false,sparkline_shared_scale:false,
   theme:'auto',
   animations:'auto',
   arrow_style:'arrow',
@@ -562,7 +569,7 @@ class XPowerFlowCardEditor extends HTMLElement{
 customElements.define('xpower-flow-card-editor',XPowerFlowCardEditor);
 
 class XPowerFlowCard extends HTMLElement{
-constructor(){super();this.attachShadow({mode:'open'});this._c={};this._h=null;this._prev={solar:0,bat:0,grid:0,load:0};this._hist={solar:[],load:[],grid:[],battery:[]};this._histMax={solar:1,load:1,grid:1,battery:1};this._fs={};this._histTimer=null;this._histLastLoad=0;this._histLoading=false;this._syncSpd=0;this._resync=false;this._rafId=null;this._twv={};this._twq={};this._twRaf=null;this._entList=[];this._srKey='';this._rm=!!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);this._mq=window.matchMedia?window.matchMedia('(prefers-color-scheme: light)'):null;this._onMq=()=>this._applyTheme();this._mwc=new Map();this._io=null;this._vis=true;this._srTk=null;this._srLit=-1;this._onVis=()=>{if(!document.hidden&&this._h){this._histLastLoad=0;this._schedule();}};}
+constructor(){super();this.attachShadow({mode:'open'});this._c={};this._h=null;this._prev={solar:0,bat:0,grid:0,load:0};this._hist={solar:[],load:[],grid:[],battery:[]};this._histMax={solar:1,load:1,grid:1,battery:1};this._fs={};this._histTimer=null;this._histLastLoad=0;this._histLoading=false;this._syncSpd=0;this._resync=false;this._rafId=null;this._twv={};this._twq={};this._twRaf=null;this._entList=[];this._srKey='';this._rm=!!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);this._mq=window.matchMedia?window.matchMedia('(prefers-color-scheme: light)'):null;this._onMq=()=>this._applyTheme();this._mwc=new Map();this._io=null;this._ro=null;this._vis=true;this._srTk=null;this._srLit=-1;this._onVis=()=>{if(!document.hidden&&this._h){this._histLastLoad=0;this._schedule();}};}
 
 static getConfigElement(){return document.createElement('xpower-flow-card-editor');}
 static getStubConfig(){return{...DEFAULTS};}
@@ -586,9 +593,11 @@ connectedCallback(){
   if(!this._c.compact&&!this._histTimer)this._histTimer=setInterval(()=>{if(this._h&&!document.hidden&&this._vis)this._loadHistory();},HIST_INTERVAL);
   // Pause animations + skip updates while scrolled out of view
   if(!this._io&&'IntersectionObserver' in window){this._io=new IntersectionObserver(en=>{const v=en[en.length-1].isIntersecting;if(v===this._vis)return;this._vis=v;this.classList.toggle('off',!v);if(v&&this._h)this._schedule();},{threshold:0});this._io.observe(this);}
+  this._ringPath();
 }
 
 disconnectedCallback(){
+  if(this._ro){this._ro.disconnect();this._ro=null;}
   document.removeEventListener('visibilitychange',this._onVis);
   if(this._mq&&this._mq.removeEventListener)this._mq.removeEventListener('change',this._onMq);
   if(this._io){this._io.disconnect();this._io=null;}this._vis=true;this.classList.remove('off');
@@ -691,14 +700,20 @@ async _loadHistory(){if(this._histLoading||!this._h)return;this._histLoading=tru
 _render(){this._elc={};this._mwc=new Map();this._srTk=null;this._srLit=-1;this._srKey='';const L=this._lang;const INV=String(this._c.inverter_name||'').replace(/[<>&]/g,m=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[m]));const s=this.shadowRoot;s.innerHTML=`<style>
 :host{--solar:var(--xpf-solar,#FFB300);--battery:var(--xpf-battery,#7C4DFF);--grid:var(--xpf-grid,#42A5F5);--load:var(--xpf-load,#26C6DA);--green:var(--xpf-green,#66BB6A);--red:var(--xpf-red,#EF5350);--orange:var(--xpf-orange,#FFA726);--t1:var(--xpf-text,rgba(255,255,255,0.92));--t3:var(--xpf-text-secondary,rgba(255,255,255,0.45));--xpf-r:var(--xpf-radius,20px);--xpf-vm-size:var(--xpf-font-size,${this._c.font_size||24}px);--flow-w:var(--xpf-flow-width,3);--flow-dash:var(--xpf-dash-size,100);--batf:#fff;--batn:#111;--batt:rgba(255,255,255,0.22)}
 :host(.light){--t1:var(--xpf-text,rgba(0,0,0,0.85));--t3:var(--xpf-text-secondary,rgba(0,0,0,0.45));--batf:rgba(0,0,0,0.85);--batn:#fff;--batt:rgba(0,0,0,0.12)}
-:host(.light) ha-card{background:var(--xpf-bg,rgba(255,255,255,0.92));border-color:rgba(0,0,0,0.08)}
+:host(.light) ha-card{background:var(--xpf-bg,rgba(255,255,255,0.92))}
 :host(.light) ha-card::before{background:linear-gradient(90deg,transparent,rgba(124,77,255,0.12),transparent)}
 :host(.light) .fl{stroke:rgba(0,0,0,0.06)}
 :host(.light) .ib{fill:rgba(0,0,0,0.03);stroke:rgba(0,0,0,0.08)}
 :host(.light) .sb{background:var(--xpf-sparkline-bg,rgba(0,0,0,0.02));border-color:rgba(0,0,0,0.06)}
 :host(.light) .sl{opacity:0.4}
-ha-card{background:var(--xpf-bg,rgba(12,14,24,0.92));border:1px solid rgba(255,255,255,0.06);border-radius:var(--xpf-r);box-shadow:var(--xpf-shadow,0 2px 40px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.04));padding:var(--xpf-padding,6px 8px 6px);position:relative;overflow:hidden;contain:layout paint style;font-family:-apple-system,sans-serif;--ha-card-background:transparent;--ha-card-border-width:0;--ha-card-border-radius:var(--xpf-r);--ha-card-box-shadow:none;transition:border-color 1.5s ease}
+ha-card{background:var(--xpf-bg,rgba(12,14,24,0.92));border:1px solid transparent;border-radius:var(--xpf-r);box-shadow:var(--xpf-shadow,0 2px 40px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.04));padding:var(--xpf-padding,6px 8px 6px);position:relative;overflow:hidden;contain:layout paint style;font-family:-apple-system,sans-serif;--ha-card-background:transparent;--ha-card-border-width:0;--ha-card-border-radius:var(--xpf-r);--ha-card-box-shadow:none}
 ha-card::before{content:'';position:absolute;top:-1px;left:20%;right:20%;height:1px;background:linear-gradient(90deg,transparent,rgba(124,77,255,0.25),transparent)}
+#aur{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+#aur path{fill:none;stroke-width:2;stroke-linecap:butt}
+#aur #aurhit{stroke:transparent;stroke-width:16;pointer-events:stroke;cursor:pointer}
+#aubadge{opacity:0;transition:opacity 0.35s ease;pointer-events:none}
+#aubadge.show{opacity:1}
+:host(.rm) #aubadge{transition:none}
 svg{width:100%;height:auto;display:block}
 .fl{fill:none;stroke:rgba(255,255,255,0.04);stroke-width:2;stroke-linecap:round}
 .fa{fill:none;stroke-width:var(--flow-w);stroke-linecap:round;stroke-dasharray:var(--flow-dash) var(--flow-dash);transition:stroke 0.8s ease,opacity 0.8s ease}
@@ -720,12 +735,9 @@ svg{width:100%;height:auto;display:block}
 .vc{fill:var(--t3);font-size:11px;font-weight:600;text-anchor:middle;dominant-baseline:middle}.srtk{stroke-width:0.7;opacity:0.2;transition:opacity 0.35s ease}.pvh{fill:var(--t3);font-size:8px;font-weight:700;text-anchor:middle;letter-spacing:0.06em;dominant-baseline:middle}.pvv{fill:var(--t3);font-size:9px;font-weight:600;text-anchor:middle;dominant-baseline:middle}.pvu{fill:var(--t3);font-size:8px;font-weight:500;opacity:0.75;text-anchor:middle;dominant-baseline:middle}.srt{fill:var(--t3);font-size:8px;font-weight:600;dominant-baseline:middle;opacity:0;transition:opacity 0.25s ease}#sunRing:hover .srt,#sunRing.srshow .srt{opacity:1}
 .ib{fill:rgba(255,255,255,0.02);stroke:rgba(255,255,255,0.06);stroke-width:1}
 .il{fill:rgba(255,255,255,0.35);font-size:12px;font-weight:600;letter-spacing:0.05em;text-anchor:middle;dominant-baseline:middle}
-.au{fill:white;font-size:9px;font-weight:600;letter-spacing:0.04em;text-anchor:middle;dominant-baseline:middle}
-.au-pill{rx:8;ry:8;transition:fill 0.5s ease}#au-s,#au-b,#au-g{transition:stroke-dasharray .6s cubic-bezier(.33,1,.68,1),stroke-dashoffset .6s cubic-bezier(.33,1,.68,1)}:host(.rm) #au-s,:host(.rm) #au-b,:host(.rm) #au-g{transition:none}
-.au-track{stroke:rgba(255,255,255,0.10)}.au-ic{fill:none;stroke:#fff;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;transition:opacity .3s ease;pointer-events:none}.au-ic.hide{opacity:0}:host(.rm) .au-ic{transition:none}
+#au-s,#au-b,#au-g{transition:stroke-dasharray .6s cubic-bezier(.33,1,.68,1),stroke-dashoffset .6s cubic-bezier(.33,1,.68,1)}:host(.rm) #au-s,:host(.rm) #au-b,:host(.rm) #au-g{transition:none}
+.au-track{stroke:rgba(255,255,255,0.10)}
 :host(.light) .au-track{stroke:rgba(0,0,0,0.10)}
-.aul{fill:var(--t1);font-size:8.5px;font-weight:600;letter-spacing:0.02em;text-anchor:end;dominant-baseline:middle;opacity:0;transition:opacity 0.25s ease}
-#nAutarky:hover .aul,#nAutarky.aushow .aul{opacity:1}
 #main{will-change:transform}.ct{cursor:pointer}.ct:hover{opacity:.85}
 
 
@@ -749,7 +761,7 @@ svg{width:100%;height:auto;display:block}
 .ss #hs{fill:none;stroke:rgba(102,187,106,0.7);stroke-width:1.2}.sc #hl{fill:none;stroke:rgba(38,198,218,0.7);stroke-width:1.2}.sg #hg{fill:none;stroke:rgba(66,165,245,0.7);stroke-width:1.2}.sbt #hb2{fill:none;stroke:rgba(124,77,255,0.7);stroke-width:1.2}
 .ss #hsa{fill:url(#sgd-s);stroke:none}.sc #hla{fill:url(#sgd-l);stroke:none}.sg #hga{fill:url(#sgd-g);stroke:none}.sbt #hb2a{fill:url(#sgd-b);stroke:none}
 </style>
-<ha-card id="xcard"><svg id="main" viewBox="0 -8 526 478"><defs><linearGradient id="sunrg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#FF8F00"/><stop offset="1" stop-color="#FFD54F"/></linearGradient><clipPath id="bat-clip"><rect x="232" y="342.5" width="32" height="17" rx="5.5"/></clipPath><clipPath id="ev-clip"><rect x="420.5" y="450.5" width="24" height="12" rx="4"/></clipPath><radialGradient id="sundisc" cx="38%" cy="34%" r="72%"><stop offset="0" stop-color="#FFE082"/><stop offset="0.55" stop-color="#FFC107"/><stop offset="1" stop-color="#FF9800"/></radialGradient><radialGradient id="sunhl" cx="50%" cy="50%" r="50%"><stop offset="0.55" stop-color="#FFC107" stop-opacity="0.30"/><stop offset="1" stop-color="#FFC107" stop-opacity="0"/></radialGradient><linearGradient id="ivbody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#E9ECEF"/></linearGradient><linearGradient id="ivpill" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#34373B"/><stop offset="0.55" stop-color="#2B2E31"/><stop offset="0.56" stop-color="#3C4045"/><stop offset="1" stop-color="#2B2E31"/></linearGradient><linearGradient id="hsrc" gradientUnits="userSpaceOnUse" x1="287.4" y1="225" x2="395" y2="225"><stop id="hs0" offset="0%" stop-color="#66BB6A"/><stop id="hs1" offset="60%" stop-color="#66BB6A"/><stop id="hs2" offset="60%" stop-color="#FFA726"/><stop id="hs3" offset="60%" stop-color="#FFA726"/><stop id="hs4" offset="60%" stop-color="#EF5350"/><stop id="hs5" offset="100%" stop-color="#EF5350"/></linearGradient></defs><g transform="translate(25.5,10) scale(0.95)">
+<ha-card id="xcard"><svg id="aur" aria-hidden="true"><path id="aut" class="au-track"/><path id="au-s" stroke="var(--green)" pathLength="100" stroke-dasharray="0 100"/><path id="au-b" stroke="var(--orange)" pathLength="100" stroke-dasharray="0 100"/><path id="au-g" stroke="var(--red)" pathLength="100" stroke-dasharray="0 100"/><path id="aurhit"/></svg><svg id="main" viewBox="0 -8 526 478"><defs><linearGradient id="sunrg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#FF8F00"/><stop offset="1" stop-color="#FFD54F"/></linearGradient><clipPath id="bat-clip"><rect x="232" y="342.5" width="32" height="17" rx="5.5"/></clipPath><clipPath id="ev-clip"><rect x="420.5" y="450.5" width="24" height="12" rx="4"/></clipPath><radialGradient id="sundisc" cx="38%" cy="34%" r="72%"><stop offset="0" stop-color="#FFE082"/><stop offset="0.55" stop-color="#FFC107"/><stop offset="1" stop-color="#FF9800"/></radialGradient><radialGradient id="sunhl" cx="50%" cy="50%" r="50%"><stop offset="0.55" stop-color="#FFC107" stop-opacity="0.30"/><stop offset="1" stop-color="#FFC107" stop-opacity="0"/></radialGradient><linearGradient id="ivbody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#E9ECEF"/></linearGradient><linearGradient id="ivpill" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#34373B"/><stop offset="0.55" stop-color="#2B2E31"/><stop offset="0.56" stop-color="#3C4045"/><stop offset="1" stop-color="#2B2E31"/></linearGradient><linearGradient id="hsrc" gradientUnits="userSpaceOnUse" x1="287.4" y1="225" x2="395" y2="225"><stop id="hs0" offset="0%" stop-color="#66BB6A"/><stop id="hs1" offset="60%" stop-color="#66BB6A"/><stop id="hs2" offset="60%" stop-color="#FFA726"/><stop id="hs3" offset="60%" stop-color="#FFA726"/><stop id="hs4" offset="60%" stop-color="#EF5350"/><stop id="hs5" offset="100%" stop-color="#EF5350"/></linearGradient></defs><g transform="translate(25.5,10) scale(0.95)">
 <g id="wicons" style="display:none" transform="translate(-20,0)">
 <rect class="wb" x="-2" y="-4" width="86" height="20"/>
 <g transform="translate(0,1)"><rect x="6" y="0" width="2.5" height="7" rx="1.2" fill="none" stroke="var(--t3)" stroke-width="0.7"/><circle cx="7.2" cy="9" r="2.5" fill="none" stroke="var(--t3)" stroke-width="0.7"/><line x1="7.2" y1="3" x2="7.2" y2="7" stroke="var(--red)" stroke-width="1" stroke-linecap="round"/><circle cx="7.2" cy="9" r="1.2" fill="var(--red)"/></g>
@@ -767,6 +779,7 @@ svg{width:100%;height:auto;display:block}
 <path class="fl" d="M250,96 L250,187.7"/><path class="fl" d="M250,262.4 L250,364"/><path class="fl" d="M90,225 L212.7,225"/><path class="fl" d="M287.4,225 L395,225"/>
 <path id="fs" class="fa" d="M250,96 L250,187.7" pathLength="100" opacity="0"/><path id="fb" class="fa" d="M250,262.4 L250,364" pathLength="100" opacity="0"/><path id="fg" class="fa" d="M90,225 L212.7,225" pathLength="100" opacity="0"/><path id="fh" class="fa" d="M287.4,225 L395,225" pathLength="100" opacity="0"/>
 <g id="nSolar" class="ct"><g id="sunRing" style="display:none">${SUNTICKS}<path id="srhit" d="M224.5,63.5 A36,36 0 1 1 275.5,63.5" fill="none" stroke="transparent" stroke-width="16" pointer-events="stroke" style="cursor:pointer"/><text id="srx" x="215" y="66" class="srt" style="text-anchor:end"></text><text id="ssx" x="285" y="66" class="srt" style="text-anchor:start"></text></g><g id="sunG"><circle cx="250" cy="38" r="28" fill="url(#sunhl)"/><circle cx="250" cy="38" r="19" fill="url(#sundisc)"/></g><text x="250" y="81" class="vm" style="fill:var(--green)" id="vs"></text><text x="250" y="-10" class="vl">${L.solar}</text><text id="dst1" x="186" y="22" class="pvh"></text><text id="ds1" x="186" y="34" class="pvv"></text><text id="pv1" x="186" y="46" class="pvu"></text><text id="dst" x="314" y="22" class="pvh"></text><text id="ds" x="314" y="34" class="pvv"></text><text id="pv" x="314" y="46" class="pvu"></text><path id="arl" d="M162,31 L162,37 L168,34 Z" fill="#FFD54F" opacity="0.85" style="display:none"/><path id="arr" d="M338,31 L338,37 L332,34 Z" fill="#FFD54F" opacity="0.85" style="display:none"/><rect id="pv1hit" x="164" y="14" width="44" height="40" fill="transparent" pointer-events="all" style="display:none;cursor:pointer"/><rect id="pv2hit" x="292" y="14" width="44" height="40" fill="transparent" pointer-events="all" style="display:none;cursor:pointer"/></g>
+<g id="aubadge"><g id="au-leaf" transform="translate(498 2)" fill="none" stroke="var(--green)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><g transform="translate(-3.6 -3.6) scale(0.3)"><path d="M5 21c.5-4.5 2.5-8 7-10"/><path d="M9 18c6.218 0 10.5-3.288 11-12v-2h-4.014c-9 0-11.986 4-12 9c0 1 0 3 2 5h3z"/></g></g><text x="498" y="17" id="va" font-family="-apple-system,sans-serif" font-size="9" font-weight="800" fill="var(--t1)" text-anchor="middle" dominant-baseline="middle"></text></g>
 <g><g transform="translate(250,225) scale(1.65)"><rect x="-19" y="-19" width="38" height="38" rx="5" fill="url(#ivbody)" stroke="rgba(0,0,0,0.18)" stroke-width="0.5"/><rect x="-11" y="18" width="4.5" height="2.4" rx="0.8" fill="rgba(0,0,0,0.35)"/><rect x="-2.25" y="18" width="4.5" height="2.4" rx="0.8" fill="rgba(0,0,0,0.35)"/><rect x="6.5" y="18" width="4.5" height="2.4" rx="0.8" fill="rgba(0,0,0,0.35)"/><rect x="-11" y="-4.6" width="22" height="9.2" rx="4.6" fill="url(#ivpill)"/><circle id="led1" cx="-4" cy="-0.6" r="1.15" fill="rgba(255,255,255,0.12)"/><circle id="led2" cx="0" cy="-0.6" r="1.15" fill="rgba(255,255,255,0.12)"/><circle id="led3" cx="4" cy="-0.6" r="1.15" fill="rgba(255,255,255,0.12)"/><rect id="ivbar" x="-3" y="2.6" width="6" height="0.9" rx="0.45" fill="#E4002B"/></g>${INV?'<text x="250" y="272" class="il">'+INV+'</text>':''}<text x="296" y="264" class="vc" id="tp" text-anchor="start"></text></g>
 <g id="nGrid" class="ct"><g id="gridIcon" transform="translate(66,225) scale(1.65) translate(-66,-196)"><rect x="64" y="181" width="4" height="30" rx="1" fill="var(--red)" opacity="0.7"/><rect x="54" y="183" width="24" height="3" rx="1" fill="var(--red)" opacity="0.6"/><rect x="57" y="192" width="18" height="2.5" rx="1" fill="var(--red)" opacity="0.5"/><path d="M60,211 L64,199 L68,199 L72,211" fill="var(--red)" opacity="0.4"/><circle cx="56" cy="184" r="1.5" fill="var(--red)" opacity="0.8"/><circle cx="76" cy="184" r="1.5" fill="var(--red)" opacity="0.8"/><circle cx="58" cy="193" r="1.2" fill="var(--red)" opacity="0.7"/><circle cx="74" cy="193" r="1.2" fill="var(--red)" opacity="0.7"/><line x1="54" y1="184" x2="46" y2="181" stroke="var(--red)" stroke-width="0.8" opacity="0.3"/><line x1="78" y1="184" x2="86" y2="181" stroke="var(--red)" stroke-width="0.8" opacity="0.3"/></g><text x="66" y="265" class="vm" style="fill:var(--red)" id="vg"></text><text x="66" y="190" class="vl">${L.grid}</text><text x="66" y="286" class="vc" id="gv"></text><circle id="gsd" cx="92" cy="189" r="4" fill="rgba(255,255,255,0.12)"/><text x="66" y="300" class="vd" id="dg"></text></g>
 <g id="nLoad" class="ct"><g id="loadIcon" transform="translate(434,225) scale(1.65) translate(-434,-188)"><path d="M416,188 L434,174 L452,188 Z" fill="var(--load)" opacity="0.8"/><rect x="420" y="187" width="28" height="18" rx="1" fill="var(--load)" opacity="0.6"/><rect x="430" y="195" width="8" height="10" rx="1" fill="rgba(0,0,0,0.3)"/><rect x="422" y="190" width="6" height="5" rx="0.5" fill="rgba(255,255,255,0.15)"/><rect x="440" y="190" width="6" height="5" rx="0.5" fill="rgba(255,255,255,0.15)"/><rect x="441" y="176" width="5" height="8" rx="1" fill="var(--load)" opacity="0.5"/></g><text x="434" y="268" class="vm" style="fill:var(--load)" id="vl"></text><text x="434" y="190" class="vl">${L.load}</text><text x="434" y="288" class="vd" id="dl"></text></g>
@@ -808,18 +821,18 @@ svg{width:100%;height:auto;display:block}
 </g>
 <text x="499" y="183" class="vm" style="fill:var(--load);font-size:13px" id="ex3val"></text>
 </g>
-<linearGradient id="augrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#10b981"/><stop offset="1" stop-color="#a3e635"/></linearGradient><g id="nAutarky" class="ct"><text id="au-label" x="481" y="8" class="aul">${L.autarky}</text><circle class="au-track" cx="498" cy="8" r="11" fill="none" stroke-width="2"/><g transform="rotate(-90 498 8)" fill="none" stroke-width="2" stroke-linecap="butt"><circle id="au-s" cx="498" cy="8" r="11" stroke="var(--green)" pathLength="100" stroke-dasharray="0 100"/><circle id="au-b" cx="498" cy="8" r="11" stroke="var(--orange)" pathLength="100" stroke-dasharray="0 100"/><circle id="au-g" cx="498" cy="8" r="11" stroke="var(--red)" pathLength="100" stroke-dasharray="0 100"/></g><g id="au-leaf" transform="translate(498 4)" fill="none" stroke="var(--green)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><g transform="translate(-2.25 -2.25) scale(0.1875)"><path d="M5 21c.5-4.5 2.5-8 7-10"/><path d="M9 18c6.218 0 10.5-3.288 11-12v-2h-4.014c-9 0-11.986 4-12 9c0 1 0 3 2 5h3z"/></g></g><text x="498" y="10.5" id="va" font-family="-apple-system,sans-serif" font-size="7" font-weight="800" fill="var(--t1)" text-anchor="middle" dominant-baseline="middle"></text><circle id="au-hit" cx="498" cy="8" r="15" fill="transparent" pointer-events="all"/></g>
 </g></svg>
 <div class="sr" style="margin-top:4px">
 <div class="sb sg"><div class="sb-header"><span class="sl">${L.grid24}</span><span class="sv" id="hz"></span></div><svg viewBox="0 0 200 55" preserveAspectRatio="none"><defs><linearGradient id="sgd-g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(66,165,245,0.30)"/><stop offset="1" stop-color="rgba(66,165,245,0)"/></linearGradient></defs><path id="hga"/><path id="hg"/><line class="cursor" id="cg" x1="0" y1="0" x2="0" y2="55"/><circle class="cursor-dot" id="dg2" cx="0" cy="0" r="3"/></svg><span class="sb-tip" id="tg"></span></div>
 <div class="sb ss"><div class="sb-header"><span class="sl">${L.solar24}</span><span class="sv" id="hv"></span></div><svg viewBox="0 0 200 55" preserveAspectRatio="none"><defs><linearGradient id="sgd-s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(102,187,106,0.30)"/><stop offset="1" stop-color="rgba(102,187,106,0)"/></linearGradient></defs><path id="hsa"/><path id="hs"/><line class="cursor" id="cs" x1="0" y1="0" x2="0" y2="55"/><circle class="cursor-dot" id="ds2" cx="0" cy="0" r="3"/></svg><span class="sb-tip" id="ts"></span></div>
 <div class="sb sc"><div class="sb-header"><span class="sl">${L.load24}</span><span class="sv" id="hx"></span></div><svg viewBox="0 0 200 55" preserveAspectRatio="none"><defs><linearGradient id="sgd-l" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(38,198,218,0.30)"/><stop offset="1" stop-color="rgba(38,198,218,0)"/></linearGradient></defs><path id="hla"/><path id="hl"/><line class="cursor" id="cl" x1="0" y1="0" x2="0" y2="55"/><circle class="cursor-dot" id="dl2" cx="0" cy="0" r="3"/></svg><span class="sb-tip" id="tl"></span></div>
 <div class="sb sbt"><div class="sb-header"><span class="sl">${L.bat24}</span><span class="sv" id="hy"></span></div><svg viewBox="0 0 200 55" preserveAspectRatio="none"><defs><linearGradient id="sgd-b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(124,77,255,0.30)"/><stop offset="1" stop-color="rgba(124,77,255,0)"/></linearGradient></defs><path id="hb2a"/><path id="hb2"/><line class="cursor" id="cb" x1="0" y1="0" x2="0" y2="55"/><circle class="cursor-dot" id="db2" cx="0" cy="0" r="3"/></svg><span class="sb-tip" id="tb"></span></div>
-</div></ha-card>`;this._setupTooltips();this._setupClicks();}
+</div></ha-card>`;this._setupTooltips();this._setupClicks();this._ringPath();requestAnimationFrame(()=>this._ringPath());if(this._ro)this._ro.disconnect();if('ResizeObserver' in window){this._ro=new ResizeObserver(()=>this._ringPath());const cd=this._$('xcard');if(cd)this._ro.observe(cd);}}
 
 _$(id){let c=this._elc;if(!c)c=this._elc={};let el=c[id];if(el&&el.isConnected)return el;el=this.shadowRoot.getElementById(id);c[id]=el;return el;}
 _moreInfo(entityId){if(!entityId)return;this.dispatchEvent(new CustomEvent('hass-more-info',{detail:{entityId},bubbles:true,composed:true}));}
-_setupClicks(){const c=this._c;const bind=(id,entity)=>{const el=this._$(id);if(el&&entity)el.addEventListener('click',()=>this._moreInfo(entity));};bind('nSolar',c.solar);bind('nGrid',c.grid);bind('nLoad',c.load);bind('nBat',c.battery||c.soc);bind('nEV',c.ev_power||c.ev_soc);bind('nExtra1',c.extra1_power);bind('nExtra2',c.extra2_power);bind('nExtra3',c.extra3_power);const hit=this._$('srhit'),sg=this._$('sunRing');if(hit&&sg)hit.addEventListener('click',(e)=>{e.stopPropagation();sg.classList.add('srshow');clearTimeout(this._srT);this._srT=setTimeout(()=>sg.classList.remove('srshow'),3000);});const auHit=this._$('au-hit'),auG=this._$('nAutarky');if(auHit&&auG)auHit.addEventListener('click',(e)=>{e.stopPropagation();auG.classList.add('aushow');clearTimeout(this._auT);this._auT=setTimeout(()=>auG.classList.remove('aushow'),3000);});const pv1=this._$('pv1hit');if(pv1)pv1.addEventListener('click',(e)=>{e.stopPropagation();this._moreInfo(c.solar);});const pv2=this._$('pv2hit');if(pv2)pv2.addEventListener('click',(e)=>{e.stopPropagation();this._moreInfo(c.solar2);});}
+_setupClicks(){const c=this._c;const bind=(id,entity)=>{const el=this._$(id);if(el&&entity)el.addEventListener('click',()=>this._moreInfo(entity));};bind('nSolar',c.solar);bind('nGrid',c.grid);bind('nLoad',c.load);bind('nBat',c.battery||c.soc);bind('nEV',c.ev_power||c.ev_soc);bind('nExtra1',c.extra1_power);bind('nExtra2',c.extra2_power);bind('nExtra3',c.extra3_power);const hit=this._$('srhit'),sg=this._$('sunRing');if(hit&&sg)hit.addEventListener('click',(e)=>{e.stopPropagation();sg.classList.add('srshow');clearTimeout(this._srT);this._srT=setTimeout(()=>sg.classList.remove('srshow'),3000);});const pv1=this._$('pv1hit');if(pv1)pv1.addEventListener('click',(e)=>{e.stopPropagation();this._moreInfo(c.solar);});const pv2=this._$('pv2hit');if(pv2)pv2.addEventListener('click',(e)=>{e.stopPropagation();this._moreInfo(c.solar2);});const aH=this._$('aurhit'),aB=this._$('aubadge');if(aH&&aB){const show=()=>{aB.classList.add('show');clearTimeout(this._auT);this._auT=setTimeout(()=>aB.classList.remove('show'),3000);};aH.addEventListener('pointerenter',show);aH.addEventListener('pointerdown',e=>{e.stopPropagation();show();});aH.addEventListener('pointerleave',()=>{clearTimeout(this._auT);this._auT=setTimeout(()=>aB.classList.remove('show'),600);});}}
+_ringPath(){const card=this._$('xcard');if(!card)return;const w=card.clientWidth,h=card.clientHeight;if(!w||!h)return;const sw=2,i=sw/2,W=w-sw,H=h-sw;let r=parseFloat(getComputedStyle(card).borderTopLeftRadius)||20;r=Math.max(0,Math.min(r,Math.min(W,H)/2));const d='M'+(i+W/2)+','+i+' H'+(i+W-r)+' A'+r+','+r+' 0 0 1 '+(i+W)+','+(i+r)+' V'+(i+H-r)+' A'+r+','+r+' 0 0 1 '+(i+W-r)+','+(i+H)+' H'+(i+r)+' A'+r+','+r+' 0 0 1 '+i+','+(i+H-r)+' V'+(i+r)+' A'+r+','+r+' 0 0 1 '+(i+r)+','+i+' Z';this._sa(this._$('aur'),'viewBox','0 0 '+w+' '+h);['aut','au-s','au-b','au-g','aurhit'].forEach(id=>this._sa(this._$(id),'d',d));}
 _setupTooltips(){
   const self=this;
   const setup=(svgParent,cursorId,dotId,tipId,dataKey,color)=>{
@@ -833,7 +846,7 @@ _setupTooltips(){
       const x=(cx-rect.left)/rect.width;
       const idx=Math.min(Math.max(Math.round(x*(data.length-1)),0),data.length-1);
       const val=data[idx];const svgX=x*200;
-      const max=self._histMax[dataKey]||1;const svgY=2+(1-val/max)*51;
+      const max=self._sparkM||self._histMax[dataKey]||1;const svgY=2+(1-val/max)*51;
       cursor.setAttribute('x1',svgX);cursor.setAttribute('x2',svgX);cursor.style.display='';
       dot.setAttribute('cx',svgX);dot.setAttribute('cy',svgY);dot.style.display='';dot.setAttribute('fill',color);
       const hoursAgo=(1-idx/(data.length-1))*24;
@@ -855,11 +868,10 @@ _setupTooltips(){
 }
 _spd(p){const a=Math.abs(p);if(a<10)return 0;let s=Math.max(ANIM_MIN_SPD,ANIM_MAX_SPD-(a/ANIM_MAX_W)*(ANIM_MAX_SPD-ANIM_MIN_SPD));if(a>=3000)s*=0.4;else if(a>=2000)s*=0.6;else if(a>=1000)s*=0.8;return s;}
 _sf(el,id,p,d,c,o){if(!el)return;if(Math.abs(p)<10){this._sa(el,'opacity','0');return;}this._sa(el,'stroke',c);this._sa(el,'opacity',o);if(this._fs[id]!==d){this._fs[id]=d;el.setAttribute('class','fa '+d);this._resync=true;}}
-_auMove(el,x,y,a){const set=(x,y,a)=>{el.setAttribute('transform','translate('+x.toFixed(2)+' '+y.toFixed(2)+') rotate('+a.toFixed(1)+')');el.__au={x,y,a};};const f=el.__au;if(!f||(this._rm&&this._c.animations!=='always')||(Math.abs(f.x-x)<.05&&Math.abs(f.y-y)<.05&&Math.abs(f.a-a)<.5)){set(x,y,a);return;}if(el.__auR)cancelAnimationFrame(el.__auR);const t0=performance.now(),fx=f.x,fy=f.y,fa=f.a,da=((a-fa+540)%360)-180;const step=t=>{let p=Math.min(1,(t-t0)/600);const e=1-Math.pow(1-p,3);set(fx+(x-fx)*e,fy+(y-fy)*e,fa+da*e);if(p<1)el.__auR=requestAnimationFrame(step);else el.__auR=null;};el.__auR=requestAnimationFrame(step);}
 _tween(id,target,fmt){const el=this._$(id);if(!el)return;if(target===null||(this._rm&&this._c.animations!=='always')){delete this._twq[id];el.textContent=fmt(target);this._twv[id]=target;return;}const from=this._twv[id];if(from===undefined||from===null||Math.abs(target-from)<1){delete this._twq[id];el.textContent=fmt(target);this._twv[id]=target;return;}this._twq[id]={el,from,to:target,fmt,t0:performance.now()};if(!this._twRaf)this._twRaf=requestAnimationFrame(t=>this._twStep(t));}
 _twStep(t){this._twRaf=null;const q=this._twq;let live=false;for(const id in q){const w=q[id];let k=Math.min(1,(t-w.t0)/600);k=1-Math.pow(1-k,3);w.el.textContent=w.fmt(w.from+(w.to-w.from)*k);if(k<1)live=true;else{this._twv[id]=w.to;delete q[id];}}if(live)this._twRaf=requestAnimationFrame(t2=>this._twStep(t2));}
 _spark(id,aid,data,mx){const el=this._$(id);const af=this._$(aid);if(!el||!data.length)return;const w=200,h=55,py=2,max=mx||Math.max(...data)||1;const pts=data.map((v,i)=>[(i/(data.length-1))*w,py+(1-v/max)*(h-py*2)]);if(pts.length<2)return;const tension=0.3;const cp=(p0,p1,p2,t)=>[p1[0]+(p2[0]-p0[0])*t,p1[1]+(p2[1]-p0[1])*t];let d='M'+pts[0][0].toFixed(1)+','+pts[0][1].toFixed(1);for(let i=0;i<pts.length-1;i++){const p0=pts[Math.max(0,i-1)];const p1=pts[i];const p2=pts[i+1];const p3=pts[Math.min(pts.length-1,i+2)];const c1=cp(p0,p1,p2,tension);const c2=[p2[0]-(p3[0]-p1[0])*tension,p2[1]-(p3[1]-p1[1])*tension];d+=' C'+c1[0].toFixed(1)+','+c1[1].toFixed(1)+' '+c2[0].toFixed(1)+','+c2[1].toFixed(1)+' '+p2[0].toFixed(1)+','+p2[1].toFixed(1);}el.setAttribute('d',d);if(af){af.setAttribute('d',d+'L'+w+','+h+'L0,'+h+'Z');}}
-_drawSparks(){const H=this._hist;let mx=0;if(this._c.sparkline_shared_scale){for(const k of ['solar','load','grid','battery']){const a=H[k];if(a&&a.length){const m=Math.max(...a);if(m>mx)mx=m;}}mx=mx||1;}const M=mx||undefined;this._spark('hs','hsa',H.solar,M);this._spark('hl','hla',H.load,M);this._spark('hg','hga',H.grid,M);this._spark('hb2','hb2a',H.battery,M);}
+_drawSparks(){const H=this._hist;let mx=0;if(this._c.sparkline_shared_scale){for(const k of ['solar','load','grid','battery']){const a=H[k];if(a&&a.length){const m=Math.max(...a);if(m>mx)mx=m;}}mx=mx||1;}const M=mx||undefined;this._sparkM=M;this._spark('hs','hsa',H.solar,M);this._spark('hl','hla',H.load,M);this._spark('hg','hga',H.grid,M);this._spark('hb2','hb2a',H.battery,M);}
 
 _update(){if(!this._h||!this.shadowRoot.getElementById('vs'))return;
 const c=this._c,L=this._lang;
@@ -939,7 +951,6 @@ if(this._syncSpd<=0||Math.abs(syncSpd-this._syncSpd)/this._syncSpd>0.1){this._sy
 this._sf(this._$('fs'),'s',solF,'fd','var(--green)','0.8');
 this._sf(this._$('fg'),'g',gridF,gridF>0?'fr':'fL',gridF>0?'var(--red)':'var(--green)','0.7');
 this._sf(this._$('fb'),'b',batF,batF<0?'fd':'fu',batF<0?'var(--green)':'var(--solar)','0.75');
-const solContrib=solF>0?solF:0;const batContrib=batF>0?batF:0;const gridContrib=gridF>0?gridF:0;
 const _gImp=gridF>0?gridF:0,_bDis=batF>0?batF:0,_sToH=Math.max(0,loadF-_gImp-_bDis),_feed=_gImp+_bDis+_sToH;
 {const _sc=[[_sToH,'#66BB6A'],[_bDis,'#FFA726'],[_gImp,'#EF5350']];let _ac=0;for(let _i=0;_i<3;_i++){const _f=_feed>0?_sc[_i][0]/_feed*100:0;const _p0=this._$('hs'+(_i*2)),_p1=this._$('hs'+(_i*2+1));if(_p0){this._sa(_p0,'offset',_ac.toFixed(1)+'%');this._sa(_p0,'stop-color',_sc[_i][1]);}_ac+=_f;if(_p1){this._sa(_p1,'offset',_ac.toFixed(1)+'%');this._sa(_p1,'stop-color',_sc[_i][1]);}}}
 this._sf(this._$('fh'),'h',loadF,'fr','url(#hsrc)','0.75');
@@ -1018,7 +1029,7 @@ if(batF>RUNTIME_MIN_W&&socVal>shuSoc){
 
 const gridImp=gridF>0?gridF:0;
 const au=loadF>0?Math.max(0,Math.min(100,((loadF-gridImp)/loadF)*100)):0;
-this._tween('va',au,v=>{const _va=this._$('va'),t=Math.round(v)+'%';if(_va)this._sa(_va,'font-size',t.length>=4?6:7);return t;});
+this._tween('va',au,v=>{const _va=this._$('va'),t=Math.round(v)+'%';if(_va)this._sa(_va,'font-size',t.length>=4?8:9);return t;});
 const _batDis=batF>0?batF:0;const _solH=Math.max(0,loadF-gridImp-_batDis);const _tot=gridImp+_batDis+_solH;const _seg=(k,st,ln)=>{const el=this._$('au-'+k),l=Math.max(0,ln);if(el){this._sa(el,'stroke-dasharray',l.toFixed(2)+' '+(100-l).toFixed(2));this._sa(el,'stroke-dashoffset',(-st).toFixed(2));}};if(_tot>0){const fS=_solH/_tot*100,fB=_batDis/_tot*100,fG=gridImp/_tot*100;_seg('s',0,fS);_seg('b',fS,fB);_seg('g',fS+fB,fG);}else{_seg('s',0,0);_seg('b',0,0);_seg('g',0,0);}
 
 const wtv=this._gv(c.weather_temp);const whv=this._gv(c.weather_humidity);
@@ -1068,16 +1079,7 @@ this._st(this._$('hx'),this._fmt(load)+' / '+this._fmtE(dL));
 this._st(this._$('hz'),this._fmt(grid!==null?Math.abs(grid):null)+' / '+this._fmtE(dI+dE));
 this._st(this._$('hy'),this._fmt(bat!==null?Math.abs(bat):null)+' / '+this._fmtE(dC+dD));
 
-// #1 Dynamic Border — thin border color based on dominant source
-const card=this._$('xcard');
-if(card){const sC=solF>0?solF:0;const bC=batF>0?batF:0;const gC=gridF>0?gridF:0;
-let borderColor='rgba(255,255,255,0.06)';
-if(sC>=bC&&sC>=gC&&sC>10)borderColor='rgba(102,187,106,0.55)';
-else if(bC>=sC&&bC>=gC&&bC>10)borderColor='rgba(255,179,0,0.55)';
-else if(gC>10)borderColor='rgba(239,83,80,0.45)';
-this._ss(card,'borderColor',borderColor);}
-
-// #2 LCD — home consumption on inverter display
+this._ringPath();
 }
 
 getGridOptions(){return this._c.compact?{columns:12,rows:8,min_columns:6,min_rows:4}:{columns:12,rows:10,min_columns:6,min_rows:6};}
