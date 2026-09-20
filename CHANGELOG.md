@@ -1,3 +1,16 @@
+## v1.3.39
+
+**Self-sufficiency moves to the card frame**
+
+- The donut badge is gone; the card's own frame is now the indicator, a rounded-rect path traced over the border, split green solar / orange battery / red grid in the same proportions, starting at the top centre and running clockwise
+- Path is rebuilt from the card's live width, height and radius via `ResizeObserver`, so it follows any dashboard column width and any `--xpf-radius` override
+- Hovering or tapping the frame reveals the leaf and the percentage where the donut used to sit; it fades out 0.6s after the pointer leaves, or 3s after a tap
+- `ha-card` border set to transparent; the dynamic border colour it used to carry is now redundant
+
+**Fix: `sparkline_shared_scale` had no effect (#13)**
+
+- Added `sparkline_shared_scale` to `DEFAULTS`; `setConfig` only copies keys present there, so the option was silently dropped and the shared scale never applied
+- Sparkline tooltip dot now uses the same scale as the drawn curve, so it stays on the line when the shared scale is enabled
 ## v1.3.38
 
 **Sparklines, optional shared scale**
