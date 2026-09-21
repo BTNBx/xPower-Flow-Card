@@ -1,3 +1,12 @@
+## v1.3.40
+
+**Third MPPT and compact MPPT list (#14)**
+
+- New optional entities `solar3` and `pv_voltage3`; the solar total, flows, frame and self-sufficiency sum every configured MPPT
+- With two or three MPPTs the per-input readings move to a compact list left of the sun (label · power · voltage, power right-aligned), vertically centred on the daily total; the daily total sits to the right. Replaces the PV1/PV2 side columns and their arrows
+- Each list row opens its own entity's more-info
+- Spacing: list spans x 112–192, clearing the weather/price pills (end at x 84) and the sun ring (x ≈ 210); daily total centred at x 338 clears the ring on the right (x ≈ 290); voltage line moved to y 48 so it no longer touches the 13px daily text
+- Fix: the SOLAR (24h) sparkline only read MPPT1; it now sums the history of every configured MPPT
 ## v1.3.39
 
 **Self-sufficiency moves to the card frame**
