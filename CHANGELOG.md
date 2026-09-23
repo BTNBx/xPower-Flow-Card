@@ -1,3 +1,19 @@
+## v1.3.41
+
+**Frame polish and editor gap**
+
+- `max-resolution` is only honoured from Safari 16, so the density query now also carries `-webkit-max-device-pixel-ratio`; older Safari no longer gets the 0.75px frame on a standard-density screen
+- Badge and sunrise/sunset timers are cleared on disconnect, so a dashboard view change no longer leaves timeouts pointing at destroyed nodes
+- Frame hit path carries a `<title>` with the self-sufficiency label and the ring SVG is no longer `aria-hidden`, so screen readers announce it
+- Frame path is rebuilt on theme change, picking up a different `--xpf-radius`
+- `sparkline_shared_scale` is now in the visual editor (Sparkline scale: Independent / Shared)
+
+**Frame refinements**
+
+- Frame is thinner and softer by default: 0.75px on high-density screens (1px on standard ones), segments at 70% opacity, so it no longer outweighs the data at night
+- Themeable via `--xpf-frame-width` and `--xpf-frame-opacity`; the path inset follows the actual stroke width, so corners stay concentric at any value
+- Segment placement now favours the smaller segments (weight 1/f²): a minority source stays centred on its own side, e.g. a 20% grid share sits on the left instead of being pushed to the top by a dominant battery, while the dominant segment flexes
+*/
 ## v1.3.40
 
 **Third MPPT and compact MPPT list (#14)**
