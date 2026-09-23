@@ -1,19 +1,25 @@
 // xPower Flow Card — Modern power flow card for solar hybrid inverters
 // Copyright (C) 2025 BTNBx — MIT License
-const V='1.3.40';
+const V='1.3.41';
 
 /* ═══════════════════════════════════════
    CHANGELOG — full history in CHANGELOG.md
    ═══════════════════════════════════════
-## v1.3.40
+## v1.3.41
 
-**Third MPPT and compact MPPT list (#14)**
+**Frame polish and editor gap**
 
-- New optional entities `solar3` and `pv_voltage3`; the solar total, flows, frame and self-sufficiency sum every configured MPPT
-- With two or three MPPTs the per-input readings move to a compact list left of the sun (label · power · voltage, power right-aligned), vertically centred on the daily total; the daily total sits to the right. Replaces the PV1/PV2 side columns and their arrows
-- Each list row opens its own entity's more-info
-- Spacing: list spans x 112–192, clearing the weather/price pills (end at x 84) and the sun ring (x ≈ 210); daily total centred at x 338 clears the ring on the right (x ≈ 290); voltage line moved to y 48 so it no longer touches the 13px daily text
-- Fix: the SOLAR (24h) sparkline only read MPPT1; it now sums the history of every configured MPPT
+- `max-resolution` is only honoured from Safari 16, so the density query now also carries `-webkit-max-device-pixel-ratio`; older Safari no longer gets the 0.75px frame on a standard-density screen
+- Badge and sunrise/sunset timers are cleared on disconnect, so a dashboard view change no longer leaves timeouts pointing at destroyed nodes
+- Frame hit path carries a `<title>` with the self-sufficiency label and the ring SVG is no longer `aria-hidden`, so screen readers announce it
+- Frame path is rebuilt on theme change, picking up a different `--xpf-radius`
+- `sparkline_shared_scale` is now in the visual editor (Sparkline scale: Independent / Shared)
+
+**Frame refinements**
+
+- Frame is thinner and softer by default: 0.75px on high-density screens (1px on standard ones), segments at 70% opacity, so it no longer outweighs the data at night
+- Themeable via `--xpf-frame-width` and `--xpf-frame-opacity`; the path inset follows the actual stroke width, so corners stay concentric at any value
+- Segment placement now favours the smaller segments (weight 1/f²): a minority source stays centred on its own side, e.g. a 20% grid share sits on the left instead of being pushed to the top by a dominant battery, while the dominant segment flexes
 */
 
 /* ═══════════════════════════════════════
@@ -313,6 +319,7 @@ class XPowerFlowCardEditor extends HTMLElement{
     cfg.extra3_icon=this.querySelector('#ed-ex3icon').value;
     cfg.theme=this.querySelector('#ed-theme').value;
     cfg.compact=this.querySelector('#ed-compact').value==='true';
+    cfg.sparkline_shared_scale=this.querySelector('#ed-sshare').value==='true';
     cfg.animations=this.querySelector('#ed-anim').value;
     cfg.power_unit=this.querySelector('#ed-punit').value;
     cfg.temp_unit=this.querySelector('#ed-tunit').value;
@@ -498,6 +505,13 @@ class XPowerFlowCardEditor extends HTMLElement{
           </select>
         </div>
         <div class="field">
+          <label>Sparkline scale</label>
+          <select id="ed-sshare" style="${selStyle}">
+            <option value="false" ${!c.sparkline_shared_scale?'selected':''}>Independent</option>
+            <option value="true" ${c.sparkline_shared_scale?'selected':''}>Shared</option>
+          </select>
+        </div>
+        <div class="field">
           <label>Values font (px)</label>
           <input type="number" id="ed-fsize" min="10" max="48" value="${c.font_size??24}">
         </div>
@@ -566,7 +580,7 @@ class XPowerFlowCardEditor extends HTMLElement{
 customElements.define('xpower-flow-card-editor',XPowerFlowCardEditor);
 
 class XPowerFlowCard extends HTMLElement{
-constructor(){super();this.attachShadow({mode:'open'});this._c={};this._h=null;this._prev={solar:0,bat:0,grid:0,load:0};this._hist={solar:[],load:[],grid:[],battery:[]};this._histMax={solar:1,load:1,grid:1,battery:1};this._fs={};this._histTimer=null;this._histLastLoad=0;this._histLoading=false;this._syncSpd=0;this._resync=false;this._rafId=null;this._twv={};this._twq={};this._twRaf=null;this._entList=[];this._srKey='';this._rm=!!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);this._mq=window.matchMedia?window.matchMedia('(prefers-color-scheme: light)'):null;this._onMq=()=>this._applyTheme();this._mwc=new Map();this._io=null;this._ro=null;this._ringKey='';this._vis=true;this._srTk=null;this._srLit=-1;this._onVis=()=>{if(!document.hidden&&this._h){this._histLastLoad=0;this._schedule();}};}
+constructor(){super();this.attachShadow({mode:'open'});this._c={};this._h=null;this._prev={solar:0,bat:0,grid:0,load:0};this._hist={solar:[],load:[],grid:[],battery:[]};this._histMax={solar:1,load:1,grid:1,battery:1};this._fs={};this._histTimer=null;this._histLastLoad=0;this._histLoading=false;this._syncSpd=0;this._resync=false;this._rafId=null;this._twv={};this._twq={};this._twRaf=null;this._entList=[];this._srKey='';this._rm=!!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);this._mq=window.matchMedia?window.matchMedia('(prefers-color-scheme: light)'):null;this._onMq=()=>this._applyTheme();this._mwc=new Map();this._io=null;this._ro=null;this._ringKey='';this._auT=null;this._srT=null;this._vis=true;this._srTk=null;this._srLit=-1;this._onVis=()=>{if(!document.hidden&&this._h){this._histLastLoad=0;this._schedule();}};}
 
 static getConfigElement(){return document.createElement('xpower-flow-card-editor');}
 static getStubConfig(){return{...DEFAULTS};}
@@ -595,6 +609,7 @@ connectedCallback(){
 }
 
 disconnectedCallback(){
+  clearTimeout(this._auT);clearTimeout(this._srT);
   if(this._ro){this._ro.disconnect();this._ro=null;}
   document.removeEventListener('visibilitychange',this._onVis);
   if(this._mq&&this._mq.removeEventListener)this._mq.removeEventListener('change',this._onMq);
@@ -621,6 +636,7 @@ _applyTheme(){
   this.classList.toggle('light',light);
   this.classList.toggle('compact',!!this._c.compact);
   this.classList.toggle('rm',this._rm&&this._c.animations!=='always');
+  this._ringKey='';this._ringPath();
 }
 
 // Memoised DOM writes — skip when the value is unchanged
@@ -696,7 +712,8 @@ _bucket(arr,t0,t1,n){
 async _loadHistory(){if(this._histLoading||!this._h)return;this._histLoading=true;try{const c=this._c;const now=new Date();const start=new Date(now.getTime()-24*60*60*1000);const iso=encodeURIComponent(start.toISOString());const list=[c.solar,c.solar2,c.solar3,c.load,c.grid,c.battery,c.battery_charge,c.battery_discharge].filter(Boolean);const uniq=[...new Set(list)];if(!uniq.length)return;const entities=encodeURIComponent(uniq.join(','));const url='history/period/'+iso+'?filter_entity_id='+entities+'&minimal_response&no_attributes&significant_changes_only';const res=await this._h.callApi('GET',url);if(!res||!res.length)return;const t0=start.getTime(),t1=now.getTime();const byId={};for(const series of res){if(series.length)byId[series[0].entity_id]=this._bucket(series,t0,t1,HIST_POINTS);}const setSpark=(key,pts)=>{if(!pts)return;this._hist[key]=pts;this._histMax[key]=pts.length?Math.max(...pts)||1:1;};const sArr=[...new Set([c.solar,c.solar2,c.solar3].filter(Boolean))].map(e=>byId[e]).filter(a=>a&&a.length);if(sArr.length){const n=HIST_POINTS,tot=new Array(n).fill(0);for(const a of sArr)for(let i=0;i<n;i++)tot[i]+=a[i]||0;setSpark('solar',tot);}setSpark('load',byId[c.load]);setSpark('grid',byId[c.grid]);const bch=byId[c.battery_charge],bdis=byId[c.battery_discharge];if(bch||bdis){const n=HIST_POINTS,net=new Array(n);for(let i=0;i<n;i++){const d=bdis?bdis[i]:0,g=bch?bch[i]:0;net[i]=Math.abs(d-g);}setSpark('battery',net);}else{setSpark('battery',byId[c.battery]);}this._drawSparks();}catch(e){console.warn('xPower history:',e);}finally{this._histLoading=false;}}
 
 _render(){this._elc={};this._ringKey='';this._mwc=new Map();this._srTk=null;this._srLit=-1;this._srKey='';const L=this._lang;const INV=String(this._c.inverter_name||'').replace(/[<>&]/g,m=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[m]));const s=this.shadowRoot;s.innerHTML=`<style>
-:host{--solar:var(--xpf-solar,#FFB300);--battery:var(--xpf-battery,#7C4DFF);--grid:var(--xpf-grid,#42A5F5);--load:var(--xpf-load,#26C6DA);--green:var(--xpf-green,#66BB6A);--red:var(--xpf-red,#EF5350);--orange:var(--xpf-orange,#FFA726);--t1:var(--xpf-text,rgba(255,255,255,0.92));--t3:var(--xpf-text-secondary,rgba(255,255,255,0.45));--xpf-r:var(--xpf-radius,20px);--xpf-vm-size:var(--xpf-font-size,${this._c.font_size||24}px);--flow-w:var(--xpf-flow-width,3);--flow-dash:var(--xpf-dash-size,100);--batf:#fff;--batn:#111;--batt:rgba(255,255,255,0.22)}
+:host{--solar:var(--xpf-solar,#FFB300);--battery:var(--xpf-battery,#7C4DFF);--grid:var(--xpf-grid,#42A5F5);--load:var(--xpf-load,#26C6DA);--green:var(--xpf-green,#66BB6A);--red:var(--xpf-red,#EF5350);--orange:var(--xpf-orange,#FFA726);--t1:var(--xpf-text,rgba(255,255,255,0.92));--t3:var(--xpf-text-secondary,rgba(255,255,255,0.45));--xpf-r:var(--xpf-radius,20px);--xpf-vm-size:var(--xpf-font-size,${this._c.font_size||24}px);--flow-w:var(--xpf-flow-width,3);--flow-dash:var(--xpf-dash-size,100);--fw:var(--xpf-frame-width,0.75px);--fo:var(--xpf-frame-opacity,0.7);--batf:#fff;--batn:#111;--batt:rgba(255,255,255,0.22)}
+@media (max-resolution:1.5dppx),(-webkit-max-device-pixel-ratio:1.5){:host{--fw:var(--xpf-frame-width,1px)}}
 :host(.light){--t1:var(--xpf-text,rgba(0,0,0,0.85));--t3:var(--xpf-text-secondary,rgba(0,0,0,0.45));--batf:rgba(0,0,0,0.85);--batn:#fff;--batt:rgba(0,0,0,0.12)}
 :host(.light) ha-card{background:var(--xpf-bg,rgba(255,255,255,0.92))}
 :host(.light) .fl{stroke:rgba(0,0,0,0.06)}
@@ -705,8 +722,9 @@ _render(){this._elc={};this._ringKey='';this._mwc=new Map();this._srTk=null;this
 :host(.light) .sl{opacity:0.4}
 ha-card{background:var(--xpf-bg,rgba(12,14,24,0.92));border:1px solid transparent;border-radius:var(--xpf-r);box-shadow:var(--xpf-shadow,0 2px 40px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.04));padding:var(--xpf-padding,6px 8px 6px);position:relative;overflow:hidden;contain:layout paint style;font-family:-apple-system,sans-serif;--ha-card-background:transparent;--ha-card-border-width:0;--ha-card-border-radius:var(--xpf-r);--ha-card-box-shadow:none}
 #aur{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
-#aur path{fill:none;stroke-width:2;stroke-linecap:butt}
+#aur path{fill:none;stroke-width:var(--fw);stroke-linecap:butt}
 #aur #aurhit{stroke:transparent;stroke-width:12;pointer-events:stroke;cursor:pointer}
+#au-s,#au-b,#au-g{opacity:var(--fo)}
 #aubadge{opacity:0;transition:opacity 0.35s ease;pointer-events:none}
 #aubadge.show{opacity:1}
 :host(.rm) #aubadge{transition:none}
@@ -758,7 +776,7 @@ svg{width:100%;height:auto;display:block}
 .ss #hs{fill:none;stroke:rgba(102,187,106,0.7);stroke-width:1.2}.sc #hl{fill:none;stroke:rgba(38,198,218,0.7);stroke-width:1.2}.sg #hg{fill:none;stroke:rgba(66,165,245,0.7);stroke-width:1.2}.sbt #hb2{fill:none;stroke:rgba(124,77,255,0.7);stroke-width:1.2}
 .ss #hsa{fill:url(#sgd-s);stroke:none}.sc #hla{fill:url(#sgd-l);stroke:none}.sg #hga{fill:url(#sgd-g);stroke:none}.sbt #hb2a{fill:url(#sgd-b);stroke:none}
 </style>
-<ha-card id="xcard"><svg id="aur" aria-hidden="true"><path id="aut" class="au-track"/><path id="au-s" stroke="var(--green)" pathLength="100" stroke-dasharray="0 100"/><path id="au-b" stroke="var(--orange)" pathLength="100" stroke-dasharray="0 100"/><path id="au-g" stroke="var(--red)" pathLength="100" stroke-dasharray="0 100"/><path id="aurhit"/></svg><svg id="main" viewBox="0 -8 526 478"><defs><linearGradient id="sunrg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#FF8F00"/><stop offset="1" stop-color="#FFD54F"/></linearGradient><clipPath id="bat-clip"><rect x="232" y="342.5" width="32" height="17" rx="5.5"/></clipPath><clipPath id="ev-clip"><rect x="420.5" y="450.5" width="24" height="12" rx="4"/></clipPath><radialGradient id="sundisc" cx="38%" cy="34%" r="72%"><stop offset="0" stop-color="#FFE082"/><stop offset="0.55" stop-color="#FFC107"/><stop offset="1" stop-color="#FF9800"/></radialGradient><radialGradient id="sunhl" cx="50%" cy="50%" r="50%"><stop offset="0.55" stop-color="#FFC107" stop-opacity="0.30"/><stop offset="1" stop-color="#FFC107" stop-opacity="0"/></radialGradient><linearGradient id="ivbody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#E9ECEF"/></linearGradient><linearGradient id="ivpill" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#34373B"/><stop offset="0.55" stop-color="#2B2E31"/><stop offset="0.56" stop-color="#3C4045"/><stop offset="1" stop-color="#2B2E31"/></linearGradient><linearGradient id="hsrc" gradientUnits="userSpaceOnUse" x1="287.4" y1="225" x2="395" y2="225"><stop id="hs0" offset="0%" stop-color="#66BB6A"/><stop id="hs1" offset="60%" stop-color="#66BB6A"/><stop id="hs2" offset="60%" stop-color="#FFA726"/><stop id="hs3" offset="60%" stop-color="#FFA726"/><stop id="hs4" offset="60%" stop-color="#EF5350"/><stop id="hs5" offset="100%" stop-color="#EF5350"/></linearGradient></defs><g transform="translate(25.5,10) scale(0.95)">
+<ha-card id="xcard"><svg id="aur" role="img" aria-label="${L.autarky}"><path id="aut" class="au-track"/><path id="au-s" stroke="var(--green)" pathLength="100" stroke-dasharray="0 100"/><path id="au-b" stroke="var(--orange)" pathLength="100" stroke-dasharray="0 100"/><path id="au-g" stroke="var(--red)" pathLength="100" stroke-dasharray="0 100"/><path id="aurhit"><title>${L.autarky}</title></path></svg><svg id="main" viewBox="0 -8 526 478"><defs><linearGradient id="sunrg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#FF8F00"/><stop offset="1" stop-color="#FFD54F"/></linearGradient><clipPath id="bat-clip"><rect x="232" y="342.5" width="32" height="17" rx="5.5"/></clipPath><clipPath id="ev-clip"><rect x="420.5" y="450.5" width="24" height="12" rx="4"/></clipPath><radialGradient id="sundisc" cx="38%" cy="34%" r="72%"><stop offset="0" stop-color="#FFE082"/><stop offset="0.55" stop-color="#FFC107"/><stop offset="1" stop-color="#FF9800"/></radialGradient><radialGradient id="sunhl" cx="50%" cy="50%" r="50%"><stop offset="0.55" stop-color="#FFC107" stop-opacity="0.30"/><stop offset="1" stop-color="#FFC107" stop-opacity="0"/></radialGradient><linearGradient id="ivbody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#E9ECEF"/></linearGradient><linearGradient id="ivpill" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#34373B"/><stop offset="0.55" stop-color="#2B2E31"/><stop offset="0.56" stop-color="#3C4045"/><stop offset="1" stop-color="#2B2E31"/></linearGradient><linearGradient id="hsrc" gradientUnits="userSpaceOnUse" x1="287.4" y1="225" x2="395" y2="225"><stop id="hs0" offset="0%" stop-color="#66BB6A"/><stop id="hs1" offset="60%" stop-color="#66BB6A"/><stop id="hs2" offset="60%" stop-color="#FFA726"/><stop id="hs3" offset="60%" stop-color="#FFA726"/><stop id="hs4" offset="60%" stop-color="#EF5350"/><stop id="hs5" offset="100%" stop-color="#EF5350"/></linearGradient></defs><g transform="translate(25.5,10) scale(0.95)">
 <g id="wicons" style="display:none" transform="translate(-20,0)">
 <rect class="wb" x="-2" y="-4" width="86" height="20"/>
 <g transform="translate(0,1)"><rect x="6" y="0" width="2.5" height="7" rx="1.2" fill="none" stroke="var(--t3)" stroke-width="0.7"/><circle cx="7.2" cy="9" r="2.5" fill="none" stroke="var(--t3)" stroke-width="0.7"/><line x1="7.2" y1="3" x2="7.2" y2="7" stroke="var(--red)" stroke-width="1" stroke-linecap="round"/><circle cx="7.2" cy="9" r="1.2" fill="var(--red)"/></g>
@@ -829,7 +847,7 @@ svg{width:100%;height:auto;display:block}
 _$(id){let c=this._elc;if(!c)c=this._elc={};let el=c[id];if(el&&el.isConnected)return el;el=this.shadowRoot.getElementById(id);c[id]=el;return el;}
 _moreInfo(entityId){if(!entityId)return;this.dispatchEvent(new CustomEvent('hass-more-info',{detail:{entityId},bubbles:true,composed:true}));}
 _setupClicks(){const c=this._c;const bind=(id,entity)=>{const el=this._$(id);if(el&&entity)el.addEventListener('click',()=>this._moreInfo(entity));};bind('nSolar',c.solar);bind('nGrid',c.grid);bind('nLoad',c.load);bind('nBat',c.battery||c.soc);bind('nEV',c.ev_power||c.ev_soc);bind('nExtra1',c.extra1_power);bind('nExtra2',c.extra2_power);bind('nExtra3',c.extra3_power);const hit=this._$('srhit'),sg=this._$('sunRing');if(hit&&sg)hit.addEventListener('click',(e)=>{e.stopPropagation();sg.classList.add('srshow');clearTimeout(this._srT);this._srT=setTimeout(()=>sg.classList.remove('srshow'),3000);});[1,2,3].forEach(k=>{const g=this._$('mp'+k);if(g)g.addEventListener('click',(e)=>{e.stopPropagation();this._moreInfo(g.dataset.e);});});const aH=this._$('aurhit'),aB=this._$('aubadge');if(aH&&aB){const show=()=>{aB.classList.add('show');clearTimeout(this._auT);this._auT=setTimeout(()=>aB.classList.remove('show'),3000);};aH.addEventListener('pointerenter',show);aH.addEventListener('pointerdown',e=>{e.stopPropagation();show();});aH.addEventListener('pointerleave',()=>{clearTimeout(this._auT);this._auT=setTimeout(()=>aB.classList.remove('show'),600);});}}
-_ringPath(){const card=this._$('xcard');if(!card)return;const w=card.clientWidth,h=card.clientHeight;if(!w||!h)return;const cs=getComputedStyle(card);const bw=parseFloat(cs.borderTopWidth)||0;const sw=2,i=sw/2,W=w-sw,H=h-sw;let r=(parseFloat(cs.borderTopLeftRadius)||20)-bw-i;r=Math.max(0,Math.min(r,Math.min(W,H)/2));const key=w+'|'+h+'|'+r;if(key===this._ringKey)return;this._ringKey=key;const q=v=>Math.round(v*2)/2;const d='M'+q(i+W/2)+','+i+' H'+q(i+W-r)+' A'+q(r)+','+q(r)+' 0 0 1 '+q(i+W)+','+q(i+r)+' V'+q(i+H-r)+' A'+q(r)+','+q(r)+' 0 0 1 '+q(i+W-r)+','+q(i+H)+' H'+q(i+r)+' A'+q(r)+','+q(r)+' 0 0 1 '+i+','+q(i+H-r)+' V'+q(i+r)+' A'+q(r)+','+q(r)+' 0 0 1 '+q(i+r)+','+i+' Z';this._sa(this._$('aur'),'viewBox','0 0 '+w+' '+h);['aut','au-s','au-b','au-g','aurhit'].forEach(id=>this._sa(this._$(id),'d',d));}
+_ringPath(){const card=this._$('xcard');if(!card)return;const w=card.clientWidth,h=card.clientHeight;if(!w||!h)return;const cs=getComputedStyle(card);const bw=parseFloat(cs.borderTopWidth)||0;const sp=this._$('au-s');const sw=(sp&&parseFloat(getComputedStyle(sp).strokeWidth))||1,i=sw/2,W=w-sw,H=h-sw;let r=(parseFloat(cs.borderTopLeftRadius)||20)-bw-i;r=Math.max(0,Math.min(r,Math.min(W,H)/2));const key=w+'|'+h+'|'+r+'|'+sw;if(key===this._ringKey)return;this._ringKey=key;const q=v=>Math.round(v*4)/4;const d='M'+q(i+W/2)+','+q(i)+' H'+q(i+W-r)+' A'+q(r)+','+q(r)+' 0 0 1 '+q(i+W)+','+q(i+r)+' V'+q(i+H-r)+' A'+q(r)+','+q(r)+' 0 0 1 '+q(i+W-r)+','+q(i+H)+' H'+q(i+r)+' A'+q(r)+','+q(r)+' 0 0 1 '+q(i)+','+q(i+H-r)+' V'+q(i+r)+' A'+q(r)+','+q(r)+' 0 0 1 '+q(i+r)+','+q(i)+' Z';this._sa(this._$('aur'),'viewBox','0 0 '+w+' '+h);['aut','au-s','au-b','au-g','aurhit'].forEach(id=>this._sa(this._$(id),'d',d));}
 _setupTooltips(){
   const self=this;
   const setup=(svgParent,cursorId,dotId,tipId,dataKey,color)=>{
@@ -1010,11 +1028,11 @@ if(batF>RUNTIME_MIN_W&&socVal>shuSoc){
   this._st(brEl,this._eta(Math.round(remWh/-batF*60),'100%'));
 }else{this._st(brEl,'');}
 
-// Self-sufficiency frame — segments anchored to their source: solar top (0), battery bottom (50), grid left (75)
+// Self-sufficiency frame — segments anchored to their source: solar top (0), battery bottom (50), grid left (75); smaller segments weigh more (1/f²)
 const gridImp=gridF>0?gridF:0;
 const au=loadF>0?Math.max(0,Math.min(100,((loadF-gridImp)/loadF)*100)):0;
 this._tween('va',au,v=>{const _va=this._$('va'),t=Math.round(v)+'%';if(_va)this._sa(_va,'font-size',t.length>=4?8:9);return t;});
-const _batDis=batF>0?batF:0;const _solH=Math.max(0,loadF-gridImp-_batDis);const _tot=gridImp+_batDis+_solH;const _seg=(k,st,ln)=>{const el=this._$('au-'+k),l=Math.max(0,ln);if(el){this._sa(el,'stroke-dasharray',l.toFixed(2)+' '+(100-l).toFixed(2));this._sa(el,'stroke-dashoffset',(-st).toFixed(2));}};if(_tot>0){const fS=_solH/_tot*100,fB=_batDis/_tot*100,fG=gridImp/_tot*100;let t=(fS*(0-fS/2)+fB*(50-fS-fB/2)+fG*(75-fS-fB-fG/2))/100;t=((t+50)%100+100)%100-50;_seg('s',t,fS);_seg('b',t+fS,fB);_seg('g',t+fS+fB,fG);}else{_seg('s',0,0);_seg('b',0,0);_seg('g',0,0);}
+const _batDis=batF>0?batF:0;const _solH=Math.max(0,loadF-gridImp-_batDis);const _tot=gridImp+_batDis+_solH;const _seg=(k,st,ln)=>{const el=this._$('au-'+k),l=Math.max(0,ln);if(el){this._sa(el,'stroke-dasharray',l.toFixed(2)+' '+(100-l).toFixed(2));this._sa(el,'stroke-dashoffset',(-st).toFixed(2));}};if(_tot>0){const fS=_solH/_tot*100,fB=_batDis/_tot*100,fG=gridImp/_tot*100;let t=0,wt=0;[[fS,0,fS/2],[fB,50,fS+fB/2],[fG,75,fS+fB+fG/2]].forEach(([f,a,o])=>{if(f>0){const w=1/(f*f);t+=w*(a-o);wt+=w;}});t=wt?t/wt:0;t=((t+50)%100+100)%100-50;_seg('s',t,fS);_seg('b',t+fS,fB);_seg('g',t+fS+fB,fG);}else{_seg('s',0,0);_seg('b',0,0);_seg('g',0,0);}
 
 const wtv=this._gv(c.weather_temp);const whv=this._gv(c.weather_humidity);
 const wicons=this._$('wicons');const wdrop=this._$('wdrop');const wdiv=this._$('wdiv');
