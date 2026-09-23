@@ -6,7 +6,7 @@
 
 - The frame stroke now scales with the card's width, like the rest of the SVG content: about 0.75px on a phone, 1px on a desktop, 2px on a TV, capped at 3px (never below 1px on standard-density screens). On large screens the fixed-width line was nearly invisible
 - An explicit `--xpf-frame-width` (theme or card-mod) still takes precedence
-- The density media query from v1.3.44/45 is removed; the width is now computed in `_ringPath()` and recomputed on every resize
+- The density media query from v1.3.40/41 is removed; the width is now computed in `_ringPath()` and recomputed on every resize
 ## v1.3.41
 
 **Frame polish and editor gap**
