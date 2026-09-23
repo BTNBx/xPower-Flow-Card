@@ -163,3 +163,922 @@ const PRESETS={
     label:'Fronius (Gen24)',inverter_name:'FRONIUS',
     bat_polarity:'positive',grid_polarity:'positive',
     e:{solar:'sensor.fronius_power_photovoltaics',battery:'sensor.fronius_power_battery',
+       soc:'sensor.fronius_battery_soc',grid:'sensor.fronius_power_grid',
+       load:'sensor.fronius_power_load',grid_voltage:'sensor.fronius_voltage_ac',
+       battery_voltage:'sensor.fronius_voltage_battery',pv_voltage:'sensor.fronius_voltage_dc',
+       temperature:'sensor.fronius_temperature',frequency:'sensor.fronius_frequency',
+       grid_status:'',daily_solar:'sensor.fronius_energy_day',daily_import:'',
+       daily_export:'',daily_load:'',daily_charge:'',daily_discharge:'',
+       battery_temperature:''}
+  },
+  growatt:{
+    label:'Growatt',inverter_name:'GROWATT',
+    bat_polarity:'negative',grid_polarity:'positive',
+    e:{solar:'sensor.growatt_pv_power',battery:'sensor.growatt_battery_power',
+       soc:'sensor.growatt_battery_soc',grid:'sensor.growatt_grid_power',
+       load:'sensor.growatt_load_power',grid_voltage:'sensor.growatt_grid_voltage',
+       battery_voltage:'sensor.growatt_battery_voltage',pv_voltage:'sensor.growatt_pv_voltage',
+       temperature:'sensor.growatt_inverter_temperature',frequency:'sensor.growatt_grid_frequency',
+       grid_status:'',daily_solar:'sensor.growatt_today_generation',daily_import:'sensor.growatt_today_import',
+       daily_export:'sensor.growatt_today_export',daily_load:'sensor.growatt_today_load',
+       daily_charge:'sensor.growatt_today_charge',daily_discharge:'sensor.growatt_today_discharge',
+       battery_temperature:''}
+  },
+  victron:{
+    label:'Victron (Venus OS)',inverter_name:'VICTRON',
+    bat_polarity:'positive',grid_polarity:'positive',
+    e:{solar:'sensor.pv_power',solar2:'',battery:'sensor.battery_power',soc:'sensor.battery_soc',
+       grid:'sensor.grid_power',load:'sensor.ac_consumption',grid_voltage:'sensor.grid_voltage',
+       battery_voltage:'sensor.battery_voltage',pv_voltage:'sensor.pv_voltage',pv_voltage2:'',
+       temperature:'sensor.inverter_temperature',frequency:'sensor.grid_frequency',
+       grid_status:'',daily_solar:'sensor.daily_solar_yield',daily_import:'sensor.daily_grid_import',
+       daily_export:'sensor.daily_grid_export',daily_load:'sensor.daily_consumption',
+       daily_charge:'sensor.daily_battery_charge',daily_discharge:'sensor.daily_battery_discharge',
+       battery_temperature:'sensor.battery_temperature'}
+  },
+  solaredge:{
+    label:'SolarEdge (Modbus)',inverter_name:'SOLAREDGE',
+    bat_polarity:'positive',grid_polarity:'negative',
+    e:{solar:'sensor.solaredge_dc_power',battery:'sensor.solaredge_storage_power',
+       soc:'sensor.solaredge_storage_level',grid:'sensor.solaredge_m1_ac_power',
+       load:'sensor.solaredge_ac_power',grid_voltage:'sensor.solaredge_m1_ac_voltage',
+       battery_voltage:'sensor.solaredge_storage_voltage',pv_voltage:'sensor.solaredge_dc_voltage',
+       temperature:'sensor.solaredge_temperature',frequency:'sensor.solaredge_m1_ac_frequency',
+       grid_status:'',daily_solar:'sensor.solaredge_energy_today',daily_import:'',
+       daily_export:'',daily_load:'',daily_charge:'',daily_discharge:'',
+       battery_temperature:''}
+  },
+  solis:{
+    label:'Solis (SolisCloud)',inverter_name:'SOLIS',
+    bat_polarity:'negative',grid_polarity:'positive',
+    e:{solar:'sensor.solis_pv_power',battery:'sensor.solis_battery_power',soc:'sensor.solis_battery_soc',
+       grid:'sensor.solis_grid_power',load:'sensor.solis_house_load',grid_voltage:'sensor.solis_grid_voltage',
+       battery_voltage:'sensor.solis_battery_voltage',pv_voltage:'sensor.solis_pv_voltage',
+       temperature:'sensor.solis_inverter_temperature',frequency:'sensor.solis_grid_frequency',
+       grid_status:'',daily_solar:'sensor.solis_today_energy_generation',daily_import:'sensor.solis_today_grid_import',
+       daily_export:'sensor.solis_today_grid_export',daily_load:'sensor.solis_today_load_consumption',
+       daily_charge:'sensor.solis_today_battery_charge',daily_discharge:'sensor.solis_today_battery_discharge',
+       battery_temperature:'sensor.solis_battery_temperature'}
+  },
+  custom:{
+    label:'Custom',inverter_name:'Inverter',
+    bat_polarity:'negative',grid_polarity:'positive',
+    e:{solar:'',battery:'',soc:'',grid:'',load:'',grid_voltage:'',battery_voltage:'',
+       pv_voltage:'',temperature:'',frequency:'',grid_status:'',daily_solar:'',daily_import:'',
+       daily_export:'',daily_load:'',daily_charge:'',daily_discharge:'',battery_temperature:''}
+  }
+};
+
+const DEFAULTS={
+  preset:'deye',
+  ...PRESETS.deye.e,
+  solar2:'',solar3:'',pv_voltage2:'',pv_voltage3:'',sun_entity:'sun.sun',
+  battery_charge:'',battery_discharge:'',
+  grid_voltage_l2:'',grid_voltage_l3:'',
+  bat_polarity:'negative',grid_polarity:'positive',
+  shutdown_soc:20,battery_capacity:5120,grid_threshold:0,font_size:24,language:'pt',
+  inverter_name:'DEYE',
+  weather_temp:'',weather_humidity:'',
+  price_sensor:'',
+  ev_power:'',ev_soc:'',daily_ev:'',
+  extra1_power:'',extra1_name:'',extra1_icon:'appliance',
+  extra2_power:'',extra2_name:'',extra2_icon:'heatpump',
+  extra3_power:'',extra3_name:'',extra3_icon:'garage',
+  import_cost:'',export_cost:'',
+  compact:false,sparkline_shared_scale:false,
+  theme:'auto',
+  animations:'auto',
+  arrow_style:'arrow',
+  power_unit:'auto',
+  temp_unit:'auto'
+};
+
+const ENTITY_FIELDS=[
+  {key:'solar',label:'Solar Power (MPPT1)'},{key:'solar2',label:'Solar Power (MPPT2)'},{key:'solar3',label:'Solar Power (MPPT3)'},
+  {key:'battery',label:'Battery Power'},
+  {key:'battery_charge',label:'Battery Charge Power (split, optional)'},
+  {key:'battery_discharge',label:'Battery Discharge Power (split, optional)'},
+  {key:'soc',label:'Battery SOC'},{key:'grid',label:'Grid Power'},
+  {key:'load',label:'Load Power'},{key:'grid_voltage',label:'Grid Voltage (L1)'},
+  {key:'grid_voltage_l2',label:'Grid Voltage L2 (optional)'},{key:'grid_voltage_l3',label:'Grid Voltage L3 (optional)'},
+  {key:'battery_voltage',label:'Battery Voltage'},
+  {key:'temperature',label:'Inverter Temp.'},{key:'battery_temperature',label:'Battery Temp.'},
+  {key:'frequency',label:'Grid Frequency'},{key:'grid_status',label:'Grid Status'},
+  {key:'pv_voltage',label:'PV Voltage (MPPT1)'},{key:'pv_voltage2',label:'PV Voltage (MPPT2)'},{key:'pv_voltage3',label:'PV Voltage (MPPT3)'},{key:'sun_entity',label:'Sun Entity (solar ring)'},
+  {key:'daily_solar',label:'Daily Solar'},{key:'daily_import',label:'Daily Import'},
+  {key:'daily_export',label:'Daily Export'},{key:'daily_load',label:'Daily Load'},
+  {key:'daily_charge',label:'Daily Charge'},{key:'daily_discharge',label:'Daily Discharge'},
+  {key:'weather_temp',label:'Weather Temp.'},{key:'weather_humidity',label:'Weather Humidity'},
+  {key:'price_sensor',label:'Electricity Price (optional)'},
+  {key:'ev_power',label:'EV Charger Power (optional)'},{key:'ev_soc',label:'EV SOC (optional)'},{key:'daily_ev',label:'Daily EV Energy (optional)'},
+  {key:'extra1_power',label:'Extra Consumer 1 Power (optional)'},
+  {key:'extra2_power',label:'Extra Consumer 2 Power (optional)'},
+  {key:'extra3_power',label:'Extra Consumer 3 Power (optional)'},
+  {key:'import_cost',label:'Daily Import Cost'},{key:'export_cost',label:'Daily Export Earnings'}
+];
+const ENT_KEYS=ENTITY_FIELDS.map(f=>f.key);
+const SUNTICKS=(()=>{let s='';const N=96;const cl=t=>{const m=(a,b)=>Math.round(a+(b-a)*t).toString(16).padStart(2,'0');return '#'+m(255,224)+m(167,83)+m(38,63);};for(let i=0;i<N;i++){const t=i/(N-1),a=(-135+270*t)*Math.PI/180,sn=Math.sin(a),cs=Math.cos(a);s+=`<line class="srtk" stroke="${cl(t)}" x1="${(250+32*sn).toFixed(2)}" y1="${(38-32*cs).toFixed(2)}" x2="${(250+40*sn).toFixed(2)}" y2="${(38-40*cs).toFixed(2)}"/>`;}return s;})();
+const MPPT_ROWS=[1,2,3].map(k=>`<g id="mp${k}" class="mpr" style="display:none"><rect x="108" y="-7" width="90" height="14" fill="transparent" pointer-events="all"/><text id="ml${k}" x="112" y="0" class="pvh" style="text-anchor:start"></text><text id="mw${k}" x="166" y="0" class="pvv" style="text-anchor:end;fill:var(--t1);opacity:0.8"></text><text id="mv${k}" x="172" y="0" class="pvu" style="text-anchor:start"></text></g>`).join('');
+const XPF_ARROW={chevron:{up:['M-4.5 2.5 L0 -2.5 L4.5 2.5'],down:['M-4.5 -2.5 L0 2.5 L4.5 -2.5'],flat:['M-5 0 L5 0']},arrow:{up:['M-5 5 L4 -4','M-1 -4 L4 -4 L4 1'],down:['M-5 -4 L4 5','M4 0 L4 5 L-1 5'],flat:['M-6 0 L4.5 0','M1.5 -3 L5 0 L1.5 3']}};
+const XPF_NUDGE={chevron:{up:[{transform:'translateY(2px)',opacity:0.4},{transform:'translateY(0)',opacity:1}],down:[{transform:'translateY(-2px)',opacity:0.4},{transform:'translateY(0)',opacity:1}]},arrow:{up:[{transform:'translate(-2px,2px)',opacity:0.4},{transform:'translate(0,0)',opacity:1}],down:[{transform:'translate(-2px,-2px)',opacity:0.4},{transform:'translate(0,0)',opacity:1}]}};
+const FLBL={solar:t=>t.ps+' (MPPT1)',solar2:t=>t.ps+' (MPPT2)',solar3:t=>t.ps+' (MPPT3)',battery:t=>t.pb,battery_charge:t=>t.pbc+' '+t.sp,battery_discharge:t=>t.pbd+' '+t.sp,soc:t=>t.sc,grid:t=>t.pg,load:t=>t.pl,grid_voltage:t=>t.vg+' (L1)',grid_voltage_l2:t=>t.vg+' L2 '+t.op,grid_voltage_l3:t=>t.vg+' L3 '+t.op,battery_voltage:t=>t.vb,temperature:t=>t.ti,battery_temperature:t=>t.tb,frequency:t=>t.fq,grid_status:t=>t.gs,pv_voltage:t=>t.vp+' (MPPT1)',pv_voltage2:t=>t.vp+' (MPPT2)',pv_voltage3:t=>t.vp+' (MPPT3)',sun_entity:t=>(t&&t.sun)||'Sun Entity (solar ring)',daily_solar:t=>t.dso,daily_import:t=>t.dim,daily_export:t=>t.dex,daily_load:t=>t.dlo,daily_charge:t=>t.dch,daily_discharge:t=>t.ddi,weather_temp:t=>t.wt,weather_humidity:t=>t.wh,ev_power:t=>t.evp+' '+t.op,ev_soc:t=>t.evs+' '+t.op,daily_ev:t=>t.evd+' '+t.op,import_cost:t=>t.cim,export_cost:t=>t.cex};
+const EDL={"pt":{"ps":"Pot\u00eancia Solar","pb":"Pot\u00eancia Bateria","pbc":"Pot\u00eancia Carga Bat.","pbd":"Pot\u00eancia Descarga Bat.","sc":"SOC Bateria","pg":"Pot\u00eancia Rede","pl":"Pot\u00eancia Consumo","vg":"Tens\u00e3o Rede","vb":"Tens\u00e3o Bateria","vp":"Tens\u00e3o PV","sun":"Entidade Sol (anel solar)","ti":"Temp. Inversor","tb":"Temp. Bateria","fq":"Frequ\u00eancia Rede","gs":"Estado Rede","dso":"Solar Di\u00e1rio","dim":"Importa\u00e7\u00e3o Di\u00e1ria","dex":"Exporta\u00e7\u00e3o Di\u00e1ria","dlo":"Consumo Di\u00e1rio","dch":"Carga Di\u00e1ria","ddi":"Descarga Di\u00e1ria","wt":"Temp. Exterior","wh":"Humidade","evp":"Pot\u00eancia Carregador EV","evs":"SOC EV","evd":"Energia EV Di\u00e1ria","cim":"Custo Importa\u00e7\u00e3o Di\u00e1rio","cex":"Ganhos Exporta\u00e7\u00e3o Di\u00e1rios","op":"(opcional)","sp":"(separado, opcional)"},"de":{"ps":"Solarleistung","pb":"Batterieleistung","pbc":"Ladeleistung Bat.","pbd":"Entladeleistung Bat.","sc":"Batterie-SOC","pg":"Netzleistung","pl":"Verbrauchsleistung","vg":"Netzspannung","vb":"Batteriespannung","vp":"PV-Spannung","sun":"Sonnen-Entit\u00e4t (Ring)","ti":"WR-Temp.","tb":"Bat.-Temp.","fq":"Netzfrequenz","gs":"Netzstatus","dso":"Tagesertrag Solar","dim":"Tagesimport","dex":"Tagesexport","dlo":"Tagesverbrauch","dch":"Tagesladung","ddi":"Tagesentladung","wt":"Au\u00dfentemp.","wh":"Luftfeuchte","evp":"EV-Ladeleistung","evs":"EV-SOC","evd":"EV-Tagesenergie","cim":"T\u00e4gl. Importkosten","cex":"T\u00e4gl. Exporterl\u00f6s","op":"(optional)","sp":"(getrennt, optional)"},"fr":{"ps":"Puissance solaire","pb":"Puissance batterie","pbc":"Puissance charge bat.","pbd":"Puissance d\u00e9charge bat.","sc":"SOC batterie","pg":"Puissance r\u00e9seau","pl":"Puissance conso.","vg":"Tension r\u00e9seau","vb":"Tension batterie","vp":"Tension PV","sun":"Entit\u00e9 soleil (anneau)","ti":"Temp. onduleur","tb":"Temp. batterie","fq":"Fr\u00e9quence r\u00e9seau","gs":"\u00c9tat r\u00e9seau","dso":"Solaire journalier","dim":"Import journalier","dex":"Export journalier","dlo":"Conso. journali\u00e8re","dch":"Charge journali\u00e8re","ddi":"D\u00e9charge journali\u00e8re","wt":"Temp. ext.","wh":"Humidit\u00e9","evp":"Puissance chargeur VE","evs":"SOC VE","evd":"\u00c9nergie VE journali\u00e8re","cim":"Co\u00fbt import journalier","cex":"Gains export journaliers","op":"(optionnel)","sp":"(s\u00e9par\u00e9, optionnel)"},"es":{"ps":"Potencia solar","pb":"Potencia bater\u00eda","pbc":"Potencia carga bat.","pbd":"Potencia descarga bat.","sc":"SOC bater\u00eda","pg":"Potencia red","pl":"Potencia consumo","vg":"Tensi\u00f3n red","vb":"Tensi\u00f3n bater\u00eda","vp":"Tensi\u00f3n PV","sun":"Entidad sol (anillo)","ti":"Temp. inversor","tb":"Temp. bater\u00eda","fq":"Frecuencia red","gs":"Estado red","dso":"Solar diario","dim":"Importaci\u00f3n diaria","dex":"Exportaci\u00f3n diaria","dlo":"Consumo diario","dch":"Carga diaria","ddi":"Descarga diaria","wt":"Temp. exterior","wh":"Humedad","evp":"Potencia cargador VE","evs":"SOC VE","evd":"Energ\u00eda VE diaria","cim":"Coste importaci\u00f3n diario","cex":"Ganancias exportaci\u00f3n diarias","op":"(opcional)","sp":"(separado, opcional)"},"it":{"ps":"Potenza solare","pb":"Potenza batteria","pbc":"Potenza carica bat.","pbd":"Potenza scarica bat.","sc":"SOC batteria","pg":"Potenza rete","pl":"Potenza consumo","vg":"Tensione rete","vb":"Tensione batteria","vp":"Tensione PV","sun":"Entit\u00e0 sole (anello)","ti":"Temp. inverter","tb":"Temp. batteria","fq":"Frequenza rete","gs":"Stato rete","dso":"Solare giornaliero","dim":"Import giornaliero","dex":"Export giornaliero","dlo":"Consumo giornaliero","dch":"Carica giornaliera","ddi":"Scarica giornaliera","wt":"Temp. esterna","wh":"Umidit\u00e0","evp":"Potenza caricatore EV","evs":"SOC EV","evd":"Energia EV giornaliera","cim":"Costo import giornaliero","cex":"Guadagni export giornalieri","op":"(opzionale)","sp":"(separato, opzionale)"},"nl":{"ps":"Zonnevermogen","pb":"Batterijvermogen","pbc":"Laadvermogen bat.","pbd":"Ontlaadvermogen bat.","sc":"Batterij-SOC","pg":"Netvermogen","pl":"Verbruiksvermogen","vg":"Netspanning","vb":"Batterijspanning","vp":"PV-spanning","sun":"Zon-entiteit (ring)","ti":"Omvormer temp.","tb":"Batterij temp.","fq":"Netfrequentie","gs":"Netstatus","dso":"Dagelijks zonne","dim":"Dagelijkse import","dex":"Dagelijkse export","dlo":"Dagelijks verbruik","dch":"Dagelijkse lading","ddi":"Dagelijkse ontlading","wt":"Buitentemp.","wh":"Vochtigheid","evp":"EV-laadvermogen","evs":"EV-SOC","evd":"Dagelijkse EV-energie","cim":"Dagelijkse importkosten","cex":"Dagelijkse exportopbrengst","op":"(optioneel)","sp":"(gescheiden, optioneel)"},"pl":{"ps":"Moc PV","pb":"Moc baterii","pbc":"Moc \u0142adowania bat.","pbd":"Moc roz\u0142adowania bat.","sc":"SOC baterii","pg":"Moc sieci","pl":"Moc obci\u0105\u017cenia","vg":"Napi\u0119cie sieci","vb":"Napi\u0119cie baterii","vp":"Napi\u0119cie PV","sun":"Encja s\u0142o\u0144ca (pier\u015bcie\u0144)","ti":"Temp. falownika","tb":"Temp. baterii","fq":"Cz\u0119stotliwo\u015b\u0107 sieci","gs":"Stan sieci","dso":"Dzienny solar","dim":"Dzienny import","dex":"Dzienny eksport","dlo":"Dzienne zu\u017cycie","dch":"Dzienne \u0142adowanie","ddi":"Dzienne roz\u0142adowanie","wt":"Temp. zewn.","wh":"Wilgotno\u015b\u0107","evp":"Moc \u0142adowarki EV","evs":"SOC EV","evd":"Dzienna energia EV","cim":"Dzienny koszt importu","cex":"Dzienny zysk z eksportu","op":"(opcjonalnie)","sp":"(osobno, opcjonalnie)"}};
+
+const HIST_POINTS=48;
+const HIST_INTERVAL=5*60*1000;
+const RUNTIME_MIN_W=50;
+const ANIM_MAX_W=6000;
+const ANIM_MIN_SPD=1.5;
+const ANIM_MAX_SPD=3.5;
+
+class XPowerFlowCardEditor extends HTMLElement{
+  constructor(){super();this._config={};this._hass=null;this._onchange=this._fire.bind(this);}
+  _esc(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+  setConfig(config){const merged={...DEFAULTS,...config};if(this._ready&&JSON.stringify(merged)===JSON.stringify(this._config))return;this._config=merged;this._render();this._ready=true;}
+  set hass(hass){this._hass=hass;}
+  disconnectedCallback(){const el=this.querySelector('.editor');if(el)el.removeEventListener('change',this._onchange);}
+
+  _fire(e){
+    if(!e.target.matches('input,select'))return;
+    const cfg={...this._config};
+    cfg.language=this.querySelector('#ed-lang').value;
+    cfg.inverter_name=this.querySelector('#ed-inv').value;
+    cfg.extra1_name=this.querySelector('#ed-ex1name').value;
+    cfg.extra1_icon=this.querySelector('#ed-ex1icon').value;
+    cfg.extra2_name=this.querySelector('#ed-ex2name').value;
+    cfg.extra2_icon=this.querySelector('#ed-ex2icon').value;
+    cfg.extra3_name=this.querySelector('#ed-ex3name').value;
+    cfg.extra3_icon=this.querySelector('#ed-ex3icon').value;
+    cfg.theme=this.querySelector('#ed-theme').value;
+    cfg.compact=this.querySelector('#ed-compact').value==='true';
+    cfg.sparkline_shared_scale=this.querySelector('#ed-sshare').value==='true';
+    cfg.animations=this.querySelector('#ed-anim').value;
+    cfg.power_unit=this.querySelector('#ed-punit').value;
+    cfg.temp_unit=this.querySelector('#ed-tunit').value;
+    const gthVal=parseInt(this.querySelector('#ed-gth').value,10);
+    cfg.grid_threshold=isNaN(gthVal)?0:gthVal;
+    const fsVal=parseInt(this.querySelector('#ed-fsize').value,10);
+    cfg.font_size=isNaN(fsVal)?24:fsVal;
+    cfg.bat_polarity=this.querySelector('#ed-bpol').value;
+    cfg.grid_polarity=this.querySelector('#ed-gpol').value;
+    const socVal=parseInt(this.querySelector('#ed-ssoc').value,10);
+    cfg.shutdown_soc=isNaN(socVal)?20:socVal;
+    const capVal=parseInt(this.querySelector('#ed-cap').value,10);
+    cfg.battery_capacity=isNaN(capVal)?5120:capVal;
+    const newPreset=this.querySelector('#ed-preset').value;
+    if(newPreset!==cfg.preset&&PRESETS[newPreset]){
+      const p=PRESETS[newPreset];
+      Object.keys(p.e).forEach(k=>{cfg[k]=p.e[k];});
+      cfg.bat_polarity=p.bat_polarity;
+      cfg.grid_polarity=p.grid_polarity;
+      cfg.inverter_name=p.inverter_name;
+      cfg.preset=newPreset;
+      this._config=cfg;
+      this.dispatchEvent(new CustomEvent('config-changed',{detail:{config:cfg},bubbles:true,composed:true}));
+      this._render();
+      return;
+    }
+    cfg.preset=newPreset;
+    ENTITY_FIELDS.forEach(f=>{const v=this.querySelector('#ed-'+f.key);if(v){cfg[f.key]=v.value;const bad=v.value&&this._hass&&!this._hass.states[v.value];v.style.borderColor=bad?'#EF5350':'';}});
+    this._config=cfg;
+    this.dispatchEvent(new CustomEvent('config-changed',{detail:{config:cfg},bubbles:true,composed:true}));
+  }
+
+  async _autoDetect(){
+    if(!this._hass)return;
+    const cfg={...this._config};const st=this._hass.states;
+    try{
+      const prefs=await this._hass.callWS({type:'energy/get_prefs'});
+      for(const s of (prefs.energy_sources||[])){
+        if(s.type==='solar'&&s.stat_energy_from&&st[s.stat_energy_from]&&!cfg.daily_solar)cfg.daily_solar=s.stat_energy_from;
+        if(s.type==='grid'){
+          const f=(s.flow_from||[])[0],t=(s.flow_to||[])[0];
+          if(f&&f.stat_energy_from&&st[f.stat_energy_from]&&!cfg.daily_import)cfg.daily_import=f.stat_energy_from;
+          if(t&&t.stat_energy_to&&st[t.stat_energy_to]&&!cfg.daily_export)cfg.daily_export=t.stat_energy_to;
+        }
+        if(s.type==='battery'){
+          if(s.stat_energy_to&&st[s.stat_energy_to]&&!cfg.daily_charge)cfg.daily_charge=s.stat_energy_to;
+          if(s.stat_energy_from&&st[s.stat_energy_from]&&!cfg.daily_discharge)cfg.daily_discharge=s.stat_energy_from;
+        }
+      }
+    }catch(e){}
+    const pow=Object.keys(st).filter(id=>id.startsWith('sensor.')&&st[id].attributes?.device_class==='power');
+    const pick=re=>pow.find(id=>re.test(id))||'';
+    if(!cfg.solar)cfg.solar=pick(/pv1?_power|solar_power|photovolta/);
+    if(!cfg.battery&&!cfg.battery_charge)cfg.battery=pick(/battery_power|storage_power/);
+    if(!cfg.grid)cfg.grid=pick(/grid_power|ct1?_power|meter_active_power/);
+    if(!cfg.load)cfg.load=pick(/load_power|house_consumption|essential_power|ac_consumption/);
+    if(!cfg.soc){const socs=Object.keys(st).filter(id=>id.startsWith('sensor.')&&st[id].attributes?.device_class==='battery');cfg.soc=socs.find(id=>/battery|soc/.test(id))||'';}
+    this._config=cfg;
+    this.dispatchEvent(new CustomEvent('config-changed',{detail:{config:cfg},bubbles:true,composed:true}));
+    this._render();
+  }
+
+  _render(){
+    const el=this.querySelector('.editor');if(el)el.removeEventListener('change',this._onchange);
+    const L=LANG[this._config.language||'pt']||LANG.pt;
+    const c=this._config;
+    const T=EDL[c.language];const lbl=f=>T&&FLBL[f.key]?FLBL[f.key](T):f.label;
+    const selStyle='padding:8px;border:1px solid var(--divider-color);border-radius:4px;background:var(--card-background-color);color:var(--primary-text-color);width:100%;font-size:14px';
+    this.innerHTML=`
+    <style>
+      .editor{font-family:-apple-system,sans-serif;padding:16px}
+      .editor h3{margin:0 0 12px;font-size:14px;font-weight:600;color:var(--primary-text-color);border-bottom:1px solid var(--divider-color);padding-bottom:8px}
+      .editor h4{margin:16px 0 8px;font-size:12px;font-weight:600;color:var(--secondary-text-color);text-transform:uppercase;letter-spacing:0.05em}
+      .field{margin-bottom:8px}
+      .field label{display:block;font-size:12px;color:var(--secondary-text-color);margin-bottom:4px}
+      .field input,.field select{width:100%;padding:8px;border:1px solid var(--divider-color,rgba(255,255,255,0.15));border-radius:4px;background:var(--card-background-color,#1c1e21);color:var(--primary-text-color);font-size:14px;box-sizing:border-box;min-height:38px}
+      .row{display:flex;gap:12px}
+      .row .field{flex:1}
+      .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+      .hint{font-size:10px;color:var(--secondary-text-color);opacity:0.6;margin-top:2px}
+    </style>
+    <div class="editor">
+      <h3>${L.editor_title} <span style="font-size:10px;opacity:0.4">v${V}</span></h3>
+
+      <div class="row">
+        <div class="field">
+          <label>${L.editor_preset}</label>
+          <select id="ed-preset" style="${selStyle}">
+            ${Object.keys(PRESETS).map(k=>`<option value="${k}" ${c.preset===k?'selected':''}>${PRESETS[k].label}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field">
+          <label>${L.editor_lang}</label>
+          <select id="ed-lang" style="${selStyle}">
+            <option value="pt" ${c.language==='pt'?'selected':''}>Portugu\u00EAs</option>
+            <option value="en" ${c.language==='en'?'selected':''}>English</option>
+            <option value="de" ${c.language==='de'?'selected':''}>Deutsch</option>
+            <option value="fr" ${c.language==='fr'?'selected':''}>Fran\u00E7ais</option>
+            <option value="es" ${c.language==='es'?'selected':''}>Espa\u00F1ol</option>
+            <option value="it" ${c.language==='it'?'selected':''}>Italiano</option>
+            <option value="nl" ${c.language==='nl'?'selected':''}>Nederlands</option>
+            <option value="pl" ${c.language==='pl'?'selected':''}>Polski</option>
+            <option value="sv" ${c.language==='sv'?'selected':''}>Svenska</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label>${L.editor_inverter_name}</label>
+          <input type="text" id="ed-inv" value="${this._esc(c.inverter_name)}">
+        </div>
+        <div class="field">
+          <label>Theme</label>
+          <select id="ed-theme" style="${selStyle}">
+            <option value="auto" ${c.theme==='auto'?'selected':''}>Auto</option>
+            <option value="dark" ${c.theme==='dark'?'selected':''}>Dark</option>
+            <option value="light" ${c.theme==='light'?'selected':''}>Light</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Layout</label>
+          <select id="ed-compact" style="${selStyle}">
+            <option value="false" ${!c.compact?'selected':''}>Full</option>
+            <option value="true" ${c.compact?'selected':''}>Compact</option>
+          </select>
+        </div>
+      </div>
+
+      <h4>${L.editor_polarity}</h4>
+      <div class="row">
+        <div class="field">
+          <label>${L.editor_bat_pol}</label>
+          <select id="ed-bpol" style="${selStyle}">
+            <option value="negative" ${c.bat_polarity==='negative'?'selected':''}>${L.charging} (Deye, Sunsynk, Growatt)</option>
+            <option value="positive" ${c.bat_polarity==='positive'?'selected':''}>${L.charging} (Huawei, Fronius, SolarEdge, Victron, Solis)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>${L.editor_grid_pol}</label>
+          <select id="ed-gpol" style="${selStyle}">
+            <option value="positive" ${c.grid_polarity==='positive'?'selected':''}>${L.importing} (Deye, Huawei, Growatt)</option>
+            <option value="negative" ${c.grid_polarity==='negative'?'selected':''}>${L.exporting} (SolarEdge)</option>
+          </select>
+        </div>
+      </div>
+
+      <h4>${L.editor_options}</h4>
+      <div class="row">
+        <div class="field">
+          <label>${L.editor_soc}</label>
+          <input type="number" id="ed-ssoc" min="0" max="100" value="${c.shutdown_soc??20}">
+        </div>
+        <div class="field">
+          <label>${L.editor_capacity}</label>
+          <input type="number" id="ed-cap" min="0" value="${c.battery_capacity??5120}">
+        </div>
+        <div class="field">
+          <label>Grid min. (W)</label>
+          <input type="number" id="ed-gth" min="0" value="${c.grid_threshold??0}">
+        </div>
+        <div class="field">
+          <label>Animations</label>
+          <select id="ed-anim" style="${selStyle}">
+            <option value="auto" ${c.animations!=='always'?'selected':''}>Auto</option>
+            <option value="always" ${c.animations==='always'?'selected':''}>Always</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Power unit</label>
+          <select id="ed-punit" style="${selStyle}">
+            <option value="auto" ${(c.power_unit||'auto')==='auto'?'selected':''}>Auto</option>
+            <option value="W" ${c.power_unit==='W'?'selected':''}>W</option>
+            <option value="kW" ${c.power_unit==='kW'?'selected':''}>kW</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Temp. unit</label>
+          <select id="ed-tunit" style="${selStyle}">
+            <option value="auto" ${(c.temp_unit||'auto')==='auto'?'selected':''}>Auto</option>
+            <option value="C" ${c.temp_unit==='C'?'selected':''}>°C</option>
+            <option value="F" ${c.temp_unit==='F'?'selected':''}>°F</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Sparkline scale</label>
+          <select id="ed-sshare" style="${selStyle}">
+            <option value="false" ${!c.sparkline_shared_scale?'selected':''}>Independent</option>
+            <option value="true" ${c.sparkline_shared_scale?'selected':''}>Shared</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Values font (px)</label>
+          <input type="number" id="ed-fsize" min="10" max="48" value="${c.font_size??24}">
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>Extra Consumer 1: Name</label>
+          <input type="text" id="ed-ex1name" value="${this._esc(c.extra1_name)}" placeholder="Auto">
+        </div>
+        <div class="field">
+          <label>Extra Consumer 1: Icon</label>
+          <select id="ed-ex1icon" style="${selStyle}">
+            <option value="appliance" ${c.extra1_icon==='appliance'?'selected':''}>Appliances</option>
+            <option value="heatpump" ${c.extra1_icon==='heatpump'?'selected':''}>Heat Pump</option>
+            <option value="garage" ${c.extra1_icon==='garage'?'selected':''}>Garage/Shed</option>
+            <option value="generic" ${c.extra1_icon==='generic'?'selected':''}>Generic</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>Extra Consumer 2: Name</label>
+          <input type="text" id="ed-ex2name" value="${this._esc(c.extra2_name)}" placeholder="Auto">
+        </div>
+        <div class="field">
+          <label>Extra Consumer 2: Icon</label>
+          <select id="ed-ex2icon" style="${selStyle}">
+            <option value="appliance" ${c.extra2_icon==='appliance'?'selected':''}>Appliances</option>
+            <option value="heatpump" ${c.extra2_icon==='heatpump'?'selected':''}>Heat Pump</option>
+            <option value="garage" ${c.extra2_icon==='garage'?'selected':''}>Garage/Shed</option>
+            <option value="generic" ${c.extra2_icon==='generic'?'selected':''}>Generic</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>Extra Consumer 3: Name</label>
+          <input type="text" id="ed-ex3name" value="${this._esc(c.extra3_name)}" placeholder="Auto">
+        </div>
+        <div class="field">
+          <label>Extra Consumer 3: Icon</label>
+          <select id="ed-ex3icon" style="${selStyle}">
+            <option value="appliance" ${c.extra3_icon==='appliance'?'selected':''}>Appliances</option>
+            <option value="heatpump" ${c.extra3_icon==='heatpump'?'selected':''}>Heat Pump</option>
+            <option value="garage" ${c.extra3_icon==='garage'?'selected':''}>Garage/Shed</option>
+            <option value="generic" ${c.extra3_icon==='generic'?'selected':''}>Generic</option>
+          </select>
+        </div>
+      </div>
+
+      <h4>${L.editor_entities} <button id="ed-auto" type="button" style="float:right;margin-top:-4px;padding:4px 10px;font-size:11px;border:1px solid var(--divider-color,rgba(255,255,255,0.15));border-radius:4px;background:var(--card-background-color,#1c1e21);color:var(--primary-text-color);cursor:pointer">\u26A1 ${L.autodetect}</button></h4>
+      <div class="grid">
+        ${ENTITY_FIELDS.map(f=>{const v=c[f.key];const bad=v&&this._hass&&!this._hass.states[v];return `
+          <div class="field">
+            <label>${lbl(f)}</label>
+            <input type="text" id="ed-${f.key}" value="${this._esc(v)}" placeholder="${this._esc(PRESETS[c.preset||'deye']?.e[f.key])}"${bad?' style="border-color:#EF5350"':''}>
+            ${bad?'<div class="hint" style="color:#EF5350;opacity:1">\u26A0 '+L.invalid+'</div>':''}
+          </div>
+        `;}).join('')}
+      </div>
+    </div>`;
+    this.querySelector('.editor').addEventListener('change',this._onchange);
+    const ab=this.querySelector('#ed-auto');if(ab)ab.addEventListener('click',()=>this._autoDetect());
+  }
+}
+customElements.define('xpower-flow-card-editor',XPowerFlowCardEditor);
+
+class XPowerFlowCard extends HTMLElement{
+constructor(){super();this.attachShadow({mode:'open'});this._c={};this._h=null;this._prev={solar:0,bat:0,grid:0,load:0};this._hist={solar:[],load:[],grid:[],battery:[]};this._histMax={solar:1,load:1,grid:1,battery:1};this._fs={};this._histTimer=null;this._histLastLoad=0;this._histLoading=false;this._syncSpd=0;this._resync=false;this._rafId=null;this._twv={};this._twq={};this._twRaf=null;this._entList=[];this._srKey='';this._rm=!!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);this._mq=window.matchMedia?window.matchMedia('(prefers-color-scheme: light)'):null;this._onMq=()=>this._applyTheme();this._mwc=new Map();this._io=null;this._ro=null;this._ringKey='';this._auT=null;this._srT=null;this._vis=true;this._srTk=null;this._srLit=-1;this._onVis=()=>{if(!document.hidden&&this._h){this._histLastLoad=0;this._schedule();}};}
+
+static getConfigElement(){return document.createElement('xpower-flow-card-editor');}
+static getStubConfig(){return{...DEFAULTS};}
+
+setConfig(c){
+  this._c={};
+  Object.keys(DEFAULTS).forEach(k=>{this._c[k]=c[k]!==undefined?c[k]:DEFAULTS[k];});
+  // Backward compatibility: migrate old hardcoded keys to the generic slot system
+  if(!c.extra1_power&&c.appliance_power){this._c.extra1_power=c.appliance_power;this._c.extra1_name=c.appliance_name||'';this._c.extra1_icon='appliance';}
+  if(!c.extra2_power&&c.heatpump_power){this._c.extra2_power=c.heatpump_power;this._c.extra2_name=c.heatpump_name||'';this._c.extra2_icon='heatpump';}
+  if(!c.extra3_power&&c.garage_power){this._c.extra3_power=c.garage_power;this._c.extra3_name=c.garage_name||'';this._c.extra3_icon='garage';}
+  this._lang=LANG[this._c.language]||LANG.pt;
+  this._entList=[...new Set(ENT_KEYS.map(k=>this._c[k]).filter(Boolean))];
+  this._render();
+  if(this._h){this._applyTheme();this._schedule();}
+}
+
+connectedCallback(){
+  document.addEventListener('visibilitychange',this._onVis);
+  if(this._mq&&this._mq.addEventListener)this._mq.addEventListener('change',this._onMq);
+  if(!this._c.compact&&!this._histTimer)this._histTimer=setInterval(()=>{if(this._h&&!document.hidden&&this._vis)this._loadHistory();},HIST_INTERVAL);
+  // Pause animations + skip updates while scrolled out of view
+  if(!this._io&&'IntersectionObserver' in window){this._io=new IntersectionObserver(en=>{const v=en[en.length-1].isIntersecting;if(v===this._vis)return;this._vis=v;this.classList.toggle('off',!v);if(v&&this._h)this._schedule();},{threshold:0});this._io.observe(this);}
+  if(!this._ro&&'ResizeObserver' in window){this._ro=new ResizeObserver(()=>this._ringPath());const cd=this._$('xcard');if(cd)this._ro.observe(cd);}
+  this._ringKey='';this._ringPath();
+}
+
+disconnectedCallback(){
+  clearTimeout(this._auT);clearTimeout(this._srT);
+  if(this._ro){this._ro.disconnect();this._ro=null;}
+  document.removeEventListener('visibilitychange',this._onVis);
+  if(this._mq&&this._mq.removeEventListener)this._mq.removeEventListener('change',this._onMq);
+  if(this._io){this._io.disconnect();this._io=null;}this._vis=true;this.classList.remove('off');
+  if(this._histTimer){clearInterval(this._histTimer);this._histTimer=null;}
+  if(this._rafId){cancelAnimationFrame(this._rafId);this._rafId=null;}if(this._twRaf){cancelAnimationFrame(this._twRaf);this._twRaf=null;}this._twq={};
+}
+
+set hass(h){
+  const prev=this._h;
+  this._h=h;
+  if(!prev||h.themes!==prev.themes)this._applyTheme();
+  if(document.hidden||!this._vis)return;
+  const now=Date.now();
+  if(!this._c.compact&&now-this._histLastLoad>HIST_INTERVAL){this._histLastLoad=now;this._loadHistory();}
+  if(this._dirty(prev,h))this._schedule();
+}
+
+_applyTheme(){
+  const h=this._h;if(!h)return;
+  const t=this._c.theme||'auto';let light;
+  if(t==='auto'){const dm=h.themes?.darkMode;light=dm!==undefined?dm===false:!!(this._mq&&this._mq.matches);}
+  else light=t==='light';
+  this.classList.toggle('light',light);
+  this.classList.toggle('compact',!!this._c.compact);
+  this.classList.toggle('rm',this._rm&&this._c.animations!=='always');
+  this._ringKey='';this._ringPath();
+}
+
+// Memoised DOM writes — skip when the value is unchanged
+_sa(el,a,v){if(!el)return;const m=el.__xa||(el.__xa={});if(m[a]===v)return;m[a]=v;el.setAttribute(a,v);}
+_st(el,v){if(!el||el.__xt===v)return;el.__xt=v;el.textContent=v;}
+_ss(el,p,v){if(!el)return;const m=el.__xs||(el.__xs={});if(m[p]===v)return;m[p]=v;el.style[p]=v;}
+_sc(el,cls){if(!el||el.__xc===cls)return;el.__xc=cls;if(cls)el.setAttribute('class',cls);else el.removeAttribute('class');}
+
+_schedule(){if(!this._rafId)this._rafId=requestAnimationFrame(()=>{this._rafId=null;this._update();});}
+
+_dirty(o,n){
+  if(!o)return true;
+  if(o===n)return false;
+  const os=o.states,ns=n.states;for(const e of this._entList){if(os[e]!==ns[e])return true;}
+  return false;
+}
+
+_gv(e){
+  if(!e||!this._h||!this._h.states[e])return null;
+  const s=this._h.states[e].state;
+  if(s==='unavailable'||s==='unknown')return null;
+  const v=parseFloat(s);
+  return isNaN(v)?null:v;
+}
+_gp(e){const v=this._gv(e);if(v===null)return null;const m=this._c.power_unit||'auto';if(m==='W')return v;if(m==='kW')return v*1000;const u=(this._h.states[e].attributes?.unit_of_measurement||'').toLowerCase();return u==='kw'?v*1000:u==='mw'?v*1000000:v;}
+_gs(e){return e&&this._h&&this._h.states[e]?this._h.states[e].state:'';}
+_temp(e){const v=this._gv(e);if(v===null)return null;const st=this._h.states[e];const su=((st&&st.attributes&&st.attributes.unit_of_measurement)||'').toUpperCase();const srcF=su.indexOf('F')>-1;const u=this._c.temp_unit||'auto';let val,unit;if(u==='F'){val=srcF?v:v*9/5+32;unit='\u00B0F';}else if(u==='C'){val=srcF?(v-32)*5/9:v;unit='\u00B0C';}else{val=v;unit=srcF?'\u00B0F':'\u00B0C';}return val.toFixed(0)+unit;}
+_fmt(v){if(v===null)return this._lang.unavailable;const a=Math.abs(v);return a>=1000?(a/1000).toFixed(1)+' kW':a.toFixed(0)+' W';}
+_sunRing(c){const g=this._$('sunRing');if(!g)return;const eid=c.sun_entity||'sun.sun';const st=this._h&&this._h.states?this._h.states[eid]:null;
+if(!st||st.state!=='above_horizon'||!st.attributes||!st.attributes.next_rising||!st.attributes.next_setting){this._ss(g,'display','none');return;}
+const now=Date.now();const key=st.attributes.next_setting+'|'+st.attributes.next_rising+'|'+Math.floor(now/60000);if(key===this._srKey)return;this._srKey=key;
+const set=new Date(st.attributes.next_setting).getTime();
+const rise=new Date(st.attributes.next_rising).getTime()-86400000;
+if(!(set>rise)){this._ss(g,'display','none');return;}
+const p=Math.min(1,Math.max(0,(now-rise)/(set-rise)));
+this._ss(g,'display','');
+const tk=this._srTk||(this._srTk=g.querySelectorAll('.srtk')),n=tk.length,lit=Math.round(p*n);
+if(lit!==this._srLit){this._srLit=lit;for(let i=0;i<n;i++)tk[i].style.opacity=i<lit?'1':'0.2';}
+const tf=t=>{const dt=new Date(t);return String(dt.getHours()).padStart(2,'0')+':'+String(dt.getMinutes()).padStart(2,'0');};
+const sr=this._$('srx'),ss=this._$('ssx');
+this._st(sr,tf(rise));this._st(ss,tf(set));}
+_fmtE(v){if(v===null)return this._lang.unavailable;return v.toFixed(1)+' kWh';}
+_fmtC(e){if(!e||!this._h||!this._h.states[e])return '';const s=this._h.states[e];const v=parseFloat(s.state);if(isNaN(v))return '';const u=s.attributes?.unit_of_measurement||'€';return u+v.toFixed(2);}
+_arrow(c,p){if(c===null)return '';const d=Math.abs(c)-Math.abs(p);return d>5?'\u25B4 ':d<-5?'\u25BE ':'\u25B8 ';}
+_mw(s){let w=this._mwc.get(s);if(w!==undefined)return w;const m=this._$('meas');if(!m)return 0;m.textContent=s;w=m.getComputedTextLength()||0;if(w){if(this._mwc.size>2000)this._mwc.clear();this._mwc.set(s,w);}return w;}
+_arw(id,cur,prev,col){const g=this._$(id);if(!g)return;if(cur===null){this._ss(g,'display','none');this._twv['_'+id]=null;return;}this._ss(g,'display','');const vx=+g.dataset.vx,vy=+g.dataset.vy;const w=this._mw(this._fmt(cur));this._sa(g,'transform','translate('+(vx-w/2-11).toFixed(1)+','+vy+')');const inner=g.firstElementChild,p1=inner.children[0],p2=inner.children[1];this._sa(inner,'opacity',Math.abs(cur)<10?'0.28':'1');const pv=prev==null?cur:prev,d=Math.abs(cur)-Math.abs(pv),dir=d>5?'up':d<-5?'down':'flat';const style=this._c.arrow_style==='arrow'?'arrow':'chevron';const G=XPF_ARROW[style][dir];this._sa(p1,'d',G[0]);this._sa(p1,'stroke',col);if(G[1]){this._ss(p2,'display','');this._sa(p2,'d',G[1]);this._sa(p2,'stroke',col);}else{this._ss(p2,'display','none');}const last=this._twv['_'+id];const changed=last===undefined||last===null||Math.abs(cur-last)>=1;this._twv['_'+id]=cur;if(changed&&dir!=='flat'&&!(this._rm&&this._c.animations!=='always')){const kf=XPF_NUDGE[style][dir];if(kf){try{inner.animate(kf,{duration:480,easing:'cubic-bezier(.3,0,.2,1)'});}catch(e){}}}}
+_eta(totalMin,label){const pad=v=>String(v).padStart(2,'0');const h=Math.floor(totalMin/60),m=totalMin%60;const t=new Date(Date.now()+totalMin*60000);return h+'h '+pad(m)+'m \u25B8 '+label+' @'+pad(t.getHours())+':'+pad(t.getMinutes());}
+
+_norm(raw,type){
+  if(raw===null)return null;
+  if(type==='bat'&&this._c.bat_polarity==='positive')return raw*-1;
+  if(type==='grid'&&this._c.grid_polarity==='negative')return raw*-1;
+  return raw;
+}
+
+_bucket(arr,t0,t1,n){
+  if(!arr||!arr.length)return[];
+  const sum=new Array(n).fill(0),cnt=new Array(n).fill(0);
+  const span=(t1-t0)||1;
+  for(const p of arr){
+    const v=parseFloat(p.state);if(isNaN(v))continue;
+    const ts=new Date(p.last_changed||p.last_updated||t0).getTime();
+    let i=Math.floor((ts-t0)/span*n);if(i<0)i=0;else if(i>=n)i=n-1;
+    sum[i]+=Math.abs(v);cnt[i]++;
+  }
+  const out=new Array(n);let prev=0;
+  for(let i=0;i<n;i++){out[i]=cnt[i]?sum[i]/cnt[i]:prev;prev=out[i];}
+  const sm=[];
+  for(let i=0;i<n;i++){const a=i>0?out[i-1]:out[i];const b=i<n-1?out[i+1]:out[i];sm.push((a+out[i]*2+b)/4);}
+  return sm;
+}
+
+async _loadHistory(){if(this._histLoading||!this._h)return;this._histLoading=true;try{const c=this._c;const now=new Date();const start=new Date(now.getTime()-24*60*60*1000);const iso=encodeURIComponent(start.toISOString());const list=[c.solar,c.solar2,c.solar3,c.load,c.grid,c.battery,c.battery_charge,c.battery_discharge].filter(Boolean);const uniq=[...new Set(list)];if(!uniq.length)return;const entities=encodeURIComponent(uniq.join(','));const url='history/period/'+iso+'?filter_entity_id='+entities+'&minimal_response&no_attributes&significant_changes_only';const res=await this._h.callApi('GET',url);if(!res||!res.length)return;const t0=start.getTime(),t1=now.getTime();const byId={};for(const series of res){if(series.length)byId[series[0].entity_id]=this._bucket(series,t0,t1,HIST_POINTS);}const setSpark=(key,pts)=>{if(!pts)return;this._hist[key]=pts;this._histMax[key]=pts.length?Math.max(...pts)||1:1;};const sArr=[...new Set([c.solar,c.solar2,c.solar3].filter(Boolean))].map(e=>byId[e]).filter(a=>a&&a.length);if(sArr.length){const n=HIST_POINTS,tot=new Array(n).fill(0);for(const a of sArr)for(let i=0;i<n;i++)tot[i]+=a[i]||0;setSpark('solar',tot);}setSpark('load',byId[c.load]);setSpark('grid',byId[c.grid]);const bch=byId[c.battery_charge],bdis=byId[c.battery_discharge];if(bch||bdis){const n=HIST_POINTS,net=new Array(n);for(let i=0;i<n;i++){const d=bdis?bdis[i]:0,g=bch?bch[i]:0;net[i]=Math.abs(d-g);}setSpark('battery',net);}else{setSpark('battery',byId[c.battery]);}this._drawSparks();}catch(e){console.warn('xPower history:',e);}finally{this._histLoading=false;}}
+
+_render(){this._elc={};this._ringKey='';this._mwc=new Map();this._srTk=null;this._srLit=-1;this._srKey='';const L=this._lang;const INV=String(this._c.inverter_name||'').replace(/[<>&]/g,m=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[m]));const s=this.shadowRoot;s.innerHTML=`<style>
+:host{--solar:var(--xpf-solar,#FFB300);--battery:var(--xpf-battery,#7C4DFF);--grid:var(--xpf-grid,#42A5F5);--load:var(--xpf-load,#26C6DA);--green:var(--xpf-green,#66BB6A);--red:var(--xpf-red,#EF5350);--orange:var(--xpf-orange,#FFA726);--t1:var(--xpf-text,rgba(255,255,255,0.92));--t3:var(--xpf-text-secondary,rgba(255,255,255,0.45));--xpf-r:var(--xpf-radius,20px);--xpf-vm-size:var(--xpf-font-size,${this._c.font_size||24}px);--flow-w:var(--xpf-flow-width,3);--flow-dash:var(--xpf-dash-size,100);--fw:var(--xpf-frame-width,1px);--fo:var(--xpf-frame-opacity,0.7);--batf:#fff;--batn:#111;--batt:rgba(255,255,255,0.22)}
+:host(.light){--t1:var(--xpf-text,rgba(0,0,0,0.85));--t3:var(--xpf-text-secondary,rgba(0,0,0,0.45));--batf:rgba(0,0,0,0.85);--batn:#fff;--batt:rgba(0,0,0,0.12)}
+:host(.light) ha-card{background:var(--xpf-bg,rgba(255,255,255,0.92))}
+:host(.light) .fl{stroke:rgba(0,0,0,0.06)}
+:host(.light) .ib{fill:rgba(0,0,0,0.03);stroke:rgba(0,0,0,0.08)}
+:host(.light) .sb{background:var(--xpf-sparkline-bg,rgba(0,0,0,0.02));border-color:rgba(0,0,0,0.06)}
+:host(.light) .sl{opacity:0.4}
+ha-card{background:var(--xpf-bg,rgba(12,14,24,0.92));border:1px solid transparent;border-radius:var(--xpf-r);box-shadow:var(--xpf-shadow,0 2px 40px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.04));padding:var(--xpf-padding,6px 8px 6px);position:relative;overflow:hidden;contain:layout paint style;font-family:-apple-system,sans-serif;--ha-card-background:transparent;--ha-card-border-width:0;--ha-card-border-radius:var(--xpf-r);--ha-card-box-shadow:none}
+#aur{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+#aur path{fill:none;stroke-width:var(--fw);stroke-linecap:butt}
+#aur #aurhit{stroke:transparent;stroke-width:12;pointer-events:stroke;cursor:pointer}
+#au-s,#au-b,#au-g{opacity:var(--fo)}
+#aubadge{opacity:0;transition:opacity 0.35s ease;pointer-events:none}
+#aubadge.show{opacity:1}
+:host(.rm) #aubadge{transition:none}
+.mpr{cursor:pointer}.mpr:hover{opacity:.85}
+svg{width:100%;height:auto;display:block}
+.fl{fill:none;stroke:rgba(255,255,255,0.04);stroke-width:2;stroke-linecap:round}
+.fa{fill:none;stroke-width:var(--flow-w);stroke-linecap:round;stroke-dasharray:var(--flow-dash) var(--flow-dash);transition:stroke 0.8s ease,opacity 0.8s ease}
+.fd{animation:fD var(--spd,3s) linear infinite}.fu{animation:fU var(--spd,3s) linear infinite}.fr{animation:fR var(--spd,3s) linear infinite}.fL{animation:fL var(--spd,3s) linear infinite}
+@keyframes ledBlink{0%,100%{opacity:1}50%{opacity:0.2}}
+.led-on{animation:ledBlink 1.5s ease-in-out infinite}
+@keyframes batPulse{0%,100%{opacity:0.5}50%{opacity:0.85}}
+.bat-charge{animation:batPulse 1.5s ease-in-out infinite}
+:host(.rm) .fa,:host(.rm) .led-on,:host(.rm) .bat-charge{animation:none !important}
+:host(.off) .fa,:host(.off) .led-on,:host(.off) .bat-charge{animation-play-state:paused}
+#sunG{transform-origin:250px 38px;transition:opacity 0.8s ease}
+#gridIcon,#loadIcon,#batIcon,#evIcon{transition:opacity 0.8s ease}
+#vs,#vg,#vl,#vb,#ve{transition:opacity 0.8s ease}
+@keyframes fR{from{stroke-dashoffset:200}to{stroke-dashoffset:0}}@keyframes fL{from{stroke-dashoffset:0}to{stroke-dashoffset:200}}@keyframes fD{from{stroke-dashoffset:200}to{stroke-dashoffset:0}}@keyframes fU{from{stroke-dashoffset:0}to{stroke-dashoffset:200}}
+.vm{fill:var(--t1);font-size:var(--xpf-vm-size);font-weight:600;text-anchor:middle;dominant-baseline:middle}
+.vl{fill:var(--t3);font-size:10px;font-weight:600;letter-spacing:0.14em;text-anchor:middle;dominant-baseline:middle}
+.vs{fill:var(--t1);font-size:22px;font-weight:700;text-anchor:middle;dominant-baseline:middle}
+.vd{fill:var(--t3);font-size:13px;font-weight:500;text-anchor:middle;dominant-baseline:middle}
+.vc{fill:var(--t3);font-size:11px;font-weight:600;text-anchor:middle;dominant-baseline:middle}.srtk{stroke-width:0.7;opacity:0.2;transition:opacity 0.35s ease}.pvh{fill:var(--t3);font-size:8px;font-weight:700;text-anchor:middle;letter-spacing:0.06em;dominant-baseline:middle}.pvv{fill:var(--t3);font-size:9px;font-weight:600;text-anchor:middle;dominant-baseline:middle}.pvu{fill:var(--t3);font-size:8px;font-weight:500;opacity:0.75;text-anchor:middle;dominant-baseline:middle}.srt{fill:var(--t3);font-size:8px;font-weight:600;dominant-baseline:middle;opacity:0;transition:opacity 0.25s ease}#sunRing:hover .srt,#sunRing.srshow .srt{opacity:1}
+.ib{fill:rgba(255,255,255,0.02);stroke:rgba(255,255,255,0.06);stroke-width:1}
+.il{fill:rgba(255,255,255,0.35);font-size:12px;font-weight:600;letter-spacing:0.05em;text-anchor:middle;dominant-baseline:middle}
+#au-s,#au-b,#au-g{transition:stroke-dasharray .6s cubic-bezier(.33,1,.68,1),stroke-dashoffset .6s cubic-bezier(.33,1,.68,1)}:host(.rm) #au-s,:host(.rm) #au-b,:host(.rm) #au-g{transition:none}
+.au-track{stroke:rgba(255,255,255,0.10)}
+:host(.light) .au-track{stroke:rgba(0,0,0,0.10)}
+#main{will-change:transform}.ct{cursor:pointer}.ct:hover{opacity:.85}
+
+
+.wt{fill:var(--t3);font-size:11px;font-weight:500;text-anchor:start;dominant-baseline:middle;font-family:-apple-system,sans-serif}
+.wb{fill:none;stroke:var(--t3);stroke-width:0.5;rx:4;ry:4;opacity:0.4}
+.sr{display:flex;gap:6px;margin-top:8mm}
+:host(.compact) .sr{display:none}
+:host(.compact) ha-card{padding:6px 8px 6px}
+.sb{flex:1;background:var(--xpf-sparkline-bg,rgba(255,255,255,0.02));border:1px solid rgba(255,255,255,0.04);border-radius:var(--xpf-sparkline-radius,12px);padding:10px 10px 8px;display:flex;flex-direction:column;gap:2px;overflow:hidden}
+.sb-header{display:flex;justify-content:space-between;align-items:baseline}
+.sl{font-size:7px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;opacity:0.3}
+.sv{font-size:11px;font-weight:600;opacity:0.8}
+.ss .sv{color:var(--green)}.sc .sv{color:var(--load)}.sg .sv{color:var(--grid)}.sbt .sv{color:var(--battery)}
+.sb svg{width:100%;height:55px;display:block;margin-top:auto}
+.sb path{stroke-linecap:round;stroke-linejoin:round}
+.sb{position:relative;cursor:crosshair}
+.sb-tip{position:absolute;top:2px;right:4px;font-size:10px;font-weight:600;opacity:0;transition:opacity 0.15s;pointer-events:none;padding:2px 6px;border-radius:4px;background:rgba(0,0,0,0.7)}
+.sb-tip.show{opacity:1}
+.sb line.cursor{stroke:rgba(255,255,255,0.3);stroke-width:1;stroke-dasharray:2 2;display:none}
+.sb circle.cursor-dot{fill:rgba(255,255,255,0.8);display:none}
+.ss #hs{fill:none;stroke:rgba(102,187,106,0.7);stroke-width:1.2}.sc #hl{fill:none;stroke:rgba(38,198,218,0.7);stroke-width:1.2}.sg #hg{fill:none;stroke:rgba(66,165,245,0.7);stroke-width:1.2}.sbt #hb2{fill:none;stroke:rgba(124,77,255,0.7);stroke-width:1.2}
+.ss #hsa{fill:url(#sgd-s);stroke:none}.sc #hla{fill:url(#sgd-l);stroke:none}.sg #hga{fill:url(#sgd-g);stroke:none}.sbt #hb2a{fill:url(#sgd-b);stroke:none}
+</style>
+<ha-card id="xcard"><svg id="aur" role="img" aria-label="${L.autarky}"><path id="aut" class="au-track"/><path id="au-s" stroke="var(--green)" pathLength="100" stroke-dasharray="0 100"/><path id="au-b" stroke="var(--orange)" pathLength="100" stroke-dasharray="0 100"/><path id="au-g" stroke="var(--red)" pathLength="100" stroke-dasharray="0 100"/><path id="aurhit"><title>${L.autarky}</title></path></svg><svg id="main" viewBox="0 -8 526 478"><defs><linearGradient id="sunrg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#FF8F00"/><stop offset="1" stop-color="#FFD54F"/></linearGradient><clipPath id="bat-clip"><rect x="232" y="342.5" width="32" height="17" rx="5.5"/></clipPath><clipPath id="ev-clip"><rect x="420.5" y="450.5" width="24" height="12" rx="4"/></clipPath><radialGradient id="sundisc" cx="38%" cy="34%" r="72%"><stop offset="0" stop-color="#FFE082"/><stop offset="0.55" stop-color="#FFC107"/><stop offset="1" stop-color="#FF9800"/></radialGradient><radialGradient id="sunhl" cx="50%" cy="50%" r="50%"><stop offset="0.55" stop-color="#FFC107" stop-opacity="0.30"/><stop offset="1" stop-color="#FFC107" stop-opacity="0"/></radialGradient><linearGradient id="ivbody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#E9ECEF"/></linearGradient><linearGradient id="ivpill" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#34373B"/><stop offset="0.55" stop-color="#2B2E31"/><stop offset="0.56" stop-color="#3C4045"/><stop offset="1" stop-color="#2B2E31"/></linearGradient><linearGradient id="hsrc" gradientUnits="userSpaceOnUse" x1="287.4" y1="225" x2="395" y2="225"><stop id="hs0" offset="0%" stop-color="#66BB6A"/><stop id="hs1" offset="60%" stop-color="#66BB6A"/><stop id="hs2" offset="60%" stop-color="#FFA726"/><stop id="hs3" offset="60%" stop-color="#FFA726"/><stop id="hs4" offset="60%" stop-color="#EF5350"/><stop id="hs5" offset="100%" stop-color="#EF5350"/></linearGradient></defs><g transform="translate(25.5,10) scale(0.95)">
+<g id="wicons" style="display:none" transform="translate(-20,0)">
+<rect class="wb" x="-2" y="-4" width="86" height="20"/>
+<g transform="translate(0,1)"><rect x="6" y="0" width="2.5" height="7" rx="1.2" fill="none" stroke="var(--t3)" stroke-width="0.7"/><circle cx="7.2" cy="9" r="2.5" fill="none" stroke="var(--t3)" stroke-width="0.7"/><line x1="7.2" y1="3" x2="7.2" y2="7" stroke="var(--red)" stroke-width="1" stroke-linecap="round"/><circle cx="7.2" cy="9" r="1.2" fill="var(--red)"/></g>
+<text x="14" y="8" class="wt" id="wt"></text>
+<line id="wdiv" x1="44" y1="2" x2="44" y2="12" stroke="var(--t3)" stroke-width="0.5" opacity="0.4" style="display:none"/>
+<g id="wdrop" transform="translate(2,1)"><path d="M46,9 Q46,4 49,0 Q52,4 52,9 Q52,12 49,12 Q46,12 46,9Z" fill="none" stroke="var(--t3)" stroke-width="0.7"/><path d="M47.2,8.5 Q47.2,5.5 49,2 Q50.8,5.5 50.8,8.5 Q50.8,10.5 49,10.5 Q47.2,10.5 47.2,8.5Z" fill="var(--grid)" opacity="0.5"/></g>
+<text x="58" y="8" class="wt" id="wh"></text>
+</g>
+<g id="priceicons" style="display:none" transform="translate(-20,26)">
+<rect class="wb" x="-2" y="-4" width="106" height="20"/>
+<circle cx="7" cy="6" r="5.5" fill="none" stroke="var(--t3)" stroke-width="0.7"/>
+<text x="7" y="6.5" font-family="-apple-system,sans-serif" font-size="7" font-weight="700" fill="var(--t3)" text-anchor="middle" dominant-baseline="middle">&#164;</text>
+<text x="17" y="8" class="wt" id="pr" font-size="10"></text>
+</g>
+<path class="fl" d="M250,96 L250,187.7"/><path class="fl" d="M250,262.4 L250,364"/><path class="fl" d="M90,225 L212.7,225"/><path class="fl" d="M287.4,225 L395,225"/>
+<path id="fs" class="fa" d="M250,96 L250,187.7" pathLength="100" opacity="0"/><path id="fb" class="fa" d="M250,262.4 L250,364" pathLength="100" opacity="0"/><path id="fg" class="fa" d="M90,225 L212.7,225" pathLength="100" opacity="0"/><path id="fh" class="fa" d="M287.4,225 L395,225" pathLength="100" opacity="0"/>
+<g id="nSolar" class="ct"><g id="sunRing" style="display:none">${SUNTICKS}<path id="srhit" d="M224.5,63.5 A36,36 0 1 1 275.5,63.5" fill="none" stroke="transparent" stroke-width="16" pointer-events="stroke" style="cursor:pointer"/><text id="srx" x="215" y="66" class="srt" style="text-anchor:end"></text><text id="ssx" x="285" y="66" class="srt" style="text-anchor:start"></text></g><g id="sunG"><circle cx="250" cy="38" r="28" fill="url(#sunhl)"/><circle cx="250" cy="38" r="19" fill="url(#sundisc)"/></g><text x="250" y="81" class="vm" style="fill:var(--green)" id="vs"></text><text x="250" y="-10" class="vl">${L.solar}</text><text id="ds" x="338" y="34" class="pvv" style="font-size:13px"></text><text id="pv" x="338" y="48" class="pvu" style="font-size:11px"></text>${MPPT_ROWS}</g>
+<g id="aubadge"><g id="au-leaf" transform="translate(498 2)" fill="none" stroke="var(--green)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><g transform="translate(-3.6 -3.6) scale(0.3)"><path d="M5 21c.5-4.5 2.5-8 7-10"/><path d="M9 18c6.218 0 10.5-3.288 11-12v-2h-4.014c-9 0-11.986 4-12 9c0 1 0 3 2 5h3z"/></g></g><text x="498" y="17" id="va" font-family="-apple-system,sans-serif" font-size="9" font-weight="800" fill="var(--t1)" text-anchor="middle" dominant-baseline="middle"></text></g>
+<g><g transform="translate(250,225) scale(1.65)"><rect x="-19" y="-19" width="38" height="38" rx="5" fill="url(#ivbody)" stroke="rgba(0,0,0,0.18)" stroke-width="0.5"/><rect x="-11" y="18" width="4.5" height="2.4" rx="0.8" fill="rgba(0,0,0,0.35)"/><rect x="-2.25" y="18" width="4.5" height="2.4" rx="0.8" fill="rgba(0,0,0,0.35)"/><rect x="6.5" y="18" width="4.5" height="2.4" rx="0.8" fill="rgba(0,0,0,0.35)"/><rect x="-11" y="-4.6" width="22" height="9.2" rx="4.6" fill="url(#ivpill)"/><circle id="led1" cx="-4" cy="-0.6" r="1.15" fill="rgba(255,255,255,0.12)"/><circle id="led2" cx="0" cy="-0.6" r="1.15" fill="rgba(255,255,255,0.12)"/><circle id="led3" cx="4" cy="-0.6" r="1.15" fill="rgba(255,255,255,0.12)"/><rect id="ivbar" x="-3" y="2.6" width="6" height="0.9" rx="0.45" fill="#E4002B"/></g>${INV?'<text x="250" y="272" class="il">'+INV+'</text>':''}<text x="296" y="264" class="vc" id="tp" text-anchor="start"></text></g>
+<g id="nGrid" class="ct"><g id="gridIcon" transform="translate(66,225) scale(1.65) translate(-66,-196)"><rect x="64" y="181" width="4" height="30" rx="1" fill="var(--red)" opacity="0.7"/><rect x="54" y="183" width="24" height="3" rx="1" fill="var(--red)" opacity="0.6"/><rect x="57" y="192" width="18" height="2.5" rx="1" fill="var(--red)" opacity="0.5"/><path d="M60,211 L64,199 L68,199 L72,211" fill="var(--red)" opacity="0.4"/><circle cx="56" cy="184" r="1.5" fill="var(--red)" opacity="0.8"/><circle cx="76" cy="184" r="1.5" fill="var(--red)" opacity="0.8"/><circle cx="58" cy="193" r="1.2" fill="var(--red)" opacity="0.7"/><circle cx="74" cy="193" r="1.2" fill="var(--red)" opacity="0.7"/><line x1="54" y1="184" x2="46" y2="181" stroke="var(--red)" stroke-width="0.8" opacity="0.3"/><line x1="78" y1="184" x2="86" y2="181" stroke="var(--red)" stroke-width="0.8" opacity="0.3"/></g><text x="66" y="265" class="vm" style="fill:var(--red)" id="vg"></text><text x="66" y="190" class="vl">${L.grid}</text><text x="66" y="286" class="vc" id="gv"></text><circle id="gsd" cx="92" cy="189" r="4" fill="rgba(255,255,255,0.12)"/><text x="66" y="300" class="vd" id="dg"></text></g>
+<g id="nLoad" class="ct"><g id="loadIcon" transform="translate(434,225) scale(1.65) translate(-434,-188)"><path d="M416,188 L434,174 L452,188 Z" fill="var(--load)" opacity="0.8"/><rect x="420" y="187" width="28" height="18" rx="1" fill="var(--load)" opacity="0.6"/><rect x="430" y="195" width="8" height="10" rx="1" fill="rgba(0,0,0,0.3)"/><rect x="422" y="190" width="6" height="5" rx="0.5" fill="rgba(255,255,255,0.15)"/><rect x="440" y="190" width="6" height="5" rx="0.5" fill="rgba(255,255,255,0.15)"/><rect x="441" y="176" width="5" height="8" rx="1" fill="var(--load)" opacity="0.5"/></g><text x="434" y="268" class="vm" style="fill:var(--load)" id="vl"></text><text x="434" y="190" class="vl">${L.load}</text><text x="434" y="288" class="vd" id="dl"></text></g>
+<g id="nBat" class="ct"><g id="batIcon" transform="translate(250,400) scale(2.05) translate(-248,-351)"><rect x="232" y="342.5" width="32" height="17" rx="5.5" fill="var(--batt)"/><rect id="bl" x="232" y="342.5" width="32" height="17" fill="var(--batf)" clip-path="url(#bat-clip)"/><rect x="264.5" y="346.5" width="4" height="9" rx="2" fill="var(--batt)"/><svg id="bpA" x="232" y="342.5" width="32" height="17" viewBox="232 342.5 32 17" preserveAspectRatio="xMinYMin slice"><text id="bp" x="248" y="355.7" font-family="-apple-system,sans-serif" font-size="13.5" font-weight="800" fill="var(--batn)" text-anchor="middle">--</text></svg><svg id="bpB" x="264" y="342.5" width="0" height="17" viewBox="264 342.5 0.01 17" preserveAspectRatio="xMinYMin slice"><text id="bp2" x="248" y="355.7" font-family="-apple-system,sans-serif" font-size="13.5" font-weight="800" fill="var(--batf)" text-anchor="middle">--</text></svg><path id="bbolt" d="M260.1,345.8 L255.7,352 L258.9,352 L257.1,356.8 L262.5,349.9 L259.3,349.9 Z" fill="#fff" style="display:none"/></g><text x="250" y="432" class="vm" style="fill:var(--solar)" id="vb"></text><text id="meas" class="vm" x="0" y="-999" visibility="hidden"></text><g id="as" data-vx="250" data-vy="81"><g><path fill="none" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/><path fill="none" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" style="display:none"/></g></g><g id="ag" data-vx="66" data-vy="265"><g><path fill="none" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/><path fill="none" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" style="display:none"/></g></g><g id="al" data-vx="434" data-vy="268"><g><path fill="none" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/><path fill="none" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" style="display:none"/></g></g><g id="ab" data-vx="250" data-vy="432"><g><path fill="none" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/><path fill="none" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" style="display:none"/></g></g><text x="250" y="372" class="vl">${L.battery}</text><text x="316" y="394" class="vc" id="bv" text-anchor="start"></text><text x="316" y="406" class="vc" id="bt" text-anchor="start"></text><text x="250" y="452" class="vd" id="db"></text><text x="250" y="468" class="vc" id="br" style="fill:var(--t1)"></text></g>
+<g id="nEV" class="ct" style="display:none"><path class="fl" d="M434,302 L434,362"/><path id="fe" class="fa" d="M434,302 L434,362" pathLength="100" opacity="0"/><text x="434" y="372" class="vl">${L.ev}</text><g id="evIcon" transform="translate(434,398) scale(1.65) translate(-434,-398)"><path d="M419.5,402.5 Q419.3,398.2 424,397.1 Q426.5,391.6 432,390.9 L437,390.9 Q442.3,391.3 445.3,395.2 Q449.1,396.1 449.4,399.6 Q449.6,402.5 446.6,402.5 L422.4,402.5 Q419.6,402.5 419.5,402.5 Z" fill="var(--load)" opacity="0.8"/><path d="M427.6,395.9 Q429.1,392.6 432.6,392.3 L433.6,392.3 L433.6,395.9 Z" fill="rgba(0,0,0,0.35)"/><path d="M435.1,392.3 L436.9,392.3 Q440.4,392.7 442.4,395.9 L435.1,395.9 Z" fill="rgba(0,0,0,0.35)"/><circle cx="426" cy="402.4" r="3.1" fill="rgba(0,0,0,0.55)"/><circle cx="426" cy="402.4" r="1.4" fill="rgba(255,255,255,0.35)"/><circle cx="442.3" cy="402.4" r="3.1" fill="rgba(0,0,0,0.55)"/><circle cx="442.3" cy="402.4" r="1.4" fill="rgba(255,255,255,0.35)"/><path id="evbolt" d="M452.5,391 L450.5,396 L453.5,396 L451.5,401" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.3)" stroke-width="0.5"/></g><text x="434" y="440" class="vm" style="fill:var(--green)" id="ve"></text><g id="evPill" style="display:none"><rect x="420.5" y="450.5" width="24" height="12" rx="4" fill="var(--batt)"/><rect id="evl" x="420.5" y="450.5" width="0" height="12" fill="var(--batf)" clip-path="url(#ev-clip)"/><rect x="444.9" y="453.3" width="3" height="6.4" rx="1.5" fill="var(--batt)"/><svg id="evA" x="420.5" y="450.5" width="24" height="12" viewBox="420.5 450.5 24 12" preserveAspectRatio="xMinYMin slice"><text id="evsoc" x="432.5" y="459.8" font-family="-apple-system,sans-serif" font-size="9.5" font-weight="800" fill="var(--batn)" text-anchor="middle"></text></svg><svg id="evB" x="444.5" y="450.5" width="0" height="12" viewBox="444.5 450.5 0.01 12" preserveAspectRatio="xMinYMin slice"><text id="evsoc2" x="432.5" y="459.8" font-family="-apple-system,sans-serif" font-size="9.5" font-weight="800" fill="var(--batf)" text-anchor="middle"></text></svg></g><text x="434" y="476" class="vd" id="de"></text></g>
+<g id="nExtra1" class="ct" style="display:none">
+<path class="fl" d="M434,204 L434,160 L381,160"/>
+<path id="fex1" class="fa" d="M434,204 L434,160 L381,160" pathLength="100" opacity="0"/>
+<text x="369" y="138" class="vl" id="ex1lbl" font-size="8"></text>
+<g id="ex1Icon" transform="translate(369,160) scale(1.05)">
+<g data-t="appliance" style="display:none"><rect x="-9" y="-10" width="18" height="20" rx="2" fill="var(--load)" opacity="0.6"/><circle cx="0" cy="2" r="6" fill="none" stroke="var(--load)" stroke-width="1.4" opacity="0.9"/><circle cx="0" cy="2" r="3" fill="var(--load)" opacity="0.4"/><rect x="-6" y="-8" width="4" height="2" rx="0.5" fill="var(--load)" opacity="0.5"/><circle cx="-6.5" cy="-8" r="0.9" fill="var(--load)" opacity="0.8"/></g>
+<g data-t="heatpump" style="display:none"><rect x="-10" y="-7" width="20" height="14" rx="2" fill="var(--load)" opacity="0.6"/><circle cx="0" cy="0" r="5" fill="none" stroke="var(--load)" stroke-width="1.1" opacity="0.9"/><line x1="0" y1="-5" x2="0" y2="5" stroke="var(--load)" stroke-width="1" opacity="0.7"/><line x1="-5" y1="0" x2="5" y2="0" stroke="var(--load)" stroke-width="1" opacity="0.7"/></g>
+<g data-t="garage" style="display:none"><path d="M-11,-2 L0,-11 L11,-2 Z" fill="var(--load)" opacity="0.8"/><rect x="-9" y="-2" width="18" height="12" rx="1" fill="var(--load)" opacity="0.6"/><line x1="-9" y1="1" x2="9" y2="1" stroke="rgba(0,0,0,0.3)" stroke-width="0.8"/><line x1="-9" y1="4" x2="9" y2="4" stroke="rgba(0,0,0,0.3)" stroke-width="0.8"/><line x1="-9" y1="7" x2="9" y2="7" stroke="rgba(0,0,0,0.3)" stroke-width="0.8"/></g>
+<g data-t="generic" style="display:none"><path d="M1,-10 L-7,3 L-1,3 L-3,10 L8,-3 L2,-3 Z" fill="var(--load)" opacity="0.8"/></g>
+</g>
+<text x="369" y="183" class="vm" style="fill:var(--load);font-size:13px" id="ex1val"></text>
+</g>
+<g id="nExtra2" class="ct" style="display:none">
+<path class="fl" d="M434,204 L434,160 L434,112"/>
+<path id="fex2" class="fa" d="M434,204 L434,160 L434,112" pathLength="100" opacity="0"/>
+<text x="434" y="78" class="vl" id="ex2lbl" font-size="8"></text>
+<g id="ex2Icon" transform="translate(434,100) scale(1.05)">
+<g data-t="appliance" style="display:none"><rect x="-9" y="-10" width="18" height="20" rx="2" fill="var(--load)" opacity="0.6"/><circle cx="0" cy="2" r="6" fill="none" stroke="var(--load)" stroke-width="1.4" opacity="0.9"/><circle cx="0" cy="2" r="3" fill="var(--load)" opacity="0.4"/><rect x="-6" y="-8" width="4" height="2" rx="0.5" fill="var(--load)" opacity="0.5"/><circle cx="-6.5" cy="-8" r="0.9" fill="var(--load)" opacity="0.8"/></g>
+<g data-t="heatpump" style="display:none"><rect x="-10" y="-7" width="20" height="14" rx="2" fill="var(--load)" opacity="0.6"/><circle cx="0" cy="0" r="5" fill="none" stroke="var(--load)" stroke-width="1.1" opacity="0.9"/><line x1="0" y1="-5" x2="0" y2="5" stroke="var(--load)" stroke-width="1" opacity="0.7"/><line x1="-5" y1="0" x2="5" y2="0" stroke="var(--load)" stroke-width="1" opacity="0.7"/></g>
+<g data-t="garage" style="display:none"><path d="M-11,-2 L0,-11 L11,-2 Z" fill="var(--load)" opacity="0.8"/><rect x="-9" y="-2" width="18" height="12" rx="1" fill="var(--load)" opacity="0.6"/><line x1="-9" y1="1" x2="9" y2="1" stroke="rgba(0,0,0,0.3)" stroke-width="0.8"/><line x1="-9" y1="4" x2="9" y2="4" stroke="rgba(0,0,0,0.3)" stroke-width="0.8"/><line x1="-9" y1="7" x2="9" y2="7" stroke="rgba(0,0,0,0.3)" stroke-width="0.8"/></g>
+<g data-t="generic" style="display:none"><path d="M1,-10 L-7,3 L-1,3 L-3,10 L8,-3 L2,-3 Z" fill="var(--load)" opacity="0.8"/></g>
+</g>
+<text x="410" y="100" style="fill:var(--load);font-size:13px;font-weight:600;text-anchor:end;dominant-baseline:middle" id="ex2val"></text>
+</g>
+<g id="nExtra3" class="ct" style="display:none">
+<path class="fl" d="M434,204 L434,160 L487,160"/>
+<path id="fex3" class="fa" d="M434,204 L434,160 L487,160" pathLength="100" opacity="0"/>
+<text x="499" y="138" class="vl" id="ex3lbl" font-size="8"></text>
+<g id="ex3Icon" transform="translate(499,160) scale(1.05)">
+<g data-t="appliance" style="display:none"><rect x="-9" y="-10" width="18" height="20" rx="2" fill="var(--load)" opacity="0.6"/><circle cx="0" cy="2" r="6" fill="none" stroke="var(--load)" stroke-width="1.4" opacity="0.9"/><circle cx="0" cy="2" r="3" fill="var(--load)" opacity="0.4"/><rect x="-6" y="-8" width="4" height="2" rx="0.5" fill="var(--load)" opacity="0.5"/><circle cx="-6.5" cy="-8" r="0.9" fill="var(--load)" opacity="0.8"/></g>
+<g data-t="heatpump" style="display:none"><rect x="-10" y="-7" width="20" height="14" rx="2" fill="var(--load)" opacity="0.6"/><circle cx="0" cy="0" r="5" fill="none" stroke="var(--load)" stroke-width="1.1" opacity="0.9"/><line x1="0" y1="-5" x2="0" y2="5" stroke="var(--load)" stroke-width="1" opacity="0.7"/><line x1="-5" y1="0" x2="5" y2="0" stroke="var(--load)" stroke-width="1" opacity="0.7"/></g>
+<g data-t="garage" style="display:none"><path d="M-11,-2 L0,-11 L11,-2 Z" fill="var(--load)" opacity="0.8"/><rect x="-9" y="-2" width="18" height="12" rx="1" fill="var(--load)" opacity="0.6"/><line x1="-9" y1="1" x2="9" y2="1" stroke="rgba(0,0,0,0.3)" stroke-width="0.8"/><line x1="-9" y1="4" x2="9" y2="4" stroke="rgba(0,0,0,0.3)" stroke-width="0.8"/><line x1="-9" y1="7" x2="9" y2="7" stroke="rgba(0,0,0,0.3)" stroke-width="0.8"/></g>
+<g data-t="generic" style="display:none"><path d="M1,-10 L-7,3 L-1,3 L-3,10 L8,-3 L2,-3 Z" fill="var(--load)" opacity="0.8"/></g>
+</g>
+<text x="499" y="183" class="vm" style="fill:var(--load);font-size:13px" id="ex3val"></text>
+</g>
+</g></svg>
+<div class="sr" style="margin-top:4px">
+<div class="sb sg"><div class="sb-header"><span class="sl">${L.grid24}</span><span class="sv" id="hz"></span></div><svg viewBox="0 0 200 55" preserveAspectRatio="none"><defs><linearGradient id="sgd-g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(66,165,245,0.30)"/><stop offset="1" stop-color="rgba(66,165,245,0)"/></linearGradient></defs><path id="hga"/><path id="hg"/><line class="cursor" id="cg" x1="0" y1="0" x2="0" y2="55"/><circle class="cursor-dot" id="dg2" cx="0" cy="0" r="3"/></svg><span class="sb-tip" id="tg"></span></div>
+<div class="sb ss"><div class="sb-header"><span class="sl">${L.solar24}</span><span class="sv" id="hv"></span></div><svg viewBox="0 0 200 55" preserveAspectRatio="none"><defs><linearGradient id="sgd-s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(102,187,106,0.30)"/><stop offset="1" stop-color="rgba(102,187,106,0)"/></linearGradient></defs><path id="hsa"/><path id="hs"/><line class="cursor" id="cs" x1="0" y1="0" x2="0" y2="55"/><circle class="cursor-dot" id="ds2" cx="0" cy="0" r="3"/></svg><span class="sb-tip" id="ts"></span></div>
+<div class="sb sc"><div class="sb-header"><span class="sl">${L.load24}</span><span class="sv" id="hx"></span></div><svg viewBox="0 0 200 55" preserveAspectRatio="none"><defs><linearGradient id="sgd-l" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(38,198,218,0.30)"/><stop offset="1" stop-color="rgba(38,198,218,0)"/></linearGradient></defs><path id="hla"/><path id="hl"/><line class="cursor" id="cl" x1="0" y1="0" x2="0" y2="55"/><circle class="cursor-dot" id="dl2" cx="0" cy="0" r="3"/></svg><span class="sb-tip" id="tl"></span></div>
+<div class="sb sbt"><div class="sb-header"><span class="sl">${L.bat24}</span><span class="sv" id="hy"></span></div><svg viewBox="0 0 200 55" preserveAspectRatio="none"><defs><linearGradient id="sgd-b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(124,77,255,0.30)"/><stop offset="1" stop-color="rgba(124,77,255,0)"/></linearGradient></defs><path id="hb2a"/><path id="hb2"/><line class="cursor" id="cb" x1="0" y1="0" x2="0" y2="55"/><circle class="cursor-dot" id="db2" cx="0" cy="0" r="3"/></svg><span class="sb-tip" id="tb"></span></div>
+</div></ha-card>`;this._setupTooltips();this._setupClicks();this._ringPath();requestAnimationFrame(()=>this._ringPath());if(this._ro)this._ro.disconnect();if('ResizeObserver' in window){this._ro=new ResizeObserver(()=>this._ringPath());const cd=this._$('xcard');if(cd)this._ro.observe(cd);}}
+
+_$(id){let c=this._elc;if(!c)c=this._elc={};let el=c[id];if(el&&el.isConnected)return el;el=this.shadowRoot.getElementById(id);c[id]=el;return el;}
+_moreInfo(entityId){if(!entityId)return;this.dispatchEvent(new CustomEvent('hass-more-info',{detail:{entityId},bubbles:true,composed:true}));}
+_setupClicks(){const c=this._c;const bind=(id,entity)=>{const el=this._$(id);if(el&&entity)el.addEventListener('click',()=>this._moreInfo(entity));};bind('nSolar',c.solar);bind('nGrid',c.grid);bind('nLoad',c.load);bind('nBat',c.battery||c.soc);bind('nEV',c.ev_power||c.ev_soc);bind('nExtra1',c.extra1_power);bind('nExtra2',c.extra2_power);bind('nExtra3',c.extra3_power);const hit=this._$('srhit'),sg=this._$('sunRing');if(hit&&sg)hit.addEventListener('click',(e)=>{e.stopPropagation();sg.classList.add('srshow');clearTimeout(this._srT);this._srT=setTimeout(()=>sg.classList.remove('srshow'),3000);});[1,2,3].forEach(k=>{const g=this._$('mp'+k);if(g)g.addEventListener('click',(e)=>{e.stopPropagation();this._moreInfo(g.dataset.e);});});const aH=this._$('aurhit'),aB=this._$('aubadge');if(aH&&aB){const show=()=>{aB.classList.add('show');clearTimeout(this._auT);this._auT=setTimeout(()=>aB.classList.remove('show'),3000);};aH.addEventListener('pointerenter',show);aH.addEventListener('pointerdown',e=>{e.stopPropagation();show();});aH.addEventListener('pointerleave',()=>{clearTimeout(this._auT);this._auT=setTimeout(()=>aB.classList.remove('show'),600);});}}
+// Frame path + stroke width: scales with card width (≈0.75px phone, 1px desktop, 2px TV, max 3px); an explicit --xpf-frame-width wins
+_ringPath(){const card=this._$('xcard'),svg=this._$('aur');if(!card||!svg)return;const w=card.clientWidth,h=card.clientHeight;if(!w||!h)return;const cs=getComputedStyle(card);const bw=parseFloat(cs.borderTopWidth)||0;const ov=parseFloat(cs.getPropertyValue('--xpf-frame-width'));const dpr=window.devicePixelRatio||1;const sw=ov>0?ov:Math.min(3,Math.max(dpr>=1.5?0.75:1,Math.round(w/480*100)/100));const i=sw/2,W=w-sw,H=h-sw;let r=(parseFloat(cs.borderTopLeftRadius)||20)-bw-i;r=Math.max(0,Math.min(r,Math.min(W,H)/2));const key=w+'|'+h+'|'+r+'|'+sw;if(key===this._ringKey)return;this._ringKey=key;svg.style.setProperty('--fw',sw+'px');const q=v=>Math.round(v*4)/4;const d='M'+q(i+W/2)+','+q(i)+' H'+q(i+W-r)+' A'+q(r)+','+q(r)+' 0 0 1 '+q(i+W)+','+q(i+r)+' V'+q(i+H-r)+' A'+q(r)+','+q(r)+' 0 0 1 '+q(i+W-r)+','+q(i+H)+' H'+q(i+r)+' A'+q(r)+','+q(r)+' 0 0 1 '+q(i)+','+q(i+H-r)+' V'+q(i+r)+' A'+q(r)+','+q(r)+' 0 0 1 '+q(i+r)+','+q(i)+' Z';this._sa(svg,'viewBox','0 0 '+w+' '+h);['aut','au-s','au-b','au-g','aurhit'].forEach(id=>this._sa(this._$(id),'d',d));}
+_setupTooltips(){
+  const self=this;
+  const setup=(svgParent,cursorId,dotId,tipId,dataKey,color)=>{
+    const svg=self.shadowRoot.querySelector('#'+cursorId)?.closest('svg');
+    if(!svg)return;
+    const cursor=self._$(cursorId);const dot=self._$(dotId);const tip=self._$(tipId);
+    if(!cursor||!dot||!tip)return;
+    const show=(cx)=>{
+      const data=self._hist[dataKey];if(!data||!data.length)return;
+      const rect=svg.getBoundingClientRect();
+      const x=(cx-rect.left)/rect.width;
+      const idx=Math.min(Math.max(Math.round(x*(data.length-1)),0),data.length-1);
+      const val=data[idx];const svgX=x*200;
+      const max=self._sparkM||self._histMax[dataKey]||1;const svgY=2+(1-val/max)*51;
+      cursor.setAttribute('x1',svgX);cursor.setAttribute('x2',svgX);cursor.style.display='';
+      dot.setAttribute('cx',svgX);dot.setAttribute('cy',svgY);dot.style.display='';dot.setAttribute('fill',color);
+      const hoursAgo=(1-idx/(data.length-1))*24;
+      const when=new Date(Date.now()-hoursAgo*3600000);
+      const hh=String(when.getHours()).padStart(2,'0');const mm=String(when.getMinutes()).padStart(2,'0');
+      tip.textContent=(val>=1000?(val/1000).toFixed(1)+' kW':val.toFixed(0)+' W')+' · '+hh+':'+mm;
+      tip.style.color=color;tip.classList.add('show');
+    };
+    const hide=()=>{cursor.style.display='none';dot.style.display='none';tip.classList.remove('show');};
+    svg.addEventListener('mousemove',(e)=>show(e.clientX));
+    svg.addEventListener('mouseleave',hide);
+    svg.addEventListener('touchmove',(e)=>{e.preventDefault();show(e.touches[0].clientX);},{passive:false});
+    svg.addEventListener('touchend',hide);
+  };
+  setup(null,'cg','dg2','tg','grid','#42A5F5');
+  setup(null,'cs','ds2','ts','solar','#66BB6A');
+  setup(null,'cl','dl2','tl','load','#26C6DA');
+  setup(null,'cb','db2','tb','battery','#7C4DFF');
+}
+_spd(p){const a=Math.abs(p);if(a<10)return 0;let s=Math.max(ANIM_MIN_SPD,ANIM_MAX_SPD-(a/ANIM_MAX_W)*(ANIM_MAX_SPD-ANIM_MIN_SPD));if(a>=3000)s*=0.4;else if(a>=2000)s*=0.6;else if(a>=1000)s*=0.8;return s;}
+_sf(el,id,p,d,c,o){if(!el)return;if(Math.abs(p)<10){this._sa(el,'opacity','0');return;}this._sa(el,'stroke',c);this._sa(el,'opacity',o);if(this._fs[id]!==d){this._fs[id]=d;el.setAttribute('class','fa '+d);this._resync=true;}}
+_tween(id,target,fmt){const el=this._$(id);if(!el)return;if(target===null||(this._rm&&this._c.animations!=='always')){delete this._twq[id];el.textContent=fmt(target);this._twv[id]=target;return;}const from=this._twv[id];if(from===undefined||from===null||Math.abs(target-from)<1){delete this._twq[id];el.textContent=fmt(target);this._twv[id]=target;return;}this._twq[id]={el,from,to:target,fmt,t0:performance.now()};if(!this._twRaf)this._twRaf=requestAnimationFrame(t=>this._twStep(t));}
+_twStep(t){this._twRaf=null;const q=this._twq;let live=false;for(const id in q){const w=q[id];let k=Math.min(1,(t-w.t0)/600);k=1-Math.pow(1-k,3);w.el.textContent=w.fmt(w.from+(w.to-w.from)*k);if(k<1)live=true;else{this._twv[id]=w.to;delete q[id];}}if(live)this._twRaf=requestAnimationFrame(t2=>this._twStep(t2));}
+_spark(id,aid,data,mx){const el=this._$(id);const af=this._$(aid);if(!el||!data.length)return;const w=200,h=55,py=2,max=mx||Math.max(...data)||1;const pts=data.map((v,i)=>[(i/(data.length-1))*w,py+(1-v/max)*(h-py*2)]);if(pts.length<2)return;const tension=0.3;const cp=(p0,p1,p2,t)=>[p1[0]+(p2[0]-p0[0])*t,p1[1]+(p2[1]-p0[1])*t];let d='M'+pts[0][0].toFixed(1)+','+pts[0][1].toFixed(1);for(let i=0;i<pts.length-1;i++){const p0=pts[Math.max(0,i-1)];const p1=pts[i];const p2=pts[i+1];const p3=pts[Math.min(pts.length-1,i+2)];const c1=cp(p0,p1,p2,tension);const c2=[p2[0]-(p3[0]-p1[0])*tension,p2[1]-(p3[1]-p1[1])*tension];d+=' C'+c1[0].toFixed(1)+','+c1[1].toFixed(1)+' '+c2[0].toFixed(1)+','+c2[1].toFixed(1)+' '+p2[0].toFixed(1)+','+p2[1].toFixed(1);}el.setAttribute('d',d);if(af){af.setAttribute('d',d+'L'+w+','+h+'L0,'+h+'Z');}}
+_drawSparks(){const H=this._hist;let mx=0;if(this._c.sparkline_shared_scale){for(const k of ['solar','load','grid','battery']){const a=H[k];if(a&&a.length){const m=Math.max(...a);if(m>mx)mx=m;}}mx=mx||1;}const M=mx||undefined;this._sparkM=M;this._spark('hs','hsa',H.solar,M);this._spark('hl','hla',H.load,M);this._spark('hg','hga',H.grid,M);this._spark('hb2','hb2a',H.battery,M);}
+
+_update(){if(!this._h||!this.shadowRoot.getElementById('vs'))return;
+const c=this._c,L=this._lang;
+
+const sol1=this._gp(c.solar);
+const sol2=this._gp(c.solar2);
+const sol3=this._gp(c.solar3);
+const _sv=[sol1,sol2,sol3].filter(v=>v!==null);
+const sol=_sv.length?_sv.reduce((a,b)=>a+b,0):null;
+const batCh=this._gp(c.battery_charge);
+const batDis=this._gp(c.battery_discharge);
+const bat=(batCh!==null||batDis!==null)?(batDis??0)-(batCh??0):this._norm(this._gp(c.battery),'bat');
+const soc=this._gv(c.soc);
+let grid=this._norm(this._gp(c.grid),'grid');const gth=Number(c.grid_threshold)||0;if(grid!==null&&Math.abs(grid)<gth)grid=0;
+const load=this._gp(c.load);
+const temp=this._gv(c.temperature);
+const gv=this._gv(c.grid_voltage);
+const gv2=this._gv(c.grid_voltage_l2);
+const gv3=this._gv(c.grid_voltage_l3);
+const bv=this._gv(c.battery_voltage);
+const pvv=this._gv(c.pv_voltage);
+const pvv2=this._gv(c.pv_voltage2);
+const pvv3=this._gv(c.pv_voltage3);
+const freq=this._gv(c.frequency);
+
+const p=this._prev;
+this._tween('vs',sol,v=>this._fmt(v));
+this._tween('vb',bat!==null?Math.abs(bat):null,v=>this._fmt(v));
+this._tween('vg',grid!==null?Math.abs(grid):null,v=>this._fmt(v));
+this._tween('vl',load,v=>this._fmt(v));
+this._arw('as',sol,p.solar,'var(--green)');
+this._arw('ab',bat!==null?Math.abs(bat):null,p.bat,'var(--solar)');
+this._arw('ag',grid!==null?Math.abs(grid):null,p.grid,'var(--red)');
+this._arw('al',load,p.load,'var(--load)');
+this._prev={solar:sol??0,bat:bat??0,grid:grid??0,load:load??0};
+
+const socVal=soc??0;
+const bpEl=this._$('bp'),bp2El=this._$('bp2');const bpTxt=soc!==null?String(Math.round(soc)):L.unavailable;if(bpEl)this._st(bpEl,bpTxt);if(bp2El)this._st(bp2El,bpTxt);
+const shu=c.shutdown_soc??20;let batC='var(--batf)',bpC='var(--batn)';if(soc!==null&&socVal<=shu){batC='#EF5350';bpC='#fff';}else if(soc!==null&&socVal<=shu+15){batC='#FFA726';bpC='#111';}const ch=bat!==null&&bat<-10&&socVal<100;if(ch){batC='#4CD964';bpC='#fff';}const bw=32*(socVal/100);const blEl=this._$('bl');if(blEl){this._sa(blEl,'width',bw.toFixed(1));this._sa(blEl,'fill',batC);this._sc(blEl,'');}const bA=this._$('bpA'),bB=this._$('bpB');if(bA){this._sa(bA,'width',bw.toFixed(2));this._sa(bA,'viewBox','232 342.5 '+Math.max(bw,0.01).toFixed(2)+' 17');}if(bB){const rw=32-bw;this._sa(bB,'x',(232+bw).toFixed(2));this._sa(bB,'width',rw.toFixed(2));this._sa(bB,'viewBox',(232+bw).toFixed(2)+' 342.5 '+Math.max(rw,0.01).toFixed(2)+' 17');}const bx=ch?'245':'248';if(bpEl){this._sa(bpEl,'fill',bpC);this._sa(bpEl,'x',bx);}if(bp2El){this._sa(bp2El,'fill',batC);this._sa(bp2El,'x',bx);}const bboltEl=this._$('bbolt');if(bboltEl)this._ss(bboltEl,'display',ch?'':'none');
+
+if(temp!==null)this._st(this._$('tp'),this._temp(c.temperature));else this._st(this._$('tp'),'');
+const gvTxt=gv!==null?(gv2!==null&&gv3!==null?gv.toFixed(0)+'/'+gv2.toFixed(0)+'/'+gv3.toFixed(0)+'V':gv.toFixed(0)+'V'):null;
+if(gvTxt!==null&&freq!==null)this._st(this._$('gv'),gvTxt+' \u00B7 '+freq.toFixed(1)+'Hz');else if(gvTxt!==null)this._st(this._$('gv'),gvTxt);else if(freq!==null)this._st(this._$('gv'),freq.toFixed(1)+'Hz');else this._st(this._$('gv'),'');
+if(bv!==null)this._st(this._$('bv'),bv.toFixed(1)+'V');else this._st(this._$('bv'),'');
+const btS=this._temp(c.battery_temperature);this._st(this._$('bt'),btS===null?'':btS);
+
+const dS=this._gv(c.daily_solar)??0,dI=this._gv(c.daily_import)??0,dE=this._gv(c.daily_export)??0,dL=this._gv(c.daily_load)??0,dC=this._gv(c.daily_charge)??0,dD=this._gv(c.daily_discharge)??0;
+// Solar node: with 2+ MPPT, compact list left of the sun (x 112–192), daily total right (x 338)
+const _mp=[[c.solar,sol1,pvv],[c.solar2,sol2,pvv2],[c.solar3,sol3,pvv3]].map((m,i)=>({e:m[0],p:m[1],v:m[2],n:'PV'+(i+1)})).filter(m=>m.e);
+const _list=_mp.length>=2;
+for(let k=1;k<=3;k++){const g=this._$('mp'+k);if(!g)continue;const m=_list?_mp[k-1]:null;if(!m){this._ss(g,'display','none');continue;}this._ss(g,'display','');if(g.dataset.e!==m.e)g.dataset.e=m.e;this._sa(g,'transform','translate(0,'+(34-(_mp.length-1)*7+(k-1)*14)+')');this._st(this._$('ml'+k),m.n);this._st(this._$('mw'+k),this._fmt(m.p));this._st(this._$('mv'+k),m.v!==null?m.v.toFixed(0)+'V':'');}
+this._st(this._$('ds'),L.daily+' '+this._fmtE(dS));
+{const v0=_mp.length?_mp[0].v:null;this._st(this._$('pv'),!_list&&v0!==null?v0.toFixed(0)+'V':'');}
+this._sunRing(c);
+this._st(this._$('dg'),L.import_+' '+this._fmtE(dI)+(this._fmtC(c.import_cost)?' · '+this._fmtC(c.import_cost):'')+' '+L.export_+' '+this._fmtE(dE)+(this._fmtC(c.export_cost)?' · '+this._fmtC(c.export_cost):''));
+this._st(this._$('dl'),L.daily+' '+this._fmtE(dL));
+this._st(this._$('db'),L.charge+' '+this._fmtE(dC)+' '+L.discharge+' '+this._fmtE(dD));
+
+const solF=sol??0,batF=bat??0,gridF=grid??0,loadF=load??0;
+const maxP=Math.max(solF,Math.abs(batF),Math.abs(gridF),loadF);
+const syncSpd=maxP>10?this._spd(maxP):3;
+if(this._syncSpd<=0||Math.abs(syncSpd-this._syncSpd)/this._syncSpd>0.1){this._syncSpd=syncSpd;const spd=syncSpd.toFixed(1)+'s';['fs','fg','fb','fh','fe','fex1','fex2','fex3'].forEach(id=>{const el=this._$(id);if(el)el.style.setProperty('--spd',spd);});this._resync=true;}
+this._sf(this._$('fs'),'s',solF,'fd','var(--green)','0.8');
+this._sf(this._$('fg'),'g',gridF,gridF>0?'fr':'fL',gridF>0?'var(--red)':'var(--green)','0.7');
+this._sf(this._$('fb'),'b',batF,batF<0?'fd':'fu',batF<0?'var(--green)':'var(--solar)','0.75');
+const _gImp=gridF>0?gridF:0,_bDis=batF>0?batF:0,_sToH=Math.max(0,loadF-_gImp-_bDis),_feed=_gImp+_bDis+_sToH;
+{const _sc=[[_sToH,'#66BB6A'],[_bDis,'#FFA726'],[_gImp,'#EF5350']];let _ac=0;for(let _i=0;_i<3;_i++){const _f=_feed>0?_sc[_i][0]/_feed*100:0;const _p0=this._$('hs'+(_i*2)),_p1=this._$('hs'+(_i*2+1));if(_p0){this._sa(_p0,'offset',_ac.toFixed(1)+'%');this._sa(_p0,'stop-color',_sc[_i][1]);}_ac+=_f;if(_p1){this._sa(_p1,'offset',_ac.toFixed(1)+'%');this._sa(_p1,'stop-color',_sc[_i][1]);}}}
+this._sf(this._$('fh'),'h',loadF,'fr','url(#hsrc)','0.75');
+
+// EV node — visible only when ev_power/ev_soc configured
+const nEV=this._$('nEV');
+if(nEV){
+  if(c.ev_power||c.ev_soc){
+    this._ss(nEV,'display','');
+    const evV=this._gp(c.ev_power);
+    const evAbs=evV!==null?Math.abs(evV):0;
+    this._tween('ve',evV!==null?evAbs:null,v=>this._fmt(v));
+    const evSoc=this._gv(c.ev_soc);
+    const evPill=this._$('evPill');
+    if(evPill){
+      if(evSoc!==null){
+        this._ss(evPill,'display','');
+        const et=String(Math.round(evSoc));
+        const e1=this._$('evsoc'),e2=this._$('evsoc2');
+        if(e1)this._st(e1,et);if(e2)this._st(e2,et);
+        const ew=24*Math.max(0,Math.min(100,evSoc))/100;
+        const evl=this._$('evl');
+        if(evl)this._sa(evl,'width',ew.toFixed(1));
+        const eA=this._$('evA'),eB=this._$('evB');
+        if(eA){this._sa(eA,'width',ew.toFixed(2));this._sa(eA,'viewBox','420.5 450.5 '+Math.max(ew,0.01).toFixed(2)+' 12');}
+        if(eB){const er=24-ew;this._sa(eB,'x',(420.5+ew).toFixed(2));this._sa(eB,'width',er.toFixed(2));this._sa(eB,'viewBox',(420.5+ew).toFixed(2)+' 450.5 '+Math.max(er,0.01).toFixed(2)+' 12');}
+        const evCh=evAbs>10;const efC=evCh?'#4CD964':'var(--batf)';
+        if(evl)this._sa(evl,'fill',efC);
+        if(e1)this._sa(e1,'fill',evCh?'#fff':'var(--batn)');
+        if(e2)this._sa(e2,'fill',efC);
+      }else this._ss(evPill,'display','none');
+    }
+    const dEV=this._gv(c.daily_ev);
+    this._st(this._$('de'),dEV!==null?L.daily+' '+this._fmtE(dEV):'');
+    this._sf(this._$('fe'),'e',evAbs,'fd','var(--green)','0.75');
+    const evIcon=this._$('evIcon');if(evIcon)this._ss(evIcon,'opacity',evAbs>10?'1':'0.25');
+    this._ss(this._$('ve'),'opacity',evAbs>10?'1':'0.25');
+    const evbolt=this._$('evbolt');if(evbolt){if(evAbs>10){this._sa(evbolt,'fill','var(--green)');this._sa(evbolt,'stroke','var(--green)');this._sc(evbolt,'led-on');}else{this._sa(evbolt,'fill','rgba(255,255,255,0.15)');this._sa(evbolt,'stroke','rgba(255,255,255,0.3)');this._sc(evbolt,'');}}
+  }else{this._ss(nEV,'display','none');}
+}
+
+// Extra consumer nodes (1-3) — generic slots, each with a selectable icon
+const iconLbl={appliance:L.appliance,heatpump:L.heatpump,garage:L.garage,generic:L.extra};
+[1,2,3].forEach(n=>{
+  const nEl=this._$('nExtra'+n);
+  if(!nEl)return;
+  const pKey=c['extra'+n+'_power'];
+  if(pKey){
+    this._ss(nEl,'display','');
+    const v=this._gp(pKey);
+    const abs=v!==null?Math.abs(v):0;
+    this._tween('ex'+n+'val',v!==null?abs:null,val=>this._fmt(val));
+    const iconType=c['extra'+n+'_icon']||'generic';
+    const lbl=this._$('ex'+n+'lbl');if(lbl)this._st(lbl,(c['extra'+n+'_name']||iconLbl[iconType]||L.extra).toUpperCase());
+    this._sf(this._$('fex'+n),'ex'+n,abs,'fd','var(--green)','0.75');
+    const iconGroup=this._$('ex'+n+'Icon');
+    if(iconGroup)Array.from(iconGroup.children).forEach(ch=>{this._ss(ch,'display',(ch.getAttribute('data-t')===iconType)?'':'none');});
+    const dim=abs>10?'1':'0.25';
+    if(iconGroup)this._ss(iconGroup,'opacity',dim);
+    const valEl=this._$('ex'+n+'val');if(valEl)this._ss(valEl,'opacity',dim);
+  }else{this._ss(nEl,'display','none');}
+});
+
+// Phase lock — restart all flow animations in the same frame so pulses relay through the inverter
+if(this._resync){this._resync=false;const els=['fs','fg','fb','fh','fe','fex1','fex2','fex3'].map(id=>this._$(id)).filter(Boolean);const half='-'+(this._syncSpd/2).toFixed(2)+'s';els.forEach(el=>{let d='0s';if(el.id==='fh')d=half;else if(el.id==='fb'&&this._fs['b']==='fd')d=half;else if(el.id==='fg'&&this._fs['g']==='fL')d=half;el.style.animationDelay=d;if(el.getAnimations)el.getAnimations().forEach(a=>{a.currentTime=0;});});}
+
+const batCap=c.battery_capacity??5120;const shuSoc=c.shutdown_soc??20;
+const brEl=this._$('br');
+if(batF>RUNTIME_MIN_W&&socVal>shuSoc){
+  const remWh=(socVal-shuSoc)/100*batCap;
+  this._st(brEl,this._eta(Math.round(remWh/batF*60),shuSoc+'%'));
+}else if(batF<-RUNTIME_MIN_W&&socVal>0&&socVal<100){
+  const remWh=(100-socVal)/100*batCap;
+  this._st(brEl,this._eta(Math.round(remWh/-batF*60),'100%'));
+}else{this._st(brEl,'');}
+
+// Self-sufficiency frame — segments anchored to their source: solar top (0), battery bottom (50), grid left (75); smaller segments weigh more (1/f²)
+const gridImp=gridF>0?gridF:0;
+const au=loadF>0?Math.max(0,Math.min(100,((loadF-gridImp)/loadF)*100)):0;
+this._tween('va',au,v=>{const _va=this._$('va'),t=Math.round(v)+'%';if(_va)this._sa(_va,'font-size',t.length>=4?8:9);return t;});
+const _batDis=batF>0?batF:0;const _solH=Math.max(0,loadF-gridImp-_batDis);const _tot=gridImp+_batDis+_solH;const _seg=(k,st,ln)=>{const el=this._$('au-'+k),l=Math.max(0,ln);if(el){this._sa(el,'stroke-dasharray',l.toFixed(2)+' '+(100-l).toFixed(2));this._sa(el,'stroke-dashoffset',(-st).toFixed(2));}};if(_tot>0){const fS=_solH/_tot*100,fB=_batDis/_tot*100,fG=gridImp/_tot*100;let t=0,wt=0;[[fS,0,fS/2],[fB,50,fS+fB/2],[fG,75,fS+fB+fG/2]].forEach(([f,a,o])=>{if(f>0){const w=1/(f*f);t+=w*(a-o);wt+=w;}});t=wt?t/wt:0;t=((t+50)%100+100)%100-50;_seg('s',t,fS);_seg('b',t+fS,fB);_seg('g',t+fS+fB,fG);}else{_seg('s',0,0);_seg('b',0,0);_seg('g',0,0);}
+
+const wtv=this._gv(c.weather_temp);const whv=this._gv(c.weather_humidity);
+const wicons=this._$('wicons');const wdrop=this._$('wdrop');const wdiv=this._$('wdiv');
+const wtEl=this._$('wt');const whEl=this._$('wh');
+if(wtv!==null||whv!==null){
+  if(wicons)this._ss(wicons,'display','');
+  if(wtEl)this._st(wtEl,wtv!==null?this._temp(c.weather_temp):'');
+  if(whEl)this._st(whEl,whv!==null?whv.toFixed(0)+'%':'');
+  if(wdrop)this._ss(wdrop,'display',whv!==null?'':'none');
+  if(wdiv)this._ss(wdiv,'display',(wtv!==null&&whv!==null)?'':'none');
+}else{
+  if(wicons)this._ss(wicons,'display','none');
+}
+
+const prv=this._gv(c.price_sensor);
+const priceIcons=this._$('priceicons');const prEl=this._$('pr');
+if(c.price_sensor&&prv!==null){
+  if(priceIcons)this._ss(priceIcons,'display','');
+  const prU=(this._h&&this._h.states[c.price_sensor]&&this._h.states[c.price_sensor].attributes&&this._h.states[c.price_sensor].attributes.unit_of_measurement)||'';
+  if(prEl)this._st(prEl,prv.toFixed(2)+(prU?' '+prU:''));
+}else{
+  if(priceIcons)this._ss(priceIcons,'display','none');
+}
+
+const _led=(id,on,color)=>{const el=this._$(id);if(!el)return;this._sa(el,'fill',on?color:'rgba(255,255,255,0.12)');this._sc(el,on?'led-on':'');};
+_led('led1',solF>10,'#66BB6A');
+_led('led2',batF>10,'#FFA726');
+_led('led3',gridF>10,'#EF5350');
+
+// Grid status dot
+const gsd=this._$('gsd');if(gsd){const gsE=this._gs(c.grid_status);const online=gsE==='on'||gsE==='1'||gsE==='true';if(c.grid_status&&gsE){this._sa(gsd,'fill',online?'#66BB6A':'#EF5350');this._ss(gsd,'display','');}else{this._ss(gsd,'display','none');}}
+const ivbar=this._$('ivbar');if(ivbar){const gsE2=this._gs(c.grid_status);const on2=gsE2==='on'||gsE2==='1'||gsE2==='true';this._sa(ivbar,'fill',(c.grid_status&&gsE2)?(on2?'#66BB6A':'#EF5350'):'#E4002B');}
+
+// Sun spin when generating
+const sunG=this._$('sunG');if(sunG)this._ss(sunG,'opacity',solF>10?'1':'0.25');
+const gridIcon=this._$('gridIcon');if(gridIcon){this._ss(gridIcon,'opacity',Math.abs(gridF)>10?'1':'0.25');}
+const loadIcon=this._$('loadIcon');if(loadIcon){this._ss(loadIcon,'opacity',loadF>10?'1':'0.25');}
+const batIcon=this._$('batIcon');if(batIcon){this._ss(batIcon,'opacity',Math.abs(batF)>10?'1':'0.25');}
+this._ss(this._$('vs'),'opacity',solF>10?'1':'0.25');
+this._ss(this._$('vg'),'opacity',Math.abs(gridF)>10?'1':'0.25');
+this._ss(this._$('vl'),'opacity',loadF>10?'1':'0.25');
+this._ss(this._$('vb'),'opacity',Math.abs(batF)>10?'1':'0.25');
+
+this._st(this._$('hv'),this._fmt(sol)+' / '+this._fmtE(dS));
+this._st(this._$('hx'),this._fmt(load)+' / '+this._fmtE(dL));
+this._st(this._$('hz'),this._fmt(grid!==null?Math.abs(grid):null)+' / '+this._fmtE(dI+dE));
+this._st(this._$('hy'),this._fmt(bat!==null?Math.abs(bat):null)+' / '+this._fmtE(dC+dD));
+}
+
+getGridOptions(){return this._c.compact?{columns:12,rows:8,min_columns:6,min_rows:4}:{columns:12,rows:10,min_columns:6,min_rows:6};}
+getCardSize(){return this._c.compact?4:6;}
+}
+
+customElements.define('xpower-flow-card',XPowerFlowCard);
+window.customCards=window.customCards||[];
+window.customCards.push({type:'xpower-flow-card',name:'xPower Flow Card',description:'Universal power flow card for solar hybrid inverters — Deye, Sunsynk, Huawei, Fronius, Growatt, Victron, SolarEdge',preview:true,documentationURL:'https://github.com/BTNBx/xPower-Flow-Card'});
+console.info('%c XPOWER-FLOW %c v'+V+' ','background:#7C4DFF;color:white;font-weight:bold;border-radius:4px 0 0 4px;padding:2px 6px','background:#333;color:white;border-radius:0 4px 4px 0;padding:2px 6px');
