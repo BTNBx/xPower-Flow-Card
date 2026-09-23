@@ -1,4 +1,6 @@
 ## v1.3.42
+- Bug fixing
+## v1.3.42
 
 **Frame scales with the card**
 
