@@ -1,13 +1,18 @@
 // xPower Flow Card — Modern power flow card for solar hybrid inverters
 // Copyright (C) 2025 BTNBx — MIT License
-const V='1.3.43';
+const V='1.3.44';
 
 /* ═══════════════════════════════════════
    CHANGELOG — full history in CHANGELOG.md
    ═══════════════════════════════════════
-## v1.3.43
+## v1.3.44
 
-Bug fixing
+- Card style option: `xPower` (default) or `Home Assistant` (follows the theme's card background, shadow, border and radius)
+- Self-sufficiency badge (leaf + percentage) is always visible
+- Self-sufficiency frame can be turned off (`autarky_frame: false`); the badge stays visible
+- Flow speed is now proportional to each line's power by default (`flow_speed: proportional`); `synced` keeps the previous phase-locked relay
+- Language defaults to the Home Assistant language (`language` empty = auto)
+- Editor labels update immediately when the language is changed
 */
 
 /* ═══════════════════════════════════════
@@ -232,7 +237,7 @@ const DEFAULTS={
   battery_charge:'',battery_discharge:'',
   grid_voltage_l2:'',grid_voltage_l3:'',
   bat_polarity:'negative',grid_polarity:'positive',
-  shutdown_soc:20,battery_capacity:5120,grid_threshold:0,font_size:24,language:'pt',
+  shutdown_soc:20,battery_capacity:5120,grid_threshold:0,font_size:24,language:'',
   inverter_name:'DEYE',
   weather_temp:'',weather_humidity:'',
   price_sensor:'',
@@ -244,6 +249,9 @@ const DEFAULTS={
   compact:false,sparkline_shared_scale:false,
   theme:'auto',
   animations:'auto',
+  flow_speed:'proportional',
+  card_style:'xpower',
+  autarky_frame:true,
   arrow_style:'arrow',
   power_unit:'auto',
   temp_unit:'auto'
@@ -280,6 +288,8 @@ const XPF_NUDGE={chevron:{up:[{transform:'translateY(2px)',opacity:0.4},{transfo
 const FLBL={solar:t=>t.ps+' (MPPT1)',solar2:t=>t.ps+' (MPPT2)',solar3:t=>t.ps+' (MPPT3)',battery:t=>t.pb,battery_charge:t=>t.pbc+' '+t.sp,battery_discharge:t=>t.pbd+' '+t.sp,soc:t=>t.sc,grid:t=>t.pg,load:t=>t.pl,grid_voltage:t=>t.vg+' (L1)',grid_voltage_l2:t=>t.vg+' L2 '+t.op,grid_voltage_l3:t=>t.vg+' L3 '+t.op,battery_voltage:t=>t.vb,temperature:t=>t.ti,battery_temperature:t=>t.tb,frequency:t=>t.fq,grid_status:t=>t.gs,pv_voltage:t=>t.vp+' (MPPT1)',pv_voltage2:t=>t.vp+' (MPPT2)',pv_voltage3:t=>t.vp+' (MPPT3)',sun_entity:t=>(t&&t.sun)||'Sun Entity (solar ring)',daily_solar:t=>t.dso,daily_import:t=>t.dim,daily_export:t=>t.dex,daily_load:t=>t.dlo,daily_charge:t=>t.dch,daily_discharge:t=>t.ddi,weather_temp:t=>t.wt,weather_humidity:t=>t.wh,ev_power:t=>t.evp+' '+t.op,ev_soc:t=>t.evs+' '+t.op,daily_ev:t=>t.evd+' '+t.op,import_cost:t=>t.cim,export_cost:t=>t.cex};
 const EDL={"pt":{"ps":"Pot\u00eancia Solar","pb":"Pot\u00eancia Bateria","pbc":"Pot\u00eancia Carga Bat.","pbd":"Pot\u00eancia Descarga Bat.","sc":"SOC Bateria","pg":"Pot\u00eancia Rede","pl":"Pot\u00eancia Consumo","vg":"Tens\u00e3o Rede","vb":"Tens\u00e3o Bateria","vp":"Tens\u00e3o PV","sun":"Entidade Sol (anel solar)","ti":"Temp. Inversor","tb":"Temp. Bateria","fq":"Frequ\u00eancia Rede","gs":"Estado Rede","dso":"Solar Di\u00e1rio","dim":"Importa\u00e7\u00e3o Di\u00e1ria","dex":"Exporta\u00e7\u00e3o Di\u00e1ria","dlo":"Consumo Di\u00e1rio","dch":"Carga Di\u00e1ria","ddi":"Descarga Di\u00e1ria","wt":"Temp. Exterior","wh":"Humidade","evp":"Pot\u00eancia Carregador EV","evs":"SOC EV","evd":"Energia EV Di\u00e1ria","cim":"Custo Importa\u00e7\u00e3o Di\u00e1rio","cex":"Ganhos Exporta\u00e7\u00e3o Di\u00e1rios","op":"(opcional)","sp":"(separado, opcional)"},"de":{"ps":"Solarleistung","pb":"Batterieleistung","pbc":"Ladeleistung Bat.","pbd":"Entladeleistung Bat.","sc":"Batterie-SOC","pg":"Netzleistung","pl":"Verbrauchsleistung","vg":"Netzspannung","vb":"Batteriespannung","vp":"PV-Spannung","sun":"Sonnen-Entit\u00e4t (Ring)","ti":"WR-Temp.","tb":"Bat.-Temp.","fq":"Netzfrequenz","gs":"Netzstatus","dso":"Tagesertrag Solar","dim":"Tagesimport","dex":"Tagesexport","dlo":"Tagesverbrauch","dch":"Tagesladung","ddi":"Tagesentladung","wt":"Au\u00dfentemp.","wh":"Luftfeuchte","evp":"EV-Ladeleistung","evs":"EV-SOC","evd":"EV-Tagesenergie","cim":"T\u00e4gl. Importkosten","cex":"T\u00e4gl. Exporterl\u00f6s","op":"(optional)","sp":"(getrennt, optional)"},"fr":{"ps":"Puissance solaire","pb":"Puissance batterie","pbc":"Puissance charge bat.","pbd":"Puissance d\u00e9charge bat.","sc":"SOC batterie","pg":"Puissance r\u00e9seau","pl":"Puissance conso.","vg":"Tension r\u00e9seau","vb":"Tension batterie","vp":"Tension PV","sun":"Entit\u00e9 soleil (anneau)","ti":"Temp. onduleur","tb":"Temp. batterie","fq":"Fr\u00e9quence r\u00e9seau","gs":"\u00c9tat r\u00e9seau","dso":"Solaire journalier","dim":"Import journalier","dex":"Export journalier","dlo":"Conso. journali\u00e8re","dch":"Charge journali\u00e8re","ddi":"D\u00e9charge journali\u00e8re","wt":"Temp. ext.","wh":"Humidit\u00e9","evp":"Puissance chargeur VE","evs":"SOC VE","evd":"\u00c9nergie VE journali\u00e8re","cim":"Co\u00fbt import journalier","cex":"Gains export journaliers","op":"(optionnel)","sp":"(s\u00e9par\u00e9, optionnel)"},"es":{"ps":"Potencia solar","pb":"Potencia bater\u00eda","pbc":"Potencia carga bat.","pbd":"Potencia descarga bat.","sc":"SOC bater\u00eda","pg":"Potencia red","pl":"Potencia consumo","vg":"Tensi\u00f3n red","vb":"Tensi\u00f3n bater\u00eda","vp":"Tensi\u00f3n PV","sun":"Entidad sol (anillo)","ti":"Temp. inversor","tb":"Temp. bater\u00eda","fq":"Frecuencia red","gs":"Estado red","dso":"Solar diario","dim":"Importaci\u00f3n diaria","dex":"Exportaci\u00f3n diaria","dlo":"Consumo diario","dch":"Carga diaria","ddi":"Descarga diaria","wt":"Temp. exterior","wh":"Humedad","evp":"Potencia cargador VE","evs":"SOC VE","evd":"Energ\u00eda VE diaria","cim":"Coste importaci\u00f3n diario","cex":"Ganancias exportaci\u00f3n diarias","op":"(opcional)","sp":"(separado, opcional)"},"it":{"ps":"Potenza solare","pb":"Potenza batteria","pbc":"Potenza carica bat.","pbd":"Potenza scarica bat.","sc":"SOC batteria","pg":"Potenza rete","pl":"Potenza consumo","vg":"Tensione rete","vb":"Tensione batteria","vp":"Tensione PV","sun":"Entit\u00e0 sole (anello)","ti":"Temp. inverter","tb":"Temp. batteria","fq":"Frequenza rete","gs":"Stato rete","dso":"Solare giornaliero","dim":"Import giornaliero","dex":"Export giornaliero","dlo":"Consumo giornaliero","dch":"Carica giornaliera","ddi":"Scarica giornaliera","wt":"Temp. esterna","wh":"Umidit\u00e0","evp":"Potenza caricatore EV","evs":"SOC EV","evd":"Energia EV giornaliera","cim":"Costo import giornaliero","cex":"Guadagni export giornalieri","op":"(opzionale)","sp":"(separato, opzionale)"},"nl":{"ps":"Zonnevermogen","pb":"Batterijvermogen","pbc":"Laadvermogen bat.","pbd":"Ontlaadvermogen bat.","sc":"Batterij-SOC","pg":"Netvermogen","pl":"Verbruiksvermogen","vg":"Netspanning","vb":"Batterijspanning","vp":"PV-spanning","sun":"Zon-entiteit (ring)","ti":"Omvormer temp.","tb":"Batterij temp.","fq":"Netfrequentie","gs":"Netstatus","dso":"Dagelijks zonne","dim":"Dagelijkse import","dex":"Dagelijkse export","dlo":"Dagelijks verbruik","dch":"Dagelijkse lading","ddi":"Dagelijkse ontlading","wt":"Buitentemp.","wh":"Vochtigheid","evp":"EV-laadvermogen","evs":"EV-SOC","evd":"Dagelijkse EV-energie","cim":"Dagelijkse importkosten","cex":"Dagelijkse exportopbrengst","op":"(optioneel)","sp":"(gescheiden, optioneel)"},"pl":{"ps":"Moc PV","pb":"Moc baterii","pbc":"Moc \u0142adowania bat.","pbd":"Moc roz\u0142adowania bat.","sc":"SOC baterii","pg":"Moc sieci","pl":"Moc obci\u0105\u017cenia","vg":"Napi\u0119cie sieci","vb":"Napi\u0119cie baterii","vp":"Napi\u0119cie PV","sun":"Encja s\u0142o\u0144ca (pier\u015bcie\u0144)","ti":"Temp. falownika","tb":"Temp. baterii","fq":"Cz\u0119stotliwo\u015b\u0107 sieci","gs":"Stan sieci","dso":"Dzienny solar","dim":"Dzienny import","dex":"Dzienny eksport","dlo":"Dzienne zu\u017cycie","dch":"Dzienne \u0142adowanie","ddi":"Dzienne roz\u0142adowanie","wt":"Temp. zewn.","wh":"Wilgotno\u015b\u0107","evp":"Moc \u0142adowarki EV","evs":"SOC EV","evd":"Dzienna energia EV","cim":"Dzienny koszt importu","cex":"Dzienny zysk z eksportu","op":"(opcjonalnie)","sp":"(osobno, opcjonalnie)"}};
 
+const _lk=(l,h)=>{const k=l||String(h?.locale?.language||h?.language||'en').toLowerCase().slice(0,2);return LANG[k]?k:'en';};
+
 const HIST_POINTS=48;
 const HIST_INTERVAL=5*60*1000;
 const RUNTIME_MIN_W=50;
@@ -291,12 +301,12 @@ class XPowerFlowCardEditor extends HTMLElement{
   constructor(){super();this._config={};this._hass=null;this._onchange=this._fire.bind(this);}
   _esc(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
   setConfig(config){const merged={...DEFAULTS,...config};if(this._ready&&JSON.stringify(merged)===JSON.stringify(this._config))return;this._config=merged;this._render();this._ready=true;}
-  set hass(hass){this._hass=hass;}
+  set hass(hass){const first=!this._hass;this._hass=hass;if(first&&this._ready&&!this._config.language)this._render();}
   disconnectedCallback(){const el=this.querySelector('.editor');if(el)el.removeEventListener('change',this._onchange);}
 
   _fire(e){
     if(!e.target.matches('input,select'))return;
-    const cfg={...this._config};
+    const cfg={...this._config};const oldLang=this._config.language;
     cfg.language=this.querySelector('#ed-lang').value;
     cfg.inverter_name=this.querySelector('#ed-inv').value;
     cfg.extra1_name=this.querySelector('#ed-ex1name').value;
@@ -309,6 +319,9 @@ class XPowerFlowCardEditor extends HTMLElement{
     cfg.compact=this.querySelector('#ed-compact').value==='true';
     cfg.sparkline_shared_scale=this.querySelector('#ed-sshare').value==='true';
     cfg.animations=this.querySelector('#ed-anim').value;
+    cfg.flow_speed=this.querySelector('#ed-fspd').value;
+    cfg.card_style=this.querySelector('#ed-cstyle').value;
+    cfg.autarky_frame=this.querySelector('#ed-aframe').value!=='false';
     cfg.power_unit=this.querySelector('#ed-punit').value;
     cfg.temp_unit=this.querySelector('#ed-tunit').value;
     const gthVal=parseInt(this.querySelector('#ed-gth').value,10);
@@ -338,6 +351,7 @@ class XPowerFlowCardEditor extends HTMLElement{
     ENTITY_FIELDS.forEach(f=>{const v=this.querySelector('#ed-'+f.key);if(v){cfg[f.key]=v.value;const bad=v.value&&this._hass&&!this._hass.states[v.value];v.style.borderColor=bad?'#EF5350':'';}});
     this._config=cfg;
     this.dispatchEvent(new CustomEvent('config-changed',{detail:{config:cfg},bubbles:true,composed:true}));
+    if(cfg.language!==oldLang)this._render();
   }
 
   async _autoDetect(){
@@ -372,9 +386,10 @@ class XPowerFlowCardEditor extends HTMLElement{
 
   _render(){
     const el=this.querySelector('.editor');if(el)el.removeEventListener('change',this._onchange);
-    const L=LANG[this._config.language||'pt']||LANG.pt;
+    const lk=_lk(this._config.language,this._hass);
+    const L=LANG[lk];
     const c=this._config;
-    const T=EDL[c.language];const lbl=f=>T&&FLBL[f.key]?FLBL[f.key](T):f.label;
+    const T=EDL[lk];const lbl=f=>T&&FLBL[f.key]?FLBL[f.key](T):f.label;
     const selStyle='padding:8px;border:1px solid var(--divider-color);border-radius:4px;background:var(--card-background-color);color:var(--primary-text-color);width:100%;font-size:14px';
     this.innerHTML=`
     <style>
@@ -402,6 +417,7 @@ class XPowerFlowCardEditor extends HTMLElement{
         <div class="field">
           <label>${L.editor_lang}</label>
           <select id="ed-lang" style="${selStyle}">
+            <option value="" ${!c.language?'selected':''}>Auto (Home Assistant)</option>
             <option value="pt" ${c.language==='pt'?'selected':''}>Portugu\u00EAs</option>
             <option value="en" ${c.language==='en'?'selected':''}>English</option>
             <option value="de" ${c.language==='de'?'selected':''}>Deutsch</option>
@@ -426,6 +442,20 @@ class XPowerFlowCardEditor extends HTMLElement{
             <option value="auto" ${c.theme==='auto'?'selected':''}>Auto</option>
             <option value="dark" ${c.theme==='dark'?'selected':''}>Dark</option>
             <option value="light" ${c.theme==='light'?'selected':''}>Light</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Card style</label>
+          <select id="ed-cstyle" style="${selStyle}">
+            <option value="xpower" ${c.card_style!=='ha'?'selected':''}>xPower</option>
+            <option value="ha" ${c.card_style==='ha'?'selected':''}>Home Assistant</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Self-sufficiency frame</label>
+          <select id="ed-aframe" style="${selStyle}">
+            <option value="true" ${c.autarky_frame!==false?'selected':''}>On</option>
+            <option value="false" ${c.autarky_frame===false?'selected':''}>Off</option>
           </select>
         </div>
         <div class="field">
@@ -474,6 +504,13 @@ class XPowerFlowCardEditor extends HTMLElement{
           <select id="ed-anim" style="${selStyle}">
             <option value="auto" ${c.animations!=='always'?'selected':''}>Auto</option>
             <option value="always" ${c.animations==='always'?'selected':''}>Always</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Flow speed</label>
+          <select id="ed-fspd" style="${selStyle}">
+            <option value="proportional" ${c.flow_speed!=='synced'?'selected':''}>Proportional to power</option>
+            <option value="synced" ${c.flow_speed==='synced'?'selected':''}>Synced</option>
           </select>
         </div>
         <div class="field">
@@ -580,7 +617,7 @@ setConfig(c){
   if(!c.extra1_power&&c.appliance_power){this._c.extra1_power=c.appliance_power;this._c.extra1_name=c.appliance_name||'';this._c.extra1_icon='appliance';}
   if(!c.extra2_power&&c.heatpump_power){this._c.extra2_power=c.heatpump_power;this._c.extra2_name=c.heatpump_name||'';this._c.extra2_icon='heatpump';}
   if(!c.extra3_power&&c.garage_power){this._c.extra3_power=c.garage_power;this._c.extra3_name=c.garage_name||'';this._c.extra3_icon='garage';}
-  this._lang=LANG[this._c.language]||LANG.pt;
+  this._lk=_lk(this._c.language,this._h);this._lang=LANG[this._lk];
   this._entList=[...new Set(ENT_KEYS.map(k=>this._c[k]).filter(Boolean))];
   this._render();
   if(this._h){this._applyTheme();this._schedule();}
@@ -609,6 +646,7 @@ disconnectedCallback(){
 set hass(h){
   const prev=this._h;
   this._h=h;
+  if(!this._c.language){const k=_lk('',h);if(k!==this._lk){this._lk=k;this._lang=LANG[k];this._render();this._applyTheme();this._prev={solar:0,bat:0,grid:0,load:0};this._twv={};this._fs={};this._syncSpd=0;this._schedule();}}
   if(!prev||h.themes!==prev.themes)this._applyTheme();
   if(document.hidden||!this._vis)return;
   const now=Date.now();
@@ -623,6 +661,8 @@ _applyTheme(){
   else light=t==='light';
   this.classList.toggle('light',light);
   this.classList.toggle('compact',!!this._c.compact);
+  this.classList.toggle('hast',this._c.card_style==='ha');
+  this.classList.toggle('noaur',this._c.autarky_frame===false);
   this.classList.toggle('rm',this._rm&&this._c.animations!=='always');
   this._ringKey='';this._ringPath();
 }
@@ -699,7 +739,7 @@ _bucket(arr,t0,t1,n){
 
 async _loadHistory(){if(this._histLoading||!this._h)return;this._histLoading=true;try{const c=this._c;const now=new Date();const start=new Date(now.getTime()-24*60*60*1000);const iso=encodeURIComponent(start.toISOString());const list=[c.solar,c.solar2,c.solar3,c.load,c.grid,c.battery,c.battery_charge,c.battery_discharge].filter(Boolean);const uniq=[...new Set(list)];if(!uniq.length)return;const entities=encodeURIComponent(uniq.join(','));const url='history/period/'+iso+'?filter_entity_id='+entities+'&minimal_response&no_attributes&significant_changes_only';const res=await this._h.callApi('GET',url);if(!res||!res.length)return;const t0=start.getTime(),t1=now.getTime();const byId={};for(const series of res){if(series.length)byId[series[0].entity_id]=this._bucket(series,t0,t1,HIST_POINTS);}const setSpark=(key,pts)=>{if(!pts)return;this._hist[key]=pts;this._histMax[key]=pts.length?Math.max(...pts)||1:1;};const sArr=[...new Set([c.solar,c.solar2,c.solar3].filter(Boolean))].map(e=>byId[e]).filter(a=>a&&a.length);if(sArr.length){const n=HIST_POINTS,tot=new Array(n).fill(0);for(const a of sArr)for(let i=0;i<n;i++)tot[i]+=a[i]||0;setSpark('solar',tot);}setSpark('load',byId[c.load]);setSpark('grid',byId[c.grid]);const bch=byId[c.battery_charge],bdis=byId[c.battery_discharge];if(bch||bdis){const n=HIST_POINTS,net=new Array(n);for(let i=0;i<n;i++){const d=bdis?bdis[i]:0,g=bch?bch[i]:0;net[i]=Math.abs(d-g);}setSpark('battery',net);}else{setSpark('battery',byId[c.battery]);}this._drawSparks();}catch(e){console.warn('xPower history:',e);}finally{this._histLoading=false;}}
 
-_render(){this._elc={};this._ringKey='';this._mwc=new Map();this._srTk=null;this._srLit=-1;this._srKey='';const L=this._lang;const INV=String(this._c.inverter_name||'').replace(/[<>&]/g,m=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[m]));const s=this.shadowRoot;s.innerHTML=`<style>
+_render(){this._elc={};this._fsp={};this._syncSpd=0;this._ringKey='';this._mwc=new Map();this._srTk=null;this._srLit=-1;this._srKey='';const L=this._lang;const INV=String(this._c.inverter_name||'').replace(/[<>&]/g,m=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[m]));const s=this.shadowRoot;s.innerHTML=`<style>
 :host{--solar:var(--xpf-solar,#FFB300);--battery:var(--xpf-battery,#7C4DFF);--grid:var(--xpf-grid,#42A5F5);--load:var(--xpf-load,#26C6DA);--green:var(--xpf-green,#66BB6A);--red:var(--xpf-red,#EF5350);--orange:var(--xpf-orange,#FFA726);--t1:var(--xpf-text,rgba(255,255,255,0.92));--t3:var(--xpf-text-secondary,rgba(255,255,255,0.45));--xpf-r:var(--xpf-radius,20px);--xpf-vm-size:var(--xpf-font-size,${this._c.font_size||24}px);--flow-w:var(--xpf-flow-width,3);--flow-dash:var(--xpf-dash-size,100);--fw:var(--xpf-frame-width,1px);--fo:var(--xpf-frame-opacity,0.7);--batf:#fff;--batn:#111;--batt:rgba(255,255,255,0.22)}
 :host(.light){--t1:var(--xpf-text,rgba(0,0,0,0.85));--t3:var(--xpf-text-secondary,rgba(0,0,0,0.45));--batf:rgba(0,0,0,0.85);--batn:#fff;--batt:rgba(0,0,0,0.12)}
 :host(.light) ha-card{background:var(--xpf-bg,rgba(255,255,255,0.92))}
@@ -708,13 +748,14 @@ _render(){this._elc={};this._ringKey='';this._mwc=new Map();this._srTk=null;this
 :host(.light) .sb{background:var(--xpf-sparkline-bg,rgba(0,0,0,0.02));border-color:rgba(0,0,0,0.06)}
 :host(.light) .sl{opacity:0.4}
 ha-card{background:var(--xpf-bg,rgba(12,14,24,0.92));border:1px solid transparent;border-radius:var(--xpf-r);box-shadow:var(--xpf-shadow,0 2px 40px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.04));padding:var(--xpf-padding,6px 8px 6px);position:relative;overflow:hidden;contain:layout paint style;font-family:-apple-system,sans-serif;--ha-card-background:transparent;--ha-card-border-width:0;--ha-card-border-radius:var(--xpf-r);--ha-card-box-shadow:none}
+:host(.hast){--xpf-hbg:var(--ha-card-background,var(--card-background-color,#1c1c1c));--xpf-hsh:var(--ha-card-box-shadow,none);--xpf-hbc:var(--ha-card-border-color,var(--divider-color,transparent));--xpf-hbw:var(--ha-card-border-width,1px);--xpf-hr:var(--ha-card-border-radius,12px)}
+:host(.hast) ha-card{background:var(--xpf-bg,var(--xpf-hbg));box-shadow:var(--xpf-shadow,var(--xpf-hsh));border:var(--xpf-hbw) solid var(--xpf-hbc);border-radius:var(--xpf-hr)}
+:host(.noaur) #aur{display:none}
 #aur{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
 #aur path{fill:none;stroke-width:var(--fw);stroke-linecap:butt}
 #aur #aurhit{stroke:transparent;stroke-width:12;pointer-events:stroke;cursor:pointer}
 #au-s,#au-b,#au-g{opacity:var(--fo)}
-#aubadge{opacity:0;transition:opacity 0.35s ease;pointer-events:none}
-#aubadge.show{opacity:1}
-:host(.rm) #aubadge{transition:none}
+#aubadge{pointer-events:none}
 .mpr{cursor:pointer}.mpr:hover{opacity:.85}
 svg{width:100%;height:auto;display:block}
 .fl{fill:none;stroke:rgba(255,255,255,0.04);stroke-width:2;stroke-linecap:round}
@@ -781,7 +822,7 @@ svg{width:100%;height:auto;display:block}
 <path class="fl" d="M250,96 L250,187.7"/><path class="fl" d="M250,262.4 L250,364"/><path class="fl" d="M90,225 L212.7,225"/><path class="fl" d="M287.4,225 L395,225"/>
 <path id="fs" class="fa" d="M250,96 L250,187.7" pathLength="100" opacity="0"/><path id="fb" class="fa" d="M250,262.4 L250,364" pathLength="100" opacity="0"/><path id="fg" class="fa" d="M90,225 L212.7,225" pathLength="100" opacity="0"/><path id="fh" class="fa" d="M287.4,225 L395,225" pathLength="100" opacity="0"/>
 <g id="nSolar" class="ct"><g id="sunRing" style="display:none">${SUNTICKS}<path id="srhit" d="M224.5,63.5 A36,36 0 1 1 275.5,63.5" fill="none" stroke="transparent" stroke-width="16" pointer-events="stroke" style="cursor:pointer"/><text id="srx" x="215" y="66" class="srt" style="text-anchor:end"></text><text id="ssx" x="285" y="66" class="srt" style="text-anchor:start"></text></g><g id="sunG"><circle cx="250" cy="38" r="28" fill="url(#sunhl)"/><circle cx="250" cy="38" r="19" fill="url(#sundisc)"/></g><text x="250" y="81" class="vm" style="fill:var(--green)" id="vs"></text><text x="250" y="-10" class="vl">${L.solar}</text><text id="ds" x="338" y="34" class="pvv" style="font-size:13px"></text><text id="pv" x="338" y="48" class="pvu" style="font-size:11px"></text>${MPPT_ROWS}</g>
-<g id="aubadge"><g id="au-leaf" transform="translate(498 2)" fill="none" stroke="var(--green)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><g transform="translate(-3.6 -3.6) scale(0.3)"><path d="M5 21c.5-4.5 2.5-8 7-10"/><path d="M9 18c6.218 0 10.5-3.288 11-12v-2h-4.014c-9 0-11.986 4-12 9c0 1 0 3 2 5h3z"/></g></g><text x="498" y="17" id="va" font-family="-apple-system,sans-serif" font-size="9" font-weight="800" fill="var(--t1)" text-anchor="middle" dominant-baseline="middle"></text></g>
+<g id="aubadge"><g id="au-leaf" transform="translate(498 8)" fill="none" stroke="var(--green)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><g transform="translate(-3.6 -3.6) scale(0.3)"><path d="M5 21c.5-4.5 2.5-8 7-10"/><path d="M9 18c6.218 0 10.5-3.288 11-12v-2h-4.014c-9 0-11.986 4-12 9c0 1 0 3 2 5h3z"/></g></g><text x="498" y="17" id="va" font-family="-apple-system,sans-serif" font-size="9" font-weight="800" fill="var(--t1)" text-anchor="middle" dominant-baseline="middle"></text></g>
 <g><g transform="translate(250,225) scale(1.65)"><rect x="-19" y="-19" width="38" height="38" rx="5" fill="url(#ivbody)" stroke="rgba(0,0,0,0.18)" stroke-width="0.5"/><rect x="-11" y="18" width="4.5" height="2.4" rx="0.8" fill="rgba(0,0,0,0.35)"/><rect x="-2.25" y="18" width="4.5" height="2.4" rx="0.8" fill="rgba(0,0,0,0.35)"/><rect x="6.5" y="18" width="4.5" height="2.4" rx="0.8" fill="rgba(0,0,0,0.35)"/><rect x="-11" y="-4.6" width="22" height="9.2" rx="4.6" fill="url(#ivpill)"/><circle id="led1" cx="-4" cy="-0.6" r="1.15" fill="rgba(255,255,255,0.12)"/><circle id="led2" cx="0" cy="-0.6" r="1.15" fill="rgba(255,255,255,0.12)"/><circle id="led3" cx="4" cy="-0.6" r="1.15" fill="rgba(255,255,255,0.12)"/><rect id="ivbar" x="-3" y="2.6" width="6" height="0.9" rx="0.45" fill="#E4002B"/></g>${INV?'<text x="250" y="272" class="il">'+INV+'</text>':''}<text x="296" y="264" class="vc" id="tp" text-anchor="start"></text></g>
 <g id="nGrid" class="ct"><g id="gridIcon" transform="translate(66,225) scale(1.65) translate(-66,-196)"><rect x="64" y="181" width="4" height="30" rx="1" fill="var(--red)" opacity="0.7"/><rect x="54" y="183" width="24" height="3" rx="1" fill="var(--red)" opacity="0.6"/><rect x="57" y="192" width="18" height="2.5" rx="1" fill="var(--red)" opacity="0.5"/><path d="M60,211 L64,199 L68,199 L72,211" fill="var(--red)" opacity="0.4"/><circle cx="56" cy="184" r="1.5" fill="var(--red)" opacity="0.8"/><circle cx="76" cy="184" r="1.5" fill="var(--red)" opacity="0.8"/><circle cx="58" cy="193" r="1.2" fill="var(--red)" opacity="0.7"/><circle cx="74" cy="193" r="1.2" fill="var(--red)" opacity="0.7"/><line x1="54" y1="184" x2="46" y2="181" stroke="var(--red)" stroke-width="0.8" opacity="0.3"/><line x1="78" y1="184" x2="86" y2="181" stroke="var(--red)" stroke-width="0.8" opacity="0.3"/></g><text x="66" y="265" class="vm" style="fill:var(--red)" id="vg"></text><text x="66" y="190" class="vl">${L.grid}</text><text x="66" y="286" class="vc" id="gv"></text><circle id="gsd" cx="92" cy="189" r="4" fill="rgba(255,255,255,0.12)"/><text x="66" y="300" class="vd" id="dg"></text></g>
 <g id="nLoad" class="ct"><g id="loadIcon" transform="translate(434,225) scale(1.65) translate(-434,-188)"><path d="M416,188 L434,174 L452,188 Z" fill="var(--load)" opacity="0.8"/><rect x="420" y="187" width="28" height="18" rx="1" fill="var(--load)" opacity="0.6"/><rect x="430" y="195" width="8" height="10" rx="1" fill="rgba(0,0,0,0.3)"/><rect x="422" y="190" width="6" height="5" rx="0.5" fill="rgba(255,255,255,0.15)"/><rect x="440" y="190" width="6" height="5" rx="0.5" fill="rgba(255,255,255,0.15)"/><rect x="441" y="176" width="5" height="8" rx="1" fill="var(--load)" opacity="0.5"/></g><text x="434" y="268" class="vm" style="fill:var(--load)" id="vl"></text><text x="434" y="190" class="vl">${L.load}</text><text x="434" y="288" class="vd" id="dl"></text></g>
@@ -870,7 +911,7 @@ _setupTooltips(){
   setup(null,'cb','db2','tb','battery','#7C4DFF');
 }
 _spd(p){const a=Math.abs(p);if(a<10)return 0;let s=Math.max(ANIM_MIN_SPD,ANIM_MAX_SPD-(a/ANIM_MAX_W)*(ANIM_MAX_SPD-ANIM_MIN_SPD));if(a>=3000)s*=0.4;else if(a>=2000)s*=0.6;else if(a>=1000)s*=0.8;return s;}
-_sf(el,id,p,d,c,o){if(!el)return;if(Math.abs(p)<10){this._sa(el,'opacity','0');return;}this._sa(el,'stroke',c);this._sa(el,'opacity',o);if(this._fs[id]!==d){this._fs[id]=d;el.setAttribute('class','fa '+d);this._resync=true;}}
+_sf(el,id,p,d,c,o){if(!el)return;if(Math.abs(p)<10){this._sa(el,'opacity','0');return;}this._sa(el,'stroke',c);this._sa(el,'opacity',o);if(this._fs[id]!==d){this._fs[id]=d;el.setAttribute('class','fa '+d);this._resync=true;}if(this._c.flow_speed!=='synced'){const fp=this._fsp||(this._fsp={});const sp=Math.min(6,Math.max(0.5,2500/Math.abs(p)));const o0=fp[id];if(!o0||Math.abs(sp-o0)/o0>0.15){fp[id]=sp;el.style.setProperty('--spd',sp.toFixed(2)+'s');}}}
 _tween(id,target,fmt){const el=this._$(id);if(!el)return;if(target===null||(this._rm&&this._c.animations!=='always')){delete this._twq[id];el.textContent=fmt(target);this._twv[id]=target;return;}const from=this._twv[id];if(from===undefined||from===null||Math.abs(target-from)<1){delete this._twq[id];el.textContent=fmt(target);this._twv[id]=target;return;}this._twq[id]={el,from,to:target,fmt,t0:performance.now()};if(!this._twRaf)this._twRaf=requestAnimationFrame(t=>this._twStep(t));}
 _twStep(t){this._twRaf=null;const q=this._twq;let live=false;for(const id in q){const w=q[id];let k=Math.min(1,(t-w.t0)/600);k=1-Math.pow(1-k,3);w.el.textContent=w.fmt(w.from+(w.to-w.from)*k);if(k<1)live=true;else{this._twv[id]=w.to;delete q[id];}}if(live)this._twRaf=requestAnimationFrame(t2=>this._twStep(t2));}
 _spark(id,aid,data,mx){const el=this._$(id);const af=this._$(aid);if(!el||!data.length)return;const w=200,h=55,py=2,max=mx||Math.max(...data)||1;const pts=data.map((v,i)=>[(i/(data.length-1))*w,py+(1-v/max)*(h-py*2)]);if(pts.length<2)return;const tension=0.3;const cp=(p0,p1,p2,t)=>[p1[0]+(p2[0]-p0[0])*t,p1[1]+(p2[1]-p0[1])*t];let d='M'+pts[0][0].toFixed(1)+','+pts[0][1].toFixed(1);for(let i=0;i<pts.length-1;i++){const p0=pts[Math.max(0,i-1)];const p1=pts[i];const p2=pts[i+1];const p3=pts[Math.min(pts.length-1,i+2)];const c1=cp(p0,p1,p2,tension);const c2=[p2[0]-(p3[0]-p1[0])*tension,p2[1]-(p3[1]-p1[1])*tension];d+=' C'+c1[0].toFixed(1)+','+c1[1].toFixed(1)+' '+c2[0].toFixed(1)+','+c2[1].toFixed(1)+' '+p2[0].toFixed(1)+','+p2[1].toFixed(1);}el.setAttribute('d',d);if(af){af.setAttribute('d',d+'L'+w+','+h+'L0,'+h+'Z');}}
@@ -936,7 +977,7 @@ this._st(this._$('db'),L.charge+' '+this._fmtE(dC)+' '+L.discharge+' '+this._fmt
 const solF=sol??0,batF=bat??0,gridF=grid??0,loadF=load??0;
 const maxP=Math.max(solF,Math.abs(batF),Math.abs(gridF),loadF);
 const syncSpd=maxP>10?this._spd(maxP):3;
-if(this._syncSpd<=0||Math.abs(syncSpd-this._syncSpd)/this._syncSpd>0.1){this._syncSpd=syncSpd;const spd=syncSpd.toFixed(1)+'s';['fs','fg','fb','fh','fe','fex1','fex2','fex3'].forEach(id=>{const el=this._$(id);if(el)el.style.setProperty('--spd',spd);});this._resync=true;}
+if(c.flow_speed==='synced'&&(this._syncSpd<=0||Math.abs(syncSpd-this._syncSpd)/this._syncSpd>0.1)){this._syncSpd=syncSpd;const spd=syncSpd.toFixed(1)+'s';['fs','fg','fb','fh','fe','fex1','fex2','fex3'].forEach(id=>{const el=this._$(id);if(el)el.style.setProperty('--spd',spd);});this._resync=true;}
 this._sf(this._$('fs'),'s',solF,'fd','var(--green)','0.8');
 this._sf(this._$('fg'),'g',gridF,gridF>0?'fr':'fL',gridF>0?'var(--red)':'var(--green)','0.7');
 this._sf(this._$('fb'),'b',batF,batF<0?'fd':'fu',batF<0?'var(--green)':'var(--solar)','0.75');
@@ -1004,6 +1045,7 @@ const iconLbl={appliance:L.appliance,heatpump:L.heatpump,garage:L.garage,generic
 });
 
 // Phase lock — restart all flow animations in the same frame so pulses relay through the inverter
+if(this._resync&&c.flow_speed!=='synced'){this._resync=false;}
 if(this._resync){this._resync=false;const els=['fs','fg','fb','fh','fe','fex1','fex2','fex3'].map(id=>this._$(id)).filter(Boolean);const half='-'+(this._syncSpd/2).toFixed(2)+'s';els.forEach(el=>{let d='0s';if(el.id==='fh')d=half;else if(el.id==='fb'&&this._fs['b']==='fd')d=half;else if(el.id==='fg'&&this._fs['g']==='fL')d=half;el.style.animationDelay=d;if(el.getAnimations)el.getAnimations().forEach(a=>{a.currentTime=0;});});}
 
 const batCap=c.battery_capacity??5120;const shuSoc=c.shutdown_soc??20;
