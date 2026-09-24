@@ -1,3 +1,13 @@
+## v1.3.45
+ 
+- Card style option: `xPower` (default) or `Home Assistant` (follows the theme's card background, shadow, border and radius)
+- Self-sufficiency badge (leaf + percentage) is always visible, same size and height as the weather temperature, with the leaf just above it
+- Self-sufficiency frame renamed to **Energy source** frame; grid and battery segments now grow symmetrically around their anchors
+- Energy source frame can be turned off (`energy_frame: false`; old `autarky_frame` still works); the badge stays visible
+- Hovering or tapping the self-sufficiency badge shows its name for a few seconds
+- Flow speed is now proportional to each line's power by default (`flow_speed: proportional`); `synced` keeps the previous phase-locked relay
+- Language defaults to the Home Assistant language (`language` empty = auto)
+- Editor labels update immediately when the language is changed
 ## v1.3.44
 
 - Card style option: `xPower` (default) or `Home Assistant` (follows the theme's card background, shadow, border and radius)
