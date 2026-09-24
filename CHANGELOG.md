@@ -1,3 +1,11 @@
+## v1.3.44
+
+- Card style option: `xPower` (default) or `Home Assistant` (follows the theme's card background, shadow, border and radius)
+- Self-sufficiency badge (leaf + percentage) is always visible
+- Self-sufficiency frame can be turned off (`autarky_frame: false`); the badge stays visible
+- Flow speed is now proportional to each line's power by default (`flow_speed: proportional`); `synced` keeps the previous phase-locked relay
+- Language defaults to the Home Assistant language (`language` empty = auto)
+- Editor labels update immediately when the language is changed
 ## v1.3.43
 - Bug fixing
 ## v1.3.42
