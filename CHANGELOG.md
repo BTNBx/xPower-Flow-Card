@@ -1,10 +1,10 @@
 ## v1.3.45
-
-* Self-sufficiency badge now uses the same size and height as the weather temperature, with the leaf just above it
-* Hovering or tapping the self-sufficiency badge shows its name for a few seconds
-* Self-sufficiency frame renamed to Energy source frame
-* Energy source frame: grid and battery segments now grow symmetrically around their anchors
-* Frame option renamed to `energy_frame` (old `autarky_frame` still works)
+ 
+- Self-sufficiency badge now uses the same size and height as the weather temperature, with the leaf just above it
+- Hovering or tapping the self-sufficiency badge shows its name for a few seconds
+- Self-sufficiency frame renamed to Energy source frame
+- Energy source frame: grid and battery segments now grow symmetrically around their anchors
+- Frame option renamed to `energy_frame` (old `autarky_frame` still works)
 ## v1.3.44
 - Self-sufficiency badge now uses the same size and height as the weather temperature, with the leaf just above it
 - Hovering or tapping the self-sufficiency badge shows its name for a few seconds
