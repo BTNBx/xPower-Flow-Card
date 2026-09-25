@@ -1,3 +1,9 @@
+## v1.3.46
+
+* New optional `weather_entity` (any `weather.*`): the sun icon now shows the current conditions (partly cloudy, cloudy, rain, heavy rain, thunderstorm, snow/hail, fog, wind)
+* At night (sun below the horizon) the sun turns into a moon, with the same weather overlays
+* Self-sufficiency badge: larger leaf icon (7 px → 10 px)
+* Weather temperature and humidity fall back to the weather entity attributes when `weather_temp` / `weather_humidity` are empty
 ## v1.3.45
  
 - Self-sufficiency badge now uses the same size and height as the weather temperature, with the leaf just above it
