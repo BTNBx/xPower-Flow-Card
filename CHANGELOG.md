@@ -1,3 +1,7 @@
+## v1.3.47
+
+- New `mppt_scale` option (0.8–1.6, default 1) to enlarge the PV1/PV2/PV3 side info (dual/triple MPPT); also available as the `--xpf-mppt-scale` CSS variable
+- New animated weather icons (`weather_entity`): rain, pouring, thunder, thunder with rain, snow, sleet, hail, fog, wind, wind with clouds, exceptional; twinkling stars on clear nights. Animations respect reduced motion
 ## v1.3.46
 
 * New optional `weather_entity` (any `weather.*`): the sun icon now shows the current conditions (partly cloudy, cloudy, rain, heavy rain, thunderstorm, snow/hail, fog, wind)
