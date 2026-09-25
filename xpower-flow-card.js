@@ -1,16 +1,14 @@
 // xPower Flow Card — Modern power flow card for solar hybrid inverters
 // Copyright (C) 2025 BTNBx — MIT License
-const V='1.3.46';
+const V='1.3.47';
 
 /* ═══════════════════════════════════════
    CHANGELOG — full history in CHANGELOG.md
    ═══════════════════════════════════════
-## v1.3.46
+## v1.3.47
 
-* New optional `weather_entity` (any `weather.*`): the sun icon now shows the current conditions (partly cloudy, cloudy, rain, heavy rain, thunderstorm, snow/hail, fog, wind)
-* At night (sun below the horizon) the sun turns into a moon, with the same weather overlays
-* Self-sufficiency badge: larger leaf icon (7 px → 10 px)
-* Weather temperature and humidity fall back to the weather entity attributes when `weather_temp` / `weather_humidity` are empty
+- New `mppt_scale` option (0.8–1.6, default 1) to enlarge the PV1/PV2/PV3 side info (dual/triple MPPT); also available as the `--xpf-mppt-scale` CSS variable
+- New animated weather icons (`weather_entity`): rain, pouring, thunder, thunder with rain, snow, sleet, hail, fog, wind, wind with clouds, exceptional; twinkling stars on clear nights. Animations respect reduced motion
 */
 
 /* ═══════════════════════════════════════
@@ -235,7 +233,7 @@ const DEFAULTS={
   battery_charge:'',battery_discharge:'',
   grid_voltage_l2:'',grid_voltage_l3:'',
   bat_polarity:'negative',grid_polarity:'positive',
-  shutdown_soc:20,battery_capacity:5120,grid_threshold:0,font_size:24,language:'',
+  shutdown_soc:20,battery_capacity:5120,grid_threshold:0,font_size:24,mppt_scale:1,language:'',
   inverter_name:'DEYE',
   weather_temp:'',weather_humidity:'',weather_entity:'',
   price_sensor:'',
@@ -283,15 +281,32 @@ const SUNTICKS=(()=>{let s='';const N=96;const cl=t=>{const m=(a,b)=>Math.round(
 const MPPT_ROWS=[1,2,3].map(k=>`<g id="mp${k}" class="mpr" style="display:none"><rect x="108" y="-7" width="90" height="14" fill="transparent" pointer-events="all"/><text id="ml${k}" x="112" y="0" class="pvh" style="text-anchor:start"></text><text id="mw${k}" x="166" y="0" class="pvv" style="text-anchor:end;fill:var(--t1);opacity:0.8"></text><text id="mv${k}" x="172" y="0" class="pvu" style="text-anchor:start"></text></g>`).join('');
 const XPF_ARROW={chevron:{up:['M-4.5 2.5 L0 -2.5 L4.5 2.5'],down:['M-4.5 -2.5 L0 2.5 L4.5 -2.5'],flat:['M-5 0 L5 0']},arrow:{up:['M-5 5 L4 -4','M-1 -4 L4 -4 L4 1'],down:['M-5 -4 L4 5','M4 0 L4 5 L-1 5'],flat:['M-6 0 L4.5 0','M1.5 -3 L5 0 L1.5 3']}};
 const XPF_NUDGE={chevron:{up:[{transform:'translateY(2px)',opacity:0.4},{transform:'translateY(0)',opacity:1}],down:[{transform:'translateY(-2px)',opacity:0.4},{transform:'translateY(0)',opacity:1}]},arrow:{up:[{transform:'translate(-2px,2px)',opacity:0.4},{transform:'translate(0,0)',opacity:1}],down:[{transform:'translate(-2px,-2px)',opacity:0.4},{transform:'translate(0,0)',opacity:1}]}};
-const WXC=(x,y,s,dk)=>{const sh='<circle cx="-7" cy="1" r="6.5"/><circle cx="1" cy="-3.5" r="8.5"/><circle cx="9" cy="1.5" r="6"/><rect x="-13.5" y="1" width="28.5" height="7" rx="3.5"/>';return `<g transform="translate(${x} ${y}) scale(${s})"><g fill="#546E7A" stroke="#546E7A" stroke-width="1.8">${sh}</g><g fill="${dk?'#90A4AE':'#ECEFF1'}">${sh}</g></g>`;};
-const WXR=(x,y,n,s)=>{let r='';for(let i=0;i<n;i++){const xi=(x+(i-(n-1)/2)*5*s).toFixed(1);r+=`<line class="wxd" style="animation-delay:${((i*.23)%1).toFixed(2)}s" x1="${xi}" y1="${y}" x2="${(xi-2.5*s).toFixed(1)}" y2="${(y+6*s).toFixed(1)}" stroke="#64B5F6" stroke-width="${(1.8*s).toFixed(2)}" stroke-linecap="round"/>`;}return r;};
-const WXS=(x,y,s)=>[[-6,0],[0,4],[6,0],[-3,8],[4,9]].map((d,i)=>`<circle class="wxd wxs" style="animation-delay:${(i*.2).toFixed(1)}s" cx="${(x+d[0]*s).toFixed(1)}" cy="${(y+d[1]*s).toFixed(1)}" r="${(1.6*s).toFixed(2)}" fill="#fff"/>`).join('');
-const WXB=(x,y,s)=>`<polygon transform="translate(${x} ${y}) scale(${s})" points="2,0 -4,9 0,9 -2,17 6,6 2,6 4,0" fill="#FFCA28" stroke="#E65100" stroke-width=".6"/>`;
-const WXF=(x,y,w)=>[0,5,10].map((d,i)=>`<line x1="${x-w/2+i*3}" y1="${y+d}" x2="${x+w/2-i*2}" y2="${y+d}" stroke="#CFD8DC" stroke-width="2.4" stroke-linecap="round" opacity=".9"/>`).join('');
-const WXW=(x,y,s)=>`<g transform="translate(${x} ${y}) scale(${s})" fill="none" stroke="#E0F2F1" stroke-width="1.8" stroke-linecap="round"><path d="M-14 0h16a4 4 0 1 0-4-4"/><path d="M-10 6h20a4 4 0 1 1-4 4"/></g>`;
-const WXK={partlycloudy:'p',cloudy:'c',rainy:'r',pouring:'po',lightning:'l','lightning-rainy':'l',snowy:'s','snowy-rainy':'s',hail:'s',fog:'f',windy:'w','windy-variant':'w'};
-const WXL={'':[0,0,1,1],p:[-7,-6,.8,1],f:[0,-5,.75,.7],w:[-8,-5,.7,1]};
-const WXG={'':'',p:WXC(254,43,1.15),c:WXC(259,31,.9,1)+WXC(249,41,1.45),r:WXC(250,33,1.4)+WXR(250,47,3,1.2),po:WXC(250,33,1.4,1)+WXR(250,47,5,1.2),l:WXC(250,33,1.4,1)+WXB(250,43,1.1),s:WXC(250,33,1.4)+WXS(250,49,1.3),f:WXF(250,44,40),w:WXW(254,44,1.3)};
+const WXW=(x,y,s)=>`<g transform="translate(${x} ${y}) scale(${s})" fill="none" stroke="#64D2FF" stroke-width="1.8" stroke-linecap="round"><path class="wxa wxwi" d="M-14 0h16a4 4 0 1 0-4-4"/><path class="wxa wxwi" style="animation-delay:.6s" d="M-10 6h20a4 4 0 1 1-4 4"/></g>`;
+const WXA=i=>`<g transform="translate(250 38) scale(.9) translate(-32 -36)">${i}</g>`;
+const WCP='M19 44h27a9 9 0 0 0 0-18a13 13 0 0 0-25-3a10.6 10.6 0 0 0-2 21z';
+const WCL=(t,d,c)=>`<g transform="${t||'translate(0 0)'}"><path class="wxa wxcl ${c||'wxc'}" d="${d||WCP}"/></g>`;
+const WDR=a=>`<g stroke="#0A84FF" stroke-width="3" stroke-linecap="round">${a.map((p,i)=>`<line class="wxa wxdr" style="animation-delay:${(p[2]!==undefined?p[2]:i*.25).toFixed(2)}s" x1="${p[0]}" y1="${p[1]}" x2="${p[0]-3}" y2="${p[1]+8}"/>`).join('')}</g>`;
+const WBO='<polygon class="wxa wxbo" points="33,40 25,52 31,52 28,62 39,48 33,48 36,40" fill="#FFD60A"/>';
+const WSN=(x,y,dl)=>`<g class="wxa wxsn" style="animation-delay:${dl}s" stroke="#fff" stroke-width="2" stroke-linecap="round"><line x1="${x}" y1="${y-4.5}" x2="${x}" y2="${y+4.5}"/><line x1="${x-3.9}" y1="${y-2.2}" x2="${x+3.9}" y2="${y+2.2}"/><line x1="${x-3.9}" y1="${y+2.2}" x2="${x+3.9}" y2="${y-2.2}"/></g>`;
+const WHA=[[21,51,3,0],[32,54,3,.35],[43,51,3,.7],[27,59,2.3,.55],[38,59,2.3,.15]].map(p=>`<circle class="wxa wxha" style="animation-delay:${p[3]}s" cx="${p[0]}" cy="${p[1]}" r="${p[2]}" fill="#fff" stroke="#64D2FF" stroke-width="1.5"/>`).join('');
+const WST=(x,y,r,dl)=>`<path class="wxa wxst" style="animation-delay:${dl}s" fill="#fff" d="M${x} ${y-r}L${x+r*.28} ${y-r*.28}L${x+r} ${y}L${x+r*.28} ${y+r*.28}L${x} ${y+r}L${x-r*.28} ${y+r*.28}L${x-r} ${y}L${x-r*.28} ${y-r*.28}Z"/>`;
+const WXK={partlycloudy:'p',cloudy:'c',rainy:'r',pouring:'po',lightning:'l','lightning-rainy':'lr',snowy:'s','snowy-rainy':'sr',hail:'h',fog:'f',windy:'w','windy-variant':'wv',exceptional:'x'};
+const WXL={'':[0,0,1,1],p:[-4.5,-12.6,.75,1],w:[-8,-5,.7,1]};
+const WXG={'':'',
+p:WXA(WCL('','M21 50h25a8.5 8.5 0 0 0 0-17a12 12 0 0 0-23-2.5a9.8 9.8 0 0 0-2 19.5z')),
+c:WXA(WCL('translate(8 -6)','M24 34h20a7 7 0 0 0 0-14a10 10 0 0 0-19-2.3a8 8 0 0 0-1 16.3z','wxc2')+WCL('translate(-2 6)')),
+r:WXA(WDR([[24,47],[33,47,.5],[42,47,.25]])+WCL()),
+po:WXA(WDR([[22,47],[29,47,.5],[36,47,.25],[43,47,.75]])+WCL()),
+l:WXA(WBO+WCL()),
+lr:WXA(WDR([[21,48],[44,48,.5]])+WBO+WCL()),
+s:WXA(WSN(22,53,0)+WSN(33,56,.7)+WSN(43,52,1.4)+WCL()),
+sr:WXA(WDR([[23,48],[42,48,.5]])+WSN(31,54,.3)+WCL()),
+h:WXA(WHA+WCL()),
+f:WXA(WCL('translate(0 -6)')+'<g stroke="#AEAEB2" stroke-width="3" stroke-linecap="round"><line class="wxa wxfg" x1="14" y1="47" x2="50" y2="47"/><line class="wxa wxfg" style="animation-delay:1.5s" x1="20" y1="54" x2="44" y2="54"/></g>'),
+w:WXW(254,44,1.3),
+wv:WXA(WCL('translate(0 -4)','M24 34h20a7 7 0 0 0 0-14a10 10 0 0 0-19-2.3a8 8 0 0 0-1 16.3z')+'<g fill="none" stroke="#64D2FF" stroke-width="2.6" stroke-linecap="round"><path class="wxa wxwi" d="M10 40h30a5 5 0 1 0-5-5"/><path class="wxa wxwi" style="animation-delay:.6s" d="M14 48h34a5 5 0 1 1-5 5"/></g>'),
+x:WXA('<g class="wxa wxpu"><path d="M32 12L55 52H9z" fill="#FF9F0A" stroke="#FF9F0A" stroke-width="5" stroke-linejoin="round"/><rect x="29.5" y="25" width="5" height="15" rx="2.5" fill="#1c1c1e"/><circle cx="32" cy="46" r="3" fill="#1c1c1e"/></g>')};
+const WXN=WST(275,15,4.5,0)+WST(284,29,3,1.2);
 const FLBL={solar:t=>t.ps+' (MPPT1)',solar2:t=>t.ps+' (MPPT2)',solar3:t=>t.ps+' (MPPT3)',battery:t=>t.pb,battery_charge:t=>t.pbc+' '+t.sp,battery_discharge:t=>t.pbd+' '+t.sp,soc:t=>t.sc,grid:t=>t.pg,load:t=>t.pl,grid_voltage:t=>t.vg+' (L1)',grid_voltage_l2:t=>t.vg+' L2 '+t.op,grid_voltage_l3:t=>t.vg+' L3 '+t.op,battery_voltage:t=>t.vb,temperature:t=>t.ti,battery_temperature:t=>t.tb,frequency:t=>t.fq,grid_status:t=>t.gs,pv_voltage:t=>t.vp+' (MPPT1)',pv_voltage2:t=>t.vp+' (MPPT2)',pv_voltage3:t=>t.vp+' (MPPT3)',sun_entity:t=>(t&&t.sun)||'Sun Entity (solar ring)',daily_solar:t=>t.dso,daily_import:t=>t.dim,daily_export:t=>t.dex,daily_load:t=>t.dlo,daily_charge:t=>t.dch,daily_discharge:t=>t.ddi,weather_entity:t=>(t&&t.wx)||'Weather Entity (sun icon)',weather_temp:t=>t.wt,weather_humidity:t=>t.wh,ev_power:t=>t.evp+' '+t.op,ev_soc:t=>t.evs+' '+t.op,daily_ev:t=>t.evd+' '+t.op,import_cost:t=>t.cim,export_cost:t=>t.cex};
 const EDL={"pt":{"wx":"Entidade Meteo (\u00edcone sol)","ps":"Pot\u00eancia Solar","pb":"Pot\u00eancia Bateria","pbc":"Pot\u00eancia Carga Bat.","pbd":"Pot\u00eancia Descarga Bat.","sc":"SOC Bateria","pg":"Pot\u00eancia Rede","pl":"Pot\u00eancia Consumo","vg":"Tens\u00e3o Rede","vb":"Tens\u00e3o Bateria","vp":"Tens\u00e3o PV","sun":"Entidade Sol (anel solar)","ti":"Temp. Inversor","tb":"Temp. Bateria","fq":"Frequ\u00eancia Rede","gs":"Estado Rede","dso":"Solar Di\u00e1rio","dim":"Importa\u00e7\u00e3o Di\u00e1ria","dex":"Exporta\u00e7\u00e3o Di\u00e1ria","dlo":"Consumo Di\u00e1rio","dch":"Carga Di\u00e1ria","ddi":"Descarga Di\u00e1ria","wt":"Temp. Exterior","wh":"Humidade","evp":"Pot\u00eancia Carregador EV","evs":"SOC EV","evd":"Energia EV Di\u00e1ria","cim":"Custo Importa\u00e7\u00e3o Di\u00e1rio","cex":"Ganhos Exporta\u00e7\u00e3o Di\u00e1rios","op":"(opcional)","sp":"(separado, opcional)"},"de":{"wx":"Wetter-Entit\u00e4t (Sonnensymbol)","ps":"Solarleistung","pb":"Batterieleistung","pbc":"Ladeleistung Bat.","pbd":"Entladeleistung Bat.","sc":"Batterie-SOC","pg":"Netzleistung","pl":"Verbrauchsleistung","vg":"Netzspannung","vb":"Batteriespannung","vp":"PV-Spannung","sun":"Sonnen-Entit\u00e4t (Ring)","ti":"WR-Temp.","tb":"Bat.-Temp.","fq":"Netzfrequenz","gs":"Netzstatus","dso":"Tagesertrag Solar","dim":"Tagesimport","dex":"Tagesexport","dlo":"Tagesverbrauch","dch":"Tagesladung","ddi":"Tagesentladung","wt":"Au\u00dfentemp.","wh":"Luftfeuchte","evp":"EV-Ladeleistung","evs":"EV-SOC","evd":"EV-Tagesenergie","cim":"T\u00e4gl. Importkosten","cex":"T\u00e4gl. Exporterl\u00f6s","op":"(optional)","sp":"(getrennt, optional)"},"fr":{"wx":"Entit\u00e9 m\u00e9t\u00e9o (ic\u00f4ne soleil)","ps":"Puissance solaire","pb":"Puissance batterie","pbc":"Puissance charge bat.","pbd":"Puissance d\u00e9charge bat.","sc":"SOC batterie","pg":"Puissance r\u00e9seau","pl":"Puissance conso.","vg":"Tension r\u00e9seau","vb":"Tension batterie","vp":"Tension PV","sun":"Entit\u00e9 soleil (anneau)","ti":"Temp. onduleur","tb":"Temp. batterie","fq":"Fr\u00e9quence r\u00e9seau","gs":"\u00c9tat r\u00e9seau","dso":"Solaire journalier","dim":"Import journalier","dex":"Export journalier","dlo":"Conso. journali\u00e8re","dch":"Charge journali\u00e8re","ddi":"D\u00e9charge journali\u00e8re","wt":"Temp. ext.","wh":"Humidit\u00e9","evp":"Puissance chargeur VE","evs":"SOC VE","evd":"\u00c9nergie VE journali\u00e8re","cim":"Co\u00fbt import journalier","cex":"Gains export journaliers","op":"(optionnel)","sp":"(s\u00e9par\u00e9, optionnel)"},"es":{"wx":"Entidad tiempo (icono sol)","ps":"Potencia solar","pb":"Potencia bater\u00eda","pbc":"Potencia carga bat.","pbd":"Potencia descarga bat.","sc":"SOC bater\u00eda","pg":"Potencia red","pl":"Potencia consumo","vg":"Tensi\u00f3n red","vb":"Tensi\u00f3n bater\u00eda","vp":"Tensi\u00f3n PV","sun":"Entidad sol (anillo)","ti":"Temp. inversor","tb":"Temp. bater\u00eda","fq":"Frecuencia red","gs":"Estado red","dso":"Solar diario","dim":"Importaci\u00f3n diaria","dex":"Exportaci\u00f3n diaria","dlo":"Consumo diario","dch":"Carga diaria","ddi":"Descarga diaria","wt":"Temp. exterior","wh":"Humedad","evp":"Potencia cargador VE","evs":"SOC VE","evd":"Energ\u00eda VE diaria","cim":"Coste importaci\u00f3n diario","cex":"Ganancias exportaci\u00f3n diarias","op":"(opcional)","sp":"(separado, opcional)"},"it":{"wx":"Entit\u00e0 meteo (icona sole)","ps":"Potenza solare","pb":"Potenza batteria","pbc":"Potenza carica bat.","pbd":"Potenza scarica bat.","sc":"SOC batteria","pg":"Potenza rete","pl":"Potenza consumo","vg":"Tensione rete","vb":"Tensione batteria","vp":"Tensione PV","sun":"Entit\u00e0 sole (anello)","ti":"Temp. inverter","tb":"Temp. batteria","fq":"Frequenza rete","gs":"Stato rete","dso":"Solare giornaliero","dim":"Import giornaliero","dex":"Export giornaliero","dlo":"Consumo giornaliero","dch":"Carica giornaliera","ddi":"Scarica giornaliera","wt":"Temp. esterna","wh":"Umidit\u00e0","evp":"Potenza caricatore EV","evs":"SOC EV","evd":"Energia EV giornaliera","cim":"Costo import giornaliero","cex":"Guadagni export giornalieri","op":"(opzionale)","sp":"(separato, opzionale)"},"nl":{"wx":"Weer-entiteit (zonicoon)","ps":"Zonnevermogen","pb":"Batterijvermogen","pbc":"Laadvermogen bat.","pbd":"Ontlaadvermogen bat.","sc":"Batterij-SOC","pg":"Netvermogen","pl":"Verbruiksvermogen","vg":"Netspanning","vb":"Batterijspanning","vp":"PV-spanning","sun":"Zon-entiteit (ring)","ti":"Omvormer temp.","tb":"Batterij temp.","fq":"Netfrequentie","gs":"Netstatus","dso":"Dagelijks zonne","dim":"Dagelijkse import","dex":"Dagelijkse export","dlo":"Dagelijks verbruik","dch":"Dagelijkse lading","ddi":"Dagelijkse ontlading","wt":"Buitentemp.","wh":"Vochtigheid","evp":"EV-laadvermogen","evs":"EV-SOC","evd":"Dagelijkse EV-energie","cim":"Dagelijkse importkosten","cex":"Dagelijkse exportopbrengst","op":"(optioneel)","sp":"(gescheiden, optioneel)"},"pl":{"wx":"Encja pogody (ikona s\u0142o\u0144ca)","ps":"Moc PV","pb":"Moc baterii","pbc":"Moc \u0142adowania bat.","pbd":"Moc roz\u0142adowania bat.","sc":"SOC baterii","pg":"Moc sieci","pl":"Moc obci\u0105\u017cenia","vg":"Napi\u0119cie sieci","vb":"Napi\u0119cie baterii","vp":"Napi\u0119cie PV","sun":"Encja s\u0142o\u0144ca (pier\u015bcie\u0144)","ti":"Temp. falownika","tb":"Temp. baterii","fq":"Cz\u0119stotliwo\u015b\u0107 sieci","gs":"Stan sieci","dso":"Dzienny solar","dim":"Dzienny import","dex":"Dzienny eksport","dlo":"Dzienne zu\u017cycie","dch":"Dzienne \u0142adowanie","ddi":"Dzienne roz\u0142adowanie","wt":"Temp. zewn.","wh":"Wilgotno\u015b\u0107","evp":"Moc \u0142adowarki EV","evs":"SOC EV","evd":"Dzienna energia EV","cim":"Dzienny koszt importu","cex":"Dzienny zysk z eksportu","op":"(opcjonalnie)","sp":"(osobno, opcjonalnie)"}};
 
@@ -335,6 +350,8 @@ class XPowerFlowCardEditor extends HTMLElement{
     cfg.grid_threshold=isNaN(gthVal)?0:gthVal;
     const fsVal=parseInt(this.querySelector('#ed-fsize').value,10);
     cfg.font_size=isNaN(fsVal)?24:fsVal;
+    const mpsVal=parseFloat(this.querySelector('#ed-mps').value);
+    cfg.mppt_scale=isNaN(mpsVal)?1:Math.min(1.6,Math.max(0.8,mpsVal));
     cfg.bat_polarity=this.querySelector('#ed-bpol').value;
     cfg.grid_polarity=this.querySelector('#ed-gpol').value;
     const socVal=parseInt(this.querySelector('#ed-ssoc').value,10);
@@ -550,6 +567,12 @@ class XPowerFlowCardEditor extends HTMLElement{
       </div>
       <div class="row">
         <div class="field">
+          <label>MPPT text scale</label>
+          <input type="number" id="ed-mps" min="0.8" max="1.6" step="0.1" value="${c.mppt_scale??1}">
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
           <label>Extra Consumer 1: Name</label>
           <input type="text" id="ed-ex1name" value="${this._esc(c.extra1_name)}" placeholder="Auto">
         </div>
@@ -704,7 +727,7 @@ _tfmt(v,su0){const su=(su0||'').toUpperCase();const srcF=su.indexOf('F')>-1;cons
 _fmt(v){if(v===null)return this._lang.unavailable;const a=Math.abs(v);return a>=1000?(a/1000).toFixed(1)+' kW':a.toFixed(0)+' W';}
 _wx(c){const g=this._$('wxG'),b=this._$('wxBody');if(!g||!b)return;const H=this._h&&this._h.states;if(!H)return;const ws=c.weather_entity?H[c.weather_entity]:null;let s=ws?ws.state:'';if(s==='unavailable'||s==='unknown')s='';const sn=H[c.sun_entity||'sun.sun'];const night=!!s&&(s==='clear-night'||(sn&&sn.state==='below_horizon'));const k=s?(WXK[s]||''):'';const key=k+'|'+night;if(key===this._wxKey)return;this._wxKey=key;this._wxOn=!!s;
 const L=WXL[k];if(L){this._sa(b,'transform',`translate(${L[0]} ${L[1]}) translate(250 38) scale(${L[2]}) translate(-250 -38)`);this._ss(b,'opacity',String(L[3]));}else{this._ss(b,'opacity','0');}
-this._ss(this._$('sunBody'),'display',night?'none':'');this._ss(this._$('moonBody'),'display',night?'':'none');g.innerHTML=WXG[k];}
+this._ss(this._$('sunBody'),'display',night?'none':'');this._ss(this._$('moonBody'),'display',night?'':'none');g.innerHTML=WXG[k]+(night&&k===''?WXN:'');}
 _sunRing(c){const g=this._$('sunRing');if(!g)return;const eid=c.sun_entity||'sun.sun';const st=this._h&&this._h.states?this._h.states[eid]:null;
 if(!st||st.state!=='above_horizon'||!st.attributes||!st.attributes.next_rising||!st.attributes.next_setting){this._ss(g,'display','none');return;}
 const now=Date.now();const key=st.attributes.next_setting+'|'+st.attributes.next_rising+'|'+Math.floor(now/60000);if(key===this._srKey)return;this._srKey=key;
@@ -752,7 +775,7 @@ _bucket(arr,t0,t1,n){
 async _loadHistory(){if(this._histLoading||!this._h)return;this._histLoading=true;try{const c=this._c;const now=new Date();const start=new Date(now.getTime()-24*60*60*1000);const iso=encodeURIComponent(start.toISOString());const list=[c.solar,c.solar2,c.solar3,c.load,c.grid,c.battery,c.battery_charge,c.battery_discharge].filter(Boolean);const uniq=[...new Set(list)];if(!uniq.length)return;const entities=encodeURIComponent(uniq.join(','));const url='history/period/'+iso+'?filter_entity_id='+entities+'&minimal_response&no_attributes&significant_changes_only';const res=await this._h.callApi('GET',url);if(!res||!res.length)return;const t0=start.getTime(),t1=now.getTime();const byId={};for(const series of res){if(series.length)byId[series[0].entity_id]=this._bucket(series,t0,t1,HIST_POINTS);}const setSpark=(key,pts)=>{if(!pts)return;this._hist[key]=pts;this._histMax[key]=pts.length?Math.max(...pts)||1:1;};const sArr=[...new Set([c.solar,c.solar2,c.solar3].filter(Boolean))].map(e=>byId[e]).filter(a=>a&&a.length);if(sArr.length){const n=HIST_POINTS,tot=new Array(n).fill(0);for(const a of sArr)for(let i=0;i<n;i++)tot[i]+=a[i]||0;setSpark('solar',tot);}setSpark('load',byId[c.load]);setSpark('grid',byId[c.grid]);const bch=byId[c.battery_charge],bdis=byId[c.battery_discharge];if(bch||bdis){const n=HIST_POINTS,net=new Array(n);for(let i=0;i<n;i++){const d=bdis?bdis[i]:0,g=bch?bch[i]:0;net[i]=Math.abs(d-g);}setSpark('battery',net);}else{setSpark('battery',byId[c.battery]);}this._drawSparks();}catch(e){console.warn('xPower history:',e);}finally{this._histLoading=false;}}
 
 _render(){this._elc={};this._fsp={};this._syncSpd=0;this._ringKey='';this._mwc=new Map();this._srTk=null;this._srLit=-1;this._srKey='';const L=this._lang;const INV=String(this._c.inverter_name||'').replace(/[<>&]/g,m=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[m]));const s=this.shadowRoot;s.innerHTML=`<style>
-:host{--solar:var(--xpf-solar,#FFB300);--battery:var(--xpf-battery,#7C4DFF);--grid:var(--xpf-grid,#42A5F5);--load:var(--xpf-load,#26C6DA);--green:var(--xpf-green,#66BB6A);--red:var(--xpf-red,#EF5350);--orange:var(--xpf-orange,#FFA726);--t1:var(--xpf-text,rgba(255,255,255,0.92));--t3:var(--xpf-text-secondary,rgba(255,255,255,0.45));--xpf-r:var(--xpf-radius,20px);--xpf-vm-size:var(--xpf-font-size,${this._c.font_size||24}px);--flow-w:var(--xpf-flow-width,3);--flow-dash:var(--xpf-dash-size,100);--fw:var(--xpf-frame-width,1px);--fo:var(--xpf-frame-opacity,0.7);--batf:#fff;--batn:#111;--batt:rgba(255,255,255,0.22)}
+:host{--solar:var(--xpf-solar,#FFB300);--battery:var(--xpf-battery,#7C4DFF);--grid:var(--xpf-grid,#42A5F5);--load:var(--xpf-load,#26C6DA);--green:var(--xpf-green,#66BB6A);--red:var(--xpf-red,#EF5350);--orange:var(--xpf-orange,#FFA726);--t1:var(--xpf-text,rgba(255,255,255,0.92));--t3:var(--xpf-text-secondary,rgba(255,255,255,0.45));--xpf-r:var(--xpf-radius,20px);--xpf-vm-size:var(--xpf-font-size,${this._c.font_size||24}px);--mps:var(--xpf-mppt-scale,${Math.min(1.6,Math.max(0.8,Number(this._c.mppt_scale)||1))});--flow-w:var(--xpf-flow-width,3);--flow-dash:var(--xpf-dash-size,100);--fw:var(--xpf-frame-width,1px);--fo:var(--xpf-frame-opacity,0.7);--batf:#fff;--batn:#111;--batt:rgba(255,255,255,0.22)}
 :host(.light){--t1:var(--xpf-text,rgba(0,0,0,0.85));--t3:var(--xpf-text-secondary,rgba(0,0,0,0.45));--batf:rgba(0,0,0,0.85);--batn:#fff;--batt:rgba(0,0,0,0.12)}
 :host(.light) ha-card{background:var(--xpf-bg,rgba(255,255,255,0.92))}
 :host(.light) .fl{stroke:rgba(0,0,0,0.06)}
@@ -772,7 +795,8 @@ ha-card{background:var(--xpf-bg,rgba(12,14,24,0.92));border:1px solid transparen
 #aulbl.show{opacity:1}
 :host(.rm) #aulbl{transition:none}
 #auhit{cursor:default}
-.mpr{cursor:pointer}.mpr:hover{opacity:.85}
+.mpr{cursor:pointer}
+#mpw{transform:scale(var(--mps,1));transform-box:fill-box;transform-origin:100% 50%}.mpr:hover{opacity:.85}
 svg{width:100%;height:auto;display:block}
 .fl{fill:none;stroke:rgba(255,255,255,0.04);stroke-width:2;stroke-linecap:round}
 .fa{fill:none;stroke-width:var(--flow-w);stroke-linecap:round;stroke-dasharray:var(--flow-dash) var(--flow-dash);transition:stroke 0.8s ease,opacity 0.8s ease}
@@ -783,7 +807,21 @@ svg{width:100%;height:auto;display:block}
 .bat-charge{animation:batPulse 1.5s ease-in-out infinite}
 :host(.rm) .fa,:host(.rm) .led-on,:host(.rm) .bat-charge{animation:none !important}
 :host(.off) .fa,:host(.off) .led-on,:host(.off) .bat-charge,:host(.off) .wxd{animation-play-state:paused}
-@keyframes wxdr{0%{transform:translateY(-3px);opacity:0}30%{opacity:1}100%{transform:translateY(5px);opacity:0}}.wxd{animation:wxdr 1s linear infinite}.wxs{animation-duration:1.8s}:host(.rm) .wxd{animation:none}#wxBody{transition:opacity .6s ease}
+@keyframes wxdr{0%{transform:translateY(-3px);opacity:0}30%{opacity:1}100%{transform:translateY(5px);opacity:0}}.wxd{animation:wxdr 1s linear infinite}.wxs{animation-duration:1.8s}:host(.rm) .wxd{animation:none}
+.wxc{fill:#E5E5EA;stroke:var(--wxcs,none);stroke-width:1.2}
+.wxc2{fill:#AEAEB2;stroke:var(--wxcs,none);stroke-width:1.2}
+:host(.light){--wxcs:#AEAEB2}
+.wxdr{animation:wxdr2 1s linear infinite}@keyframes wxdr2{0%{transform:translateY(-4px);opacity:0}25%{opacity:1}100%{transform:translateY(6px);opacity:0}}
+.wxbo{animation:wxbo 2.4s ease-in-out infinite}@keyframes wxbo{0%,38%,52%,100%{opacity:1}44%{opacity:.15}46%{opacity:.35}48%{opacity:1}}
+.wxha{animation:wxha 1.1s cubic-bezier(.5,0,.8,.4) infinite}@keyframes wxha{0%{transform:translateY(-5px);opacity:0}20%{opacity:1}80%{transform:translateY(4px)}90%{transform:translateY(2px)}100%{transform:translateY(5px);opacity:0}}
+.wxsn{transform-box:fill-box;transform-origin:center;animation:wxsn 2.2s ease-in-out infinite}@keyframes wxsn{0%{transform:translate(0,-4px) rotate(0);opacity:0}25%{opacity:1}100%{transform:translate(2px,6px) rotate(90deg);opacity:0}}
+.wxwi{stroke-dasharray:60;animation:wxwi 2.6s ease-in-out infinite}@keyframes wxwi{0%{stroke-dashoffset:60}50%{stroke-dashoffset:0}100%{stroke-dashoffset:-60}}
+.wxcl{animation:wxcl 4s ease-in-out infinite}@keyframes wxcl{0%,100%{transform:translateX(0)}50%{transform:translateX(2.5px)}}
+.wxst{transform-box:fill-box;transform-origin:center;animation:wxst 2.4s ease-in-out infinite}@keyframes wxst{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(.55);opacity:.4}}
+.wxpu{transform-box:fill-box;transform-origin:center;animation:wxpu 1.8s ease-in-out infinite}@keyframes wxpu{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+.wxfg{animation:wxfg 3s ease-in-out infinite}@keyframes wxfg{0%,100%{transform:translateX(-2.5px)}50%{transform:translateX(2.5px)}}
+:host(.off) .wxa{animation-play-state:paused}
+:host(.rm) .wxa{animation:none}#wxBody{transition:opacity .6s ease}
 #sunG{transform-origin:250px 38px;transition:opacity 0.8s ease}
 #gridIcon,#loadIcon,#batIcon,#evIcon{transition:opacity 0.8s ease}
 #vs,#vg,#vl,#vb,#ve{transition:opacity 0.8s ease}
@@ -838,7 +876,7 @@ svg{width:100%;height:auto;display:block}
 </g>
 <path class="fl" d="M250,96 L250,187.7"/><path class="fl" d="M250,262.4 L250,364"/><path class="fl" d="M90,225 L212.7,225"/><path class="fl" d="M287.4,225 L395,225"/>
 <path id="fs" class="fa" d="M250,96 L250,187.7" pathLength="100" opacity="0"/><path id="fb" class="fa" d="M250,262.4 L250,364" pathLength="100" opacity="0"/><path id="fg" class="fa" d="M90,225 L212.7,225" pathLength="100" opacity="0"/><path id="fh" class="fa" d="M287.4,225 L395,225" pathLength="100" opacity="0"/>
-<g id="nSolar" class="ct"><g id="sunRing" style="display:none">${SUNTICKS}<path id="srhit" d="M224.5,63.5 A36,36 0 1 1 275.5,63.5" fill="none" stroke="transparent" stroke-width="16" pointer-events="stroke" style="cursor:pointer"/><text id="srx" x="215" y="66" class="srt" style="text-anchor:end"></text><text id="ssx" x="285" y="66" class="srt" style="text-anchor:start"></text></g><g id="sunG"><g id="wxBody"><g id="sunBody"><circle cx="250" cy="38" r="28" fill="url(#sunhl)"/><circle cx="250" cy="38" r="19" fill="url(#sundisc)"/></g><g id="moonBody" style="display:none"><circle cx="250" cy="38" r="27" fill="url(#moonhl)"/><circle cx="250" cy="38" r="18" fill="url(#moondisc)" mask="url(#moonmask)"/></g></g><g id="wxG"></g></g><text x="250" y="81" class="vm" style="fill:var(--green)" id="vs"></text><text x="250" y="-10" class="vl">${L.solar}</text><text id="ds" x="338" y="34" class="pvv" style="font-size:13px"></text><text id="pv" x="338" y="48" class="pvu" style="font-size:11px"></text>${MPPT_ROWS}</g>
+<g id="nSolar" class="ct"><g id="sunRing" style="display:none">${SUNTICKS}<path id="srhit" d="M224.5,63.5 A36,36 0 1 1 275.5,63.5" fill="none" stroke="transparent" stroke-width="16" pointer-events="stroke" style="cursor:pointer"/><text id="srx" x="215" y="66" class="srt" style="text-anchor:end"></text><text id="ssx" x="285" y="66" class="srt" style="text-anchor:start"></text></g><g id="sunG"><g id="wxBody"><g id="sunBody"><circle cx="250" cy="38" r="28" fill="url(#sunhl)"/><circle cx="250" cy="38" r="19" fill="url(#sundisc)"/></g><g id="moonBody" style="display:none"><circle cx="250" cy="38" r="27" fill="url(#moonhl)"/><circle cx="250" cy="38" r="18" fill="url(#moondisc)" mask="url(#moonmask)"/></g></g><g id="wxG"></g></g><text x="250" y="81" class="vm" style="fill:var(--green)" id="vs"></text><text x="250" y="-10" class="vl">${L.solar}</text><text id="ds" x="338" y="34" class="pvv" style="font-size:13px"></text><text id="pv" x="338" y="48" class="pvu" style="font-size:11px"></text><g id="mpw">${MPPT_ROWS}</g></g>
 <g id="aubadge"><g id="au-leaf" transform="translate(498 -2.8)" fill="none" stroke="var(--green)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><g transform="translate(-5 -5) scale(0.4167)"><path d="M5 21c.5-4.5 2.5-8 7-10"/><path d="M9 18c6.218 0 10.5-3.288 11-12v-2h-4.014c-9 0-11.986 4-12 9c0 1 0 3 2 5h3z"/></g></g><text x="498" y="8" id="va" font-family="-apple-system,sans-serif" font-size="11" font-weight="800" fill="var(--t1)" text-anchor="middle" dominant-baseline="middle"></text><text id="aulbl" x="511" y="21" font-family="-apple-system,sans-serif" font-size="8" font-weight="500" fill="var(--t3)" text-anchor="end" dominant-baseline="middle">${L.autarky}</text><rect id="auhit" x="482" y="-8" width="32" height="22" fill="transparent" pointer-events="all"/></g>
 <g><g transform="translate(250,225) scale(1.65)"><rect x="-19" y="-19" width="38" height="38" rx="5" fill="url(#ivbody)" stroke="rgba(0,0,0,0.18)" stroke-width="0.5"/><rect x="-11" y="18" width="4.5" height="2.4" rx="0.8" fill="rgba(0,0,0,0.35)"/><rect x="-2.25" y="18" width="4.5" height="2.4" rx="0.8" fill="rgba(0,0,0,0.35)"/><rect x="6.5" y="18" width="4.5" height="2.4" rx="0.8" fill="rgba(0,0,0,0.35)"/><rect x="-11" y="-4.6" width="22" height="9.2" rx="4.6" fill="url(#ivpill)"/><circle id="led1" cx="-4" cy="-0.6" r="1.15" fill="rgba(255,255,255,0.12)"/><circle id="led2" cx="0" cy="-0.6" r="1.15" fill="rgba(255,255,255,0.12)"/><circle id="led3" cx="4" cy="-0.6" r="1.15" fill="rgba(255,255,255,0.12)"/><rect id="ivbar" x="-3" y="2.6" width="6" height="0.9" rx="0.45" fill="#E4002B"/></g>${INV?'<text x="250" y="272" class="il">'+INV+'</text>':''}<text x="296" y="264" class="vc" id="tp" text-anchor="start"></text></g>
 <g id="nGrid" class="ct"><g id="gridIcon" transform="translate(66,225) scale(1.65) translate(-66,-196)"><rect x="64" y="181" width="4" height="30" rx="1" fill="var(--red)" opacity="0.7"/><rect x="54" y="183" width="24" height="3" rx="1" fill="var(--red)" opacity="0.6"/><rect x="57" y="192" width="18" height="2.5" rx="1" fill="var(--red)" opacity="0.5"/><path d="M60,211 L64,199 L68,199 L72,211" fill="var(--red)" opacity="0.4"/><circle cx="56" cy="184" r="1.5" fill="var(--red)" opacity="0.8"/><circle cx="76" cy="184" r="1.5" fill="var(--red)" opacity="0.8"/><circle cx="58" cy="193" r="1.2" fill="var(--red)" opacity="0.7"/><circle cx="74" cy="193" r="1.2" fill="var(--red)" opacity="0.7"/><line x1="54" y1="184" x2="46" y2="181" stroke="var(--red)" stroke-width="0.8" opacity="0.3"/><line x1="78" y1="184" x2="86" y2="181" stroke="var(--red)" stroke-width="0.8" opacity="0.3"/></g><text x="66" y="265" class="vm" style="fill:var(--red)" id="vg"></text><text x="66" y="190" class="vl">${L.grid}</text><text x="66" y="286" class="vc" id="gv"></text><circle id="gsd" cx="92" cy="189" r="4" fill="rgba(255,255,255,0.12)"/><text x="66" y="300" class="vd" id="dg"></text></g>
