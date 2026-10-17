@@ -1,14 +1,25 @@
 // xPower Flow Card — Modern power flow card for solar hybrid inverters
 // Copyright (C) 2025 BTNBx — MIT License
-const V='1.3.47';
+const V='1.3.48';
 
 /* ═══════════════════════════════════════
    CHANGELOG — full history in CHANGELOG.md
    ═══════════════════════════════════════
-## v1.3.47
+## v1.3.48
 
-- New `mppt_scale` option (0.8–1.6, default 1) to enlarge the PV1/PV2/PV3 side info (dual/triple MPPT); also available as the `--xpf-mppt-scale` CSS variable
-- New animated weather icons (`weather_entity`): rain, pouring, thunder, thunder with rain, snow, sleet, hail, fog, wind, wind with clouds, exceptional; twinkling stars on clear nights. Animations respect reduced motion
+**Fixes**
+- Grid status `unavailable` / `unknown` is no longer shown as a grid outage: the dot and the inverter bar turn neutral grey (#19). States are case-insensitive and `online`, `connected` and `on-grid` also count as online
+- Re-applying the config (editor preview, config changes) no longer freezes the flow animations, drops the weather icon or blanks the 24h charts
+- 24h charts: each value holds until it changes (time-weighted 30-min slots), so flat periods are drawn at their real value. Solar no longer floats above 0 W all night and a steady battery charge is no longer shown at a fraction of its power. Tooltips show the slot start time
+- 24h charts honour kW sensors and `power_unit` (kW values were shown as W)
+- `preset:` in YAML now fills unset entities, polarity and inverter name from that brand (it always fell back to Deye)
+- Vertical swipes over the 24h charts scroll the page again on phones; a horizontal drag still shows the tooltip
+- Battery SOC above 100% or below 0% no longer breaks the battery icon
+
+**Performance**
+- History refresh is incremental: after the first 24h load, each refresh only requests the last few minutes (~99% less data and recorder work)
+- One history refresh per interval (the timer and state updates no longer both fetch)
+- Animated values only touch the DOM when the displayed text changes (~40% fewer DOM writes per update)
 */
 
 /* ═══════════════════════════════════════
@@ -252,6 +263,8 @@ const DEFAULTS={
   power_unit:'auto',
   temp_unit:'auto'
 };
+// Defaults for a preset: unset entities, polarity and inverter name come from the chosen brand (was always Deye)
+const _pdef=p=>{const P=PRESETS[p]||PRESETS.deye;return {...DEFAULTS,...P.e,bat_polarity:P.bat_polarity,grid_polarity:P.grid_polarity,inverter_name:P.inverter_name};};
 
 const ENTITY_FIELDS=[
   {key:'solar',label:'Solar Power (MPPT1)'},{key:'solar2',label:'Solar Power (MPPT2)'},{key:'solar3',label:'Solar Power (MPPT3)'},
@@ -314,6 +327,7 @@ const _lk=(l,h)=>{const k=l||String(h?.locale?.language||h?.language||'en').toLo
 
 const HIST_POINTS=48;
 const HIST_INTERVAL=5*60*1000;
+const HIST_SLOT=24*60*60*1000/HIST_POINTS;
 const RUNTIME_MIN_W=50;
 const ANIM_MAX_W=6000;
 const ANIM_MIN_SPD=1.5;
@@ -322,7 +336,7 @@ const ANIM_MAX_SPD=3.5;
 class XPowerFlowCardEditor extends HTMLElement{
   constructor(){super();this._config={};this._hass=null;this._onchange=this._fire.bind(this);}
   _esc(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
-  setConfig(config){const merged={...DEFAULTS,...config};if(config.energy_frame===undefined&&config.autarky_frame!==undefined)merged.energy_frame=config.autarky_frame;delete merged.autarky_frame;if(this._ready&&JSON.stringify(merged)===JSON.stringify(this._config))return;this._config=merged;this._render();this._ready=true;}
+  setConfig(config){const merged={..._pdef(config.preset),...config};if(config.energy_frame===undefined&&config.autarky_frame!==undefined)merged.energy_frame=config.autarky_frame;delete merged.autarky_frame;if(this._ready&&JSON.stringify(merged)===JSON.stringify(this._config))return;this._config=merged;this._render();this._ready=true;}
   set hass(hass){const first=!this._hass;this._hass=hass;if(first&&this._ready&&!this._config.language)this._render();}
   disconnectedCallback(){const el=this.querySelector('.editor');if(el)el.removeEventListener('change',this._onchange);}
 
@@ -642,7 +656,7 @@ static getStubConfig(){return{...DEFAULTS};}
 
 setConfig(c){
   this._c={};
-  Object.keys(DEFAULTS).forEach(k=>{this._c[k]=c[k]!==undefined?c[k]:DEFAULTS[k];});
+  const B=_pdef(c.preset);Object.keys(DEFAULTS).forEach(k=>{this._c[k]=c[k]!==undefined?c[k]:B[k];});
   if(c.energy_frame===undefined&&c.autarky_frame!==undefined)this._c.energy_frame=c.autarky_frame;
   // Backward compatibility: migrate old hardcoded keys to the generic slot system
   if(!c.extra1_power&&c.appliance_power){this._c.extra1_power=c.appliance_power;this._c.extra1_name=c.appliance_name||'';this._c.extra1_icon='appliance';}
@@ -650,6 +664,7 @@ setConfig(c){
   if(!c.extra3_power&&c.garage_power){this._c.extra3_power=c.garage_power;this._c.extra3_name=c.garage_name||'';this._c.extra3_icon='garage';}
   this._lk=_lk(this._c.language,this._h);this._lang=LANG[this._lk];
   this._entList=[...new Set(ENT_KEYS.map(k=>this._c[k]).filter(Boolean))];
+  if(this._hs&&this._hs.key!==this._histKey())this._histLastLoad=0;
   this._render();
   if(this._h){this._applyTheme();this._schedule();}
 }
@@ -657,7 +672,7 @@ setConfig(c){
 connectedCallback(){
   document.addEventListener('visibilitychange',this._onVis);
   if(this._mq&&this._mq.addEventListener)this._mq.addEventListener('change',this._onMq);
-  if(!this._c.compact&&!this._histTimer)this._histTimer=setInterval(()=>{if(this._h&&!document.hidden&&this._vis)this._loadHistory();},HIST_INTERVAL);
+  if(!this._c.compact&&!this._histTimer)this._histTimer=setInterval(()=>{if(this._h&&!document.hidden&&this._vis&&Date.now()-this._histLastLoad>=HIST_INTERVAL-5000)this._loadHistory();},HIST_INTERVAL);
   // Pause animations + skip updates while scrolled out of view
   if(!this._io&&'IntersectionObserver' in window){this._io=new IntersectionObserver(en=>{const v=en[en.length-1].isIntersecting;if(v===this._vis)return;this._vis=v;this.classList.toggle('off',!v);if(v&&this._h)this._schedule();},{threshold:0});this._io.observe(this);}
   if(!this._ro&&'ResizeObserver' in window){this._ro=new ResizeObserver(()=>this._ringPath());const cd=this._$('xcard');if(cd)this._ro.observe(cd);}
@@ -720,8 +735,10 @@ _gv(e){
   const v=parseFloat(s);
   return isNaN(v)?null:v;
 }
-_gp(e){const v=this._gv(e);if(v===null)return null;const m=this._c.power_unit||'auto';if(m==='W')return v;if(m==='kW')return v*1000;const u=(this._h.states[e].attributes?.unit_of_measurement||'').toLowerCase();return u==='kw'?v*1000:u==='mw'?v*1000000:v;}
-_gs(e){return e&&this._h&&this._h.states[e]?this._h.states[e].state:'';}
+_pf(e){const m=this._c.power_unit||'auto';if(m==='W')return 1;if(m==='kW')return 1000;const st=this._h&&this._h.states[e];const u=(st&&st.attributes&&st.attributes.unit_of_measurement||'').toLowerCase();return u==='kw'?1000:u==='mw'?1e6:1;}
+_gp(e){const v=this._gv(e);return v===null?null:v*this._pf(e);}
+// Grid status: true online, false offline, null unavailable/unknown (neutral, #19), undefined not configured
+_gst(e){const st=e&&this._h&&this._h.states[e];if(!st)return undefined;const s=String(st.state).trim().toLowerCase();if(!s||s==='unavailable'||s==='unknown'||s==='none')return null;return /^(on|1|true|yes|online|connected|on[-_ ]?grid)$/.test(s);}
 _temp(e){const v=this._gv(e);if(v===null)return null;const st=this._h.states[e];return this._tfmt(v,st&&st.attributes&&st.attributes.unit_of_measurement);}
 _tfmt(v,su0){const su=(su0||'').toUpperCase();const srcF=su.indexOf('F')>-1;const u=this._c.temp_unit||'auto';let val,unit;if(u==='F'){val=srcF?v:v*9/5+32;unit='\u00B0F';}else if(u==='C'){val=srcF?(v-32)*5/9:v;unit='\u00B0C';}else{val=v;unit=srcF?'\u00B0F':'\u00B0C';}return val.toFixed(0)+unit;}
 _fmt(v){if(v===null)return this._lang.unavailable;const a=Math.abs(v);return a>=1000?(a/1000).toFixed(1)+' kW':a.toFixed(0)+' W';}
@@ -755,26 +772,31 @@ _norm(raw,type){
   return raw;
 }
 
-_bucket(arr,t0,t1,n){
-  if(!arr||!arr.length)return[];
-  const sum=new Array(n).fill(0),cnt=new Array(n).fill(0);
-  const span=(t1-t0)||1;
-  for(const p of arr){
-    const v=parseFloat(p.state);if(isNaN(v))continue;
-    const ts=new Date(p.last_changed||p.last_updated||t0).getTime();
-    let i=Math.floor((ts-t0)/span*n);if(i<0)i=0;else if(i>=n)i=n-1;
-    sum[i]+=Math.abs(v);cnt[i]++;
-  }
-  const out=new Array(n);let prev=0;
-  for(let i=0;i<n;i++){out[i]=cnt[i]?sum[i]/cnt[i]:prev;prev=out[i];}
-  const sm=[];
-  for(let i=0;i<n;i++){const a=i>0?out[i-1]:out[i];const b=i<n-1?out[i+1]:out[i];sm.push((a+out[i]*2+b)/4);}
-  return sm;
-}
+// 24h charts: 48 clock-aligned 30-min slots, time-weighted (a value holds until it changes); after the first load only new data is fetched
+_histKey(){const c=this._c;return [c.solar,c.solar2,c.solar3,c.load,c.grid,c.battery,c.battery_charge,c.battery_discharge,c.power_unit].join('|');}
+_hAdd(E,t1,w0){let a=Math.max(E.t,w0);if(E.v===null||!(t1>a))return;while(a<t1){const i=Math.floor(a/HIST_SLOT),b=Math.min(t1,(i+1)*HIST_SLOT),s=E.s[i]||(E.s[i]=[0,0]);s[0]+=E.v*(b-a);s[1]+=b-a;a=b;}}
+_hSeries(E,i0,now){const n=HIST_POINTS,out=new Array(n),sm=new Array(n);let prev=0;for(let k=0;k<n;k++){const i=i0+k,s=E.s[i];let w=s?s[0]:0,d=s?s[1]:0;if(E.v!==null){const a=Math.max(E.t,i*HIST_SLOT),b=Math.min(now,(i+1)*HIST_SLOT);if(b>a){w+=E.v*(b-a);d+=b-a;}}out[k]=d>0?w/d:prev;prev=out[k];}for(let k=0;k<n;k++)sm[k]=(out[k>0?k-1:k]+out[k]*2+out[k<n-1?k+1:k])/4;return sm;}
+async _loadHistory(){if(this._histLoading||!this._h)return;const c=this._c;const ids=[...new Set([c.solar,c.solar2,c.solar3,c.load,c.grid,c.battery,c.battery_charge,c.battery_discharge].filter(Boolean))];if(!ids.length)return;this._histLoading=true;this._histLastLoad=Date.now();try{
+const now=Date.now(),i0=Math.floor(now/HIST_SLOT)-HIST_POINTS+1,w0=i0*HIST_SLOT,key=this._histKey();
+let hs=this._hs;if(!hs||hs.key!==key||hs.until<w0||hs.until>now)hs={key,until:0,e:{}};
+const full=!hs.until,from=full?w0:hs.until-60000;
+const res=await this._h.callApi('GET','history/period/'+encodeURIComponent(new Date(from).toISOString())+'?filter_entity_id='+encodeURIComponent(ids.join(','))+'&minimal_response&no_attributes&significant_changes_only');
+if(!Array.isArray(res))return;if(this._histKey()!==key){this._histLastLoad=0;return;}
+for(const series of res){const id=series&&series.length&&series[0].entity_id;if(!id)continue;const f=this._pf(id);const E=hs.e[id]||(hs.e[id]={v:null,t:w0,n:0,s:{}});
+for(const p of series){let t=Date.parse(p.last_changed||p.last_updated);if(isNaN(t))continue;if(t<E.t){if(E.n)continue;t=E.t;}const v=parseFloat(p.state);this._hAdd(E,t,w0);E.t=t;E.v=isNaN(v)?null:Math.abs(v)*f;E.n++;}}
+for(const id in hs.e){const sl=hs.e[id].s;for(const i in sl)if(+i<i0)delete sl[i];}
+hs.until=now;this._hs=hs;this._histT0=w0;
+if(full){this._hist={solar:[],load:[],grid:[],battery:[]};this._histMax={solar:1,load:1,grid:1,battery:1};}
+const ser=e=>e&&hs.e[e]?this._hSeries(hs.e[e],i0,now):null;
+const set=(k,a)=>{if(!a)return;this._hist[k]=a;this._histMax[k]=Math.max(...a)||1;};
+const sA=[...new Set([c.solar,c.solar2,c.solar3].filter(Boolean))].map(ser).filter(Boolean);
+if(sA.length)set('solar',sA[0].map((_,k)=>sA.reduce((a,x)=>a+x[k],0)));
+set('load',ser(c.load));set('grid',ser(c.grid));
+const bc=ser(c.battery_charge),bd=ser(c.battery_discharge);
+set('battery',bc||bd?(bc&&bd?bd.map((v,k)=>Math.abs(v-bc[k])):bd||bc):ser(c.battery));
+this._drawSparks();}catch(e){console.warn('xPower history:',e);}finally{this._histLoading=false;}}
 
-async _loadHistory(){if(this._histLoading||!this._h)return;this._histLoading=true;try{const c=this._c;const now=new Date();const start=new Date(now.getTime()-24*60*60*1000);const iso=encodeURIComponent(start.toISOString());const list=[c.solar,c.solar2,c.solar3,c.load,c.grid,c.battery,c.battery_charge,c.battery_discharge].filter(Boolean);const uniq=[...new Set(list)];if(!uniq.length)return;const entities=encodeURIComponent(uniq.join(','));const url='history/period/'+iso+'?filter_entity_id='+entities+'&minimal_response&no_attributes&significant_changes_only';const res=await this._h.callApi('GET',url);if(!res||!res.length)return;const t0=start.getTime(),t1=now.getTime();const byId={};for(const series of res){if(series.length)byId[series[0].entity_id]=this._bucket(series,t0,t1,HIST_POINTS);}const setSpark=(key,pts)=>{if(!pts)return;this._hist[key]=pts;this._histMax[key]=pts.length?Math.max(...pts)||1:1;};const sArr=[...new Set([c.solar,c.solar2,c.solar3].filter(Boolean))].map(e=>byId[e]).filter(a=>a&&a.length);if(sArr.length){const n=HIST_POINTS,tot=new Array(n).fill(0);for(const a of sArr)for(let i=0;i<n;i++)tot[i]+=a[i]||0;setSpark('solar',tot);}setSpark('load',byId[c.load]);setSpark('grid',byId[c.grid]);const bch=byId[c.battery_charge],bdis=byId[c.battery_discharge];if(bch||bdis){const n=HIST_POINTS,net=new Array(n);for(let i=0;i<n;i++){const d=bdis?bdis[i]:0,g=bch?bch[i]:0;net[i]=Math.abs(d-g);}setSpark('battery',net);}else{setSpark('battery',byId[c.battery]);}this._drawSparks();}catch(e){console.warn('xPower history:',e);}finally{this._histLoading=false;}}
-
-_render(){this._elc={};this._fsp={};this._syncSpd=0;this._ringKey='';this._mwc=new Map();this._srTk=null;this._srLit=-1;this._srKey='';const L=this._lang;const INV=String(this._c.inverter_name||'').replace(/[<>&]/g,m=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[m]));const s=this.shadowRoot;s.innerHTML=`<style>
+_render(){this._elc={};this._fsp={};this._fs={};this._wxKey='';this._syncSpd=0;this._ringKey='';this._mwc=new Map();this._srTk=null;this._srLit=-1;this._srKey='';const L=this._lang;const INV=String(this._c.inverter_name||'').replace(/[<>&]/g,m=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[m]));const s=this.shadowRoot;s.innerHTML=`<style>
 :host{--solar:var(--xpf-solar,#FFB300);--battery:var(--xpf-battery,#7C4DFF);--grid:var(--xpf-grid,#42A5F5);--load:var(--xpf-load,#26C6DA);--green:var(--xpf-green,#66BB6A);--red:var(--xpf-red,#EF5350);--orange:var(--xpf-orange,#FFA726);--t1:var(--xpf-text,rgba(255,255,255,0.92));--t3:var(--xpf-text-secondary,rgba(255,255,255,0.45));--xpf-r:var(--xpf-radius,20px);--xpf-vm-size:var(--xpf-font-size,${this._c.font_size||24}px);--mps:var(--xpf-mppt-scale,${Math.min(1.6,Math.max(0.8,Number(this._c.mppt_scale)||1))});--flow-w:var(--xpf-flow-width,3);--flow-dash:var(--xpf-dash-size,100);--fw:var(--xpf-frame-width,1px);--fo:var(--xpf-frame-opacity,0.7);--batf:#fff;--batn:#111;--batt:rgba(255,255,255,0.22)}
 :host(.light){--t1:var(--xpf-text,rgba(0,0,0,0.85));--t3:var(--xpf-text-secondary,rgba(0,0,0,0.45));--batf:rgba(0,0,0,0.85);--batn:#fff;--batt:rgba(0,0,0,0.12)}
 :host(.light) ha-card{background:var(--xpf-bg,rgba(255,255,255,0.92))}
@@ -849,7 +871,7 @@ svg{width:100%;height:auto;display:block}
 .sl{font-size:7px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;opacity:0.3}
 .sv{font-size:11px;font-weight:600;opacity:0.8}
 .ss .sv{color:var(--green)}.sc .sv{color:var(--load)}.sg .sv{color:var(--grid)}.sbt .sv{color:var(--battery)}
-.sb svg{width:100%;height:55px;display:block;margin-top:auto}
+.sb svg{width:100%;height:55px;display:block;margin-top:auto;touch-action:pan-y}
 .sb path{stroke-linecap:round;stroke-linejoin:round}
 .sb{position:relative;cursor:crosshair}
 .sb-tip{position:absolute;top:2px;right:4px;font-size:10px;font-weight:600;opacity:0;transition:opacity 0.15s;pointer-events:none;padding:2px 6px;border-radius:4px;background:rgba(0,0,0,0.7)}
@@ -925,7 +947,7 @@ svg{width:100%;height:auto;display:block}
 <div class="sb ss"><div class="sb-header"><span class="sl">${L.solar24}</span><span class="sv" id="hv"></span></div><svg viewBox="0 0 200 55" preserveAspectRatio="none"><defs><linearGradient id="sgd-s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(102,187,106,0.30)"/><stop offset="1" stop-color="rgba(102,187,106,0)"/></linearGradient></defs><path id="hsa"/><path id="hs"/><line class="cursor" id="cs" x1="0" y1="0" x2="0" y2="55"/><circle class="cursor-dot" id="ds2" cx="0" cy="0" r="3"/></svg><span class="sb-tip" id="ts"></span></div>
 <div class="sb sc"><div class="sb-header"><span class="sl">${L.load24}</span><span class="sv" id="hx"></span></div><svg viewBox="0 0 200 55" preserveAspectRatio="none"><defs><linearGradient id="sgd-l" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(38,198,218,0.30)"/><stop offset="1" stop-color="rgba(38,198,218,0)"/></linearGradient></defs><path id="hla"/><path id="hl"/><line class="cursor" id="cl" x1="0" y1="0" x2="0" y2="55"/><circle class="cursor-dot" id="dl2" cx="0" cy="0" r="3"/></svg><span class="sb-tip" id="tl"></span></div>
 <div class="sb sbt"><div class="sb-header"><span class="sl">${L.bat24}</span><span class="sv" id="hy"></span></div><svg viewBox="0 0 200 55" preserveAspectRatio="none"><defs><linearGradient id="sgd-b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(124,77,255,0.30)"/><stop offset="1" stop-color="rgba(124,77,255,0)"/></linearGradient></defs><path id="hb2a"/><path id="hb2"/><line class="cursor" id="cb" x1="0" y1="0" x2="0" y2="55"/><circle class="cursor-dot" id="db2" cx="0" cy="0" r="3"/></svg><span class="sb-tip" id="tb"></span></div>
-</div></ha-card>`;this._setupTooltips();this._setupClicks();this._ringPath();requestAnimationFrame(()=>this._ringPath());if(this._ro)this._ro.disconnect();if('ResizeObserver' in window){this._ro=new ResizeObserver(()=>this._ringPath());const cd=this._$('xcard');if(cd)this._ro.observe(cd);}}
+</div></ha-card>`;this._setupTooltips();this._setupClicks();this._drawSparks();this._ringPath();requestAnimationFrame(()=>this._ringPath());if(this._ro)this._ro.disconnect();if('ResizeObserver' in window){this._ro=new ResizeObserver(()=>this._ringPath());const cd=this._$('xcard');if(cd)this._ro.observe(cd);}}
 
 _$(id){let c=this._elc;if(!c)c=this._elc={};let el=c[id];if(el&&el.isConnected)return el;el=this.shadowRoot.getElementById(id);c[id]=el;return el;}
 _moreInfo(entityId){if(!entityId)return;this.dispatchEvent(new CustomEvent('hass-more-info',{detail:{entityId},bubbles:true,composed:true}));}
@@ -948,8 +970,7 @@ _setupTooltips(){
       const max=self._sparkM||self._histMax[dataKey]||1;const svgY=2+(1-val/max)*51;
       cursor.setAttribute('x1',svgX);cursor.setAttribute('x2',svgX);cursor.style.display='';
       dot.setAttribute('cx',svgX);dot.setAttribute('cy',svgY);dot.style.display='';dot.setAttribute('fill',color);
-      const hoursAgo=(1-idx/(data.length-1))*24;
-      const when=new Date(Date.now()-hoursAgo*3600000);
+      const when=new Date((self._histT0||Date.now()-86400000)+idx*HIST_SLOT);
       const hh=String(when.getHours()).padStart(2,'0');const mm=String(when.getMinutes()).padStart(2,'0');
       tip.textContent=(val>=1000?(val/1000).toFixed(1)+' kW':val.toFixed(0)+' W')+' · '+hh+':'+mm;
       tip.style.color=color;tip.classList.add('show');
@@ -957,7 +978,9 @@ _setupTooltips(){
     const hide=()=>{cursor.style.display='none';dot.style.display='none';tip.classList.remove('show');};
     svg.addEventListener('mousemove',(e)=>show(e.clientX));
     svg.addEventListener('mouseleave',hide);
-    svg.addEventListener('touchmove',(e)=>{e.preventDefault();show(e.touches[0].clientX);},{passive:false});
+    let tx=0,ty=0;svg.addEventListener('touchstart',(e)=>{const t=e.touches[0];tx=t.clientX;ty=t.clientY;},{passive:true});
+    svg.addEventListener('touchmove',(e)=>{const t=e.touches[0];if(Math.abs(t.clientY-ty)>Math.abs(t.clientX-tx))return hide();show(t.clientX);},{passive:true});
+    svg.addEventListener('touchcancel',hide);
     svg.addEventListener('touchend',hide);
   };
   setup(null,'cg','dg2','tg','grid','#42A5F5');
@@ -967,9 +990,9 @@ _setupTooltips(){
 }
 _spd(p){const a=Math.abs(p);if(a<10)return 0;let s=Math.max(ANIM_MIN_SPD,ANIM_MAX_SPD-(a/ANIM_MAX_W)*(ANIM_MAX_SPD-ANIM_MIN_SPD));if(a>=3000)s*=0.4;else if(a>=2000)s*=0.6;else if(a>=1000)s*=0.8;return s;}
 _sf(el,id,p,d,c,o){if(!el)return;if(Math.abs(p)<10){this._sa(el,'opacity','0');return;}this._sa(el,'stroke',c);this._sa(el,'opacity',o);if(this._fs[id]!==d){this._fs[id]=d;el.setAttribute('class','fa '+d);this._resync=true;}if(this._c.flow_speed!=='synced'){const fp=this._fsp||(this._fsp={});const sp=Math.min(6,Math.max(0.5,2500/Math.abs(p)));const o0=fp[id];if(!o0||Math.abs(sp-o0)/o0>0.15){fp[id]=sp;el.style.setProperty('--spd',sp.toFixed(2)+'s');}}}
-_tween(id,target,fmt){const el=this._$(id);if(!el)return;if(target===null||(this._rm&&this._c.animations!=='always')){delete this._twq[id];el.textContent=fmt(target);this._twv[id]=target;return;}const from=this._twv[id];if(from===undefined||from===null||Math.abs(target-from)<1){delete this._twq[id];el.textContent=fmt(target);this._twv[id]=target;return;}this._twq[id]={el,from,to:target,fmt,t0:performance.now()};if(!this._twRaf)this._twRaf=requestAnimationFrame(t=>this._twStep(t));}
-_twStep(t){this._twRaf=null;const q=this._twq;let live=false;for(const id in q){const w=q[id];let k=Math.min(1,(t-w.t0)/600);k=1-Math.pow(1-k,3);w.el.textContent=w.fmt(w.from+(w.to-w.from)*k);if(k<1)live=true;else{this._twv[id]=w.to;delete q[id];}}if(live)this._twRaf=requestAnimationFrame(t2=>this._twStep(t2));}
-_spark(id,aid,data,mx){const el=this._$(id);const af=this._$(aid);if(!el||!data.length)return;const w=200,h=55,py=2,max=mx||Math.max(...data)||1;const pts=data.map((v,i)=>[(i/(data.length-1))*w,py+(1-v/max)*(h-py*2)]);if(pts.length<2)return;const tension=0.3;const cp=(p0,p1,p2,t)=>[p1[0]+(p2[0]-p0[0])*t,p1[1]+(p2[1]-p0[1])*t];let d='M'+pts[0][0].toFixed(1)+','+pts[0][1].toFixed(1);for(let i=0;i<pts.length-1;i++){const p0=pts[Math.max(0,i-1)];const p1=pts[i];const p2=pts[i+1];const p3=pts[Math.min(pts.length-1,i+2)];const c1=cp(p0,p1,p2,tension);const c2=[p2[0]-(p3[0]-p1[0])*tension,p2[1]-(p3[1]-p1[1])*tension];d+=' C'+c1[0].toFixed(1)+','+c1[1].toFixed(1)+' '+c2[0].toFixed(1)+','+c2[1].toFixed(1)+' '+p2[0].toFixed(1)+','+p2[1].toFixed(1);}el.setAttribute('d',d);if(af){af.setAttribute('d',d+'L'+w+','+h+'L0,'+h+'Z');}}
+_tween(id,target,fmt){const el=this._$(id);if(!el)return;if(target===null||(this._rm&&this._c.animations!=='always')){delete this._twq[id];this._st(el,fmt(target));this._twv[id]=target;return;}const from=this._twv[id];if(from===undefined||from===null||Math.abs(target-from)<1){delete this._twq[id];this._st(el,fmt(target));this._twv[id]=target;return;}this._twq[id]={el,from,to:target,fmt,t0:performance.now()};if(!this._twRaf)this._twRaf=requestAnimationFrame(t=>this._twStep(t));}
+_twStep(t){this._twRaf=null;const q=this._twq;let live=false;for(const id in q){const w=q[id];let k=Math.min(1,(t-w.t0)/600);k=1-Math.pow(1-k,3);this._st(w.el,w.fmt(w.from+(w.to-w.from)*k));if(k<1)live=true;else{this._twv[id]=w.to;delete q[id];}}if(live)this._twRaf=requestAnimationFrame(t2=>this._twStep(t2));}
+_spark(id,aid,data,mx){const el=this._$(id);const af=this._$(aid);if(!el)return;if(!data.length){el.removeAttribute('d');if(af)af.removeAttribute('d');return;}const w=200,h=55,py=2,max=mx||Math.max(...data)||1;const pts=data.map((v,i)=>[(i/(data.length-1))*w,py+(1-v/max)*(h-py*2)]);if(pts.length<2)return;const tension=0.3;const cp=(p0,p1,p2,t)=>[p1[0]+(p2[0]-p0[0])*t,p1[1]+(p2[1]-p0[1])*t];let d='M'+pts[0][0].toFixed(1)+','+pts[0][1].toFixed(1);for(let i=0;i<pts.length-1;i++){const p0=pts[Math.max(0,i-1)];const p1=pts[i];const p2=pts[i+1];const p3=pts[Math.min(pts.length-1,i+2)];const c1=cp(p0,p1,p2,tension);const c2=[p2[0]-(p3[0]-p1[0])*tension,p2[1]-(p3[1]-p1[1])*tension];d+=' C'+c1[0].toFixed(1)+','+c1[1].toFixed(1)+' '+c2[0].toFixed(1)+','+c2[1].toFixed(1)+' '+p2[0].toFixed(1)+','+p2[1].toFixed(1);}el.setAttribute('d',d);if(af){af.setAttribute('d',d+'L'+w+','+h+'L0,'+h+'Z');}}
 _drawSparks(){const H=this._hist;let mx=0;if(this._c.sparkline_shared_scale){for(const k of ['solar','load','grid','battery']){const a=H[k];if(a&&a.length){const m=Math.max(...a);if(m>mx)mx=m;}}mx=mx||1;}const M=mx||undefined;this._sparkM=M;this._spark('hs','hsa',H.solar,M);this._spark('hl','hla',H.load,M);this._spark('hg','hga',H.grid,M);this._spark('hb2','hb2a',H.battery,M);}
 
 _update(){if(!this._h||!this.shadowRoot.getElementById('vs'))return;
@@ -1009,7 +1032,7 @@ this._prev={solar:sol??0,bat:bat??0,grid:grid??0,load:load??0};
 
 const socVal=soc??0;
 const bpEl=this._$('bp'),bp2El=this._$('bp2');const bpTxt=soc!==null?String(Math.round(soc)):L.unavailable;if(bpEl)this._st(bpEl,bpTxt);if(bp2El)this._st(bp2El,bpTxt);
-const shu=c.shutdown_soc??20;let batC='var(--batf)',bpC='var(--batn)';if(soc!==null&&socVal<=shu){batC='#EF5350';bpC='#fff';}else if(soc!==null&&socVal<=shu+15){batC='#FFA726';bpC='#111';}const ch=bat!==null&&bat<-10&&socVal<100;if(ch){batC='#4CD964';bpC='#fff';}const bw=32*(socVal/100);const blEl=this._$('bl');if(blEl){this._sa(blEl,'width',bw.toFixed(1));this._sa(blEl,'fill',batC);this._sc(blEl,'');}const bA=this._$('bpA'),bB=this._$('bpB');if(bA){this._sa(bA,'width',bw.toFixed(2));this._sa(bA,'viewBox','232 342.5 '+Math.max(bw,0.01).toFixed(2)+' 17');}if(bB){const rw=32-bw;this._sa(bB,'x',(232+bw).toFixed(2));this._sa(bB,'width',rw.toFixed(2));this._sa(bB,'viewBox',(232+bw).toFixed(2)+' 342.5 '+Math.max(rw,0.01).toFixed(2)+' 17');}const bx=ch?'245':'248';if(bpEl){this._sa(bpEl,'fill',bpC);this._sa(bpEl,'x',bx);}if(bp2El){this._sa(bp2El,'fill',batC);this._sa(bp2El,'x',bx);}const bboltEl=this._$('bbolt');if(bboltEl)this._ss(bboltEl,'display',ch?'':'none');
+const shu=c.shutdown_soc??20;let batC='var(--batf)',bpC='var(--batn)';if(soc!==null&&socVal<=shu){batC='#EF5350';bpC='#fff';}else if(soc!==null&&socVal<=shu+15){batC='#FFA726';bpC='#111';}const ch=bat!==null&&bat<-10&&socVal<100;if(ch){batC='#4CD964';bpC='#fff';}const bw=32*Math.max(0,Math.min(100,socVal))/100;const blEl=this._$('bl');if(blEl){this._sa(blEl,'width',bw.toFixed(1));this._sa(blEl,'fill',batC);this._sc(blEl,'');}const bA=this._$('bpA'),bB=this._$('bpB');if(bA){this._sa(bA,'width',bw.toFixed(2));this._sa(bA,'viewBox','232 342.5 '+Math.max(bw,0.01).toFixed(2)+' 17');}if(bB){const rw=32-bw;this._sa(bB,'x',(232+bw).toFixed(2));this._sa(bB,'width',rw.toFixed(2));this._sa(bB,'viewBox',(232+bw).toFixed(2)+' 342.5 '+Math.max(rw,0.01).toFixed(2)+' 17');}const bx=ch?'245':'248';if(bpEl){this._sa(bpEl,'fill',bpC);this._sa(bpEl,'x',bx);}if(bp2El){this._sa(bp2El,'fill',batC);this._sa(bp2El,'x',bx);}const bboltEl=this._$('bbolt');if(bboltEl)this._ss(bboltEl,'display',ch?'':'none');
 
 if(temp!==null)this._st(this._$('tp'),this._temp(c.temperature));else this._st(this._$('tp'),'');
 const gvTxt=gv!==null?(gv2!==null&&gv3!==null?gv.toFixed(0)+'/'+gv2.toFixed(0)+'/'+gv3.toFixed(0)+'V':gv.toFixed(0)+'V'):null;
@@ -1116,7 +1139,7 @@ if(batF>RUNTIME_MIN_W&&socVal>shuSoc){
 // Self-sufficiency frame — segments anchored to their source: solar top (0), battery bottom (50), grid left (75); smaller segments weigh more (1/f²)
 const gridImp=gridF>0?gridF:0;
 const au=loadF>0?Math.max(0,Math.min(100,((loadF-gridImp)/loadF)*100)):0;
-this._tween('va',au,v=>{const _va=this._$('va'),t=Math.round(v)+'%';return t;});
+this._tween('va',au,v=>Math.round(v)+'%');
 const _batDis=batF>0?batF:0;const _solH=Math.max(0,loadF-gridImp-_batDis);const _tot=gridImp+_batDis+_solH;const _seg=(k,st,ln)=>{const el=this._$('au-'+k),l=Math.max(0,ln);if(el){this._sa(el,'stroke-dasharray',l.toFixed(2)+' '+(100-l).toFixed(2));this._sa(el,'stroke-dashoffset',(-st).toFixed(2));}};if(_tot>0){const fS=_solH/_tot*100,fB=_batDis/_tot*100,fG=gridImp/_tot*100;const nb=fB+fG;let t=0;if(nb>0){const cen=(50*fB+75*fG)/nb;t=((cen+nb/2)%100+100)%100;}_seg('s',t,fS);_seg('b',t+fS,fB);_seg('g',t+fS+fB,fG);}else{_seg('s',0,0);_seg('b',0,0);_seg('g',0,0);}
 
 const wA=c.weather_entity&&this._h.states[c.weather_entity]?this._h.states[c.weather_entity].attributes||{}:null;const wtv=c.weather_temp?this._gv(c.weather_temp):(wA&&typeof wA.temperature==='number'?wA.temperature:null);const whv=c.weather_humidity?this._gv(c.weather_humidity):(wA&&typeof wA.humidity==='number'?wA.humidity:null);
@@ -1148,8 +1171,9 @@ _led('led2',batF>10,'#FFA726');
 _led('led3',gridF>10,'#EF5350');
 
 // Grid status dot
-const gsd=this._$('gsd');if(gsd){const gsE=this._gs(c.grid_status);const online=gsE==='on'||gsE==='1'||gsE==='true';if(c.grid_status&&gsE){this._sa(gsd,'fill',online?'#66BB6A':'#EF5350');this._ss(gsd,'display','');}else{this._ss(gsd,'display','none');}}
-const ivbar=this._$('ivbar');if(ivbar){const gsE2=this._gs(c.grid_status);const on2=gsE2==='on'||gsE2==='1'||gsE2==='true';this._sa(ivbar,'fill',(c.grid_status&&gsE2)?(on2?'#66BB6A':'#EF5350'):'#E4002B');}
+const gst=this._gst(c.grid_status);
+const gsd=this._$('gsd');if(gsd){if(gst===undefined)this._ss(gsd,'display','none');else{this._sa(gsd,'fill',gst===null?'var(--t3)':gst?'#66BB6A':'#EF5350');this._ss(gsd,'display','');}}
+const ivbar=this._$('ivbar');if(ivbar)this._sa(ivbar,'fill',gst===undefined?'#E4002B':gst===null?'#8E8E93':gst?'#66BB6A':'#EF5350');
 
 // Sun spin when generating
 const sunG=this._$('sunG');if(sunG)this._ss(sunG,'opacity',(this._wxOn||solF>10)?'1':'0.25');
