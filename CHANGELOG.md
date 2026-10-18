@@ -1,3 +1,9 @@
+## v1.3.49
+
+- Flow lines are now a short comet that runs along the track from end to end, instead of a long bar sweeping in and out
+- The house line comet is split by source in real time: solar (green) at the head, then battery (orange), then grid (red)
+- New optional `flow_length` (10–80, default 30): comet length as % of the line
+- Reduced motion: lines are shown solid (house line keeps the source colour split)
 ## v1.3.48
 
 **Fixes**
