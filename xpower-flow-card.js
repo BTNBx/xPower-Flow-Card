@@ -5,21 +5,12 @@ const V='1.3.49';
 /* ═══════════════════════════════════════
    CHANGELOG — full history in CHANGELOG.md
    ═══════════════════════════════════════
-## v1.3.48
+## v1.3.49
 
-**Fixes**
-- Grid status `unavailable` / `unknown` is no longer shown as a grid outage: the dot and the inverter bar turn neutral grey (#19). States are case-insensitive and `online`, `connected` and `on-grid` also count as online
-- Re-applying the config (editor preview, config changes) no longer freezes the flow animations, drops the weather icon or blanks the 24h charts
-- 24h charts: each value holds until it changes (time-weighted 30-min slots), so flat periods are drawn at their real value. Solar no longer floats above 0 W all night and a steady battery charge is no longer shown at a fraction of its power. Tooltips show the slot start time
-- 24h charts honour kW sensors and `power_unit` (kW values were shown as W)
-- `preset:` in YAML now fills unset entities, polarity and inverter name from that brand (it always fell back to Deye)
-- Vertical swipes over the 24h charts scroll the page again on phones; a horizontal drag still shows the tooltip
-- Battery SOC above 100% or below 0% no longer breaks the battery icon
-
-**Performance**
-- History refresh is incremental: after the first 24h load, each refresh only requests the last few minutes (~99% less data and recorder work)
-- One history refresh per interval (the timer and state updates no longer both fetch)
-- Animated values only touch the DOM when the displayed text changes (~40% fewer DOM writes per update)
+- Flow lines are now a short comet that runs along the track from end to end, instead of a long bar sweeping in and out
+- The house line comet is split by source in real time: solar (green) at the head, then battery (orange), then grid (red)
+- New optional `flow_length` (10–80, default 30): comet length as % of the line
+- Reduced motion: lines are shown solid (house line keeps the source colour split)
 */
 
 /* ═══════════════════════════════════════
