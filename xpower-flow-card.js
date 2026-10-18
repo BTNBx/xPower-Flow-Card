@@ -1,10 +1,14 @@
 // xPower Flow Card — Modern power flow card for solar hybrid inverters
 // Copyright (C) 2025 BTNBx — MIT License
-const V='1.3.49';
+const V='1.3.50';
 
 /* ═══════════════════════════════════════
    CHANGELOG — full history in CHANGELOG.md
    ═══════════════════════════════════════
+## v1.3.50
+
+- House line comet is twice the `flow_length` (default 60% of the line, max 90%) so the solar / battery / grid split is easy to read; the other lines keep `flow_length`
+
 ## v1.3.49
 
 - Flow lines are now a short comet that runs along the track from end to end, instead of a long bar sweeping in and out
@@ -787,7 +791,7 @@ const bc=ser(c.battery_charge),bd=ser(c.battery_discharge);
 set('battery',bc||bd?(bc&&bd?bd.map((v,k)=>Math.abs(v-bc[k])):bd||bc):ser(c.battery));
 this._drawSparks();}catch(e){console.warn('xPower history:',e);}finally{this._histLoading=false;}}
 
-_render(){const FL=Math.min(80,Math.max(10,Number(this._c.flow_length)||30)),FP=100+FL;this._fl=FL;this._fp=FP;this._elc={};this._fsp={};this._fs={};this._wxKey='';this._syncSpd=0;this._ringKey='';this._mwc=new Map();this._srTk=null;this._srLit=-1;this._srKey='';const L=this._lang;const INV=String(this._c.inverter_name||'').replace(/[<>&]/g,m=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[m]));const s=this.shadowRoot;s.innerHTML=`<style>
+_render(){const FL=Math.min(80,Math.max(10,Number(this._c.flow_length)||30)),FP=100+FL,HL=Math.min(90,FL*2),HP=100+HL;this._fl=FL;this._fp=FP;this._hl=HL;this._hp=HP;this._elc={};this._fsp={};this._fs={};this._wxKey='';this._syncSpd=0;this._ringKey='';this._mwc=new Map();this._srTk=null;this._srLit=-1;this._srKey='';const L=this._lang;const INV=String(this._c.inverter_name||'').replace(/[<>&]/g,m=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[m]));const s=this.shadowRoot;s.innerHTML=`<style>
 :host{--solar:var(--xpf-solar,#FFB300);--battery:var(--xpf-battery,#7C4DFF);--grid:var(--xpf-grid,#42A5F5);--load:var(--xpf-load,#26C6DA);--green:var(--xpf-green,#66BB6A);--red:var(--xpf-red,#EF5350);--orange:var(--xpf-orange,#FFA726);--t1:var(--xpf-text,rgba(255,255,255,0.92));--t3:var(--xpf-text-secondary,rgba(255,255,255,0.45));--xpf-r:var(--xpf-radius,20px);--xpf-vm-size:var(--xpf-font-size,${this._c.font_size||24}px);--mps:var(--xpf-mppt-scale,${Math.min(1.6,Math.max(0.8,Number(this._c.mppt_scale)||1))});--flow-w:var(--xpf-flow-width,3);--fw:var(--xpf-frame-width,1px);--fo:var(--xpf-frame-opacity,0.7);--batf:#fff;--batn:#111;--batt:rgba(255,255,255,0.22)}
 :host(.light){--t1:var(--xpf-text,rgba(0,0,0,0.85));--t3:var(--xpf-text-secondary,rgba(0,0,0,0.45));--batf:rgba(0,0,0,0.85);--batn:#fff;--batt:rgba(0,0,0,0.12)}
 :host(.light) ha-card{background:var(--xpf-bg,rgba(255,255,255,0.92))}
@@ -838,7 +842,7 @@ svg{width:100%;height:auto;display:block}
 #sunG{transform-origin:250px 38px;transition:opacity 0.8s ease}
 #gridIcon,#loadIcon,#batIcon,#evIcon{transition:opacity 0.8s ease}
 #vs,#vg,#vl,#vb,#ve{transition:opacity 0.8s ease}
-@keyframes fR{from{stroke-dashoffset:0}to{stroke-dashoffset:-${FP}}}@keyframes fL{from{stroke-dashoffset:${FL-FP}}to{stroke-dashoffset:${FL}}}@keyframes fD{from{stroke-dashoffset:0}to{stroke-dashoffset:-${FP}}}@keyframes fU{from{stroke-dashoffset:${FL-FP}}to{stroke-dashoffset:${FL}}}
+@keyframes fR{from{stroke-dashoffset:0}to{stroke-dashoffset:-${FP}}}@keyframes fL{from{stroke-dashoffset:${FL-FP}}to{stroke-dashoffset:${FL}}}@keyframes fD{from{stroke-dashoffset:0}to{stroke-dashoffset:-${FP}}}@keyframes fU{from{stroke-dashoffset:${FL-FP}}to{stroke-dashoffset:${FL}}}@keyframes fH{from{stroke-dashoffset:0}to{stroke-dashoffset:-${HP}}}#fh,#fh2,#fh3{animation-name:fH}
 .vm{fill:var(--t1);font-size:var(--xpf-vm-size);font-weight:600;text-anchor:middle;dominant-baseline:middle}
 .vl{fill:var(--t3);font-size:10px;font-weight:600;letter-spacing:0.14em;text-anchor:middle;dominant-baseline:middle}
 .vs{fill:var(--t1);font-size:22px;font-weight:700;text-anchor:middle;dominant-baseline:middle}
@@ -1052,7 +1056,7 @@ this._sf(this._$('fg'),'g',gridF,gridF>0?'fr':'fL',gridF>0?'var(--red)':'var(--g
 this._sf(this._$('fb'),'b',batF,batF<0?'fd':'fu',batF<0?'var(--green)':'var(--solar)','0.75');
 const _gImp=gridF>0?gridF:0,_bDis=batF>0?batF:0,_sToH=Math.max(0,loadF-_gImp-_bDis),_feed=_gImp+_bDis+_sToH;
 {const _sc=[[_sToH,'#66BB6A'],[_bDis,'#FFA726'],[_gImp,'#EF5350']];let _ac=0;for(let _i=0;_i<3;_i++){const _f=_feed>0?_sc[_i][0]/_feed*100:0;const _p0=this._$('hs'+(_i*2)),_p1=this._$('hs'+(_i*2+1));if(_p0){this._sa(_p0,'offset',_ac.toFixed(1)+'%');this._sa(_p0,'stop-color',_sc[_i][1]);}_ac+=_f;if(_p1){this._sa(_p1,'offset',_ac.toFixed(1)+'%');this._sa(_p1,'stop-color',_sc[_i][1]);}}}
-{const _mx=[['fh','h',_sToH,'var(--green)'],['fh2','h2',_bDis,'var(--orange)'],['fh3','h3',_gImp,'var(--red)']],FL=this._fl,FP=this._fp;let _c=0;for(const [_id,_k,_w,_col] of _mx){const el=this._$(_id);if(!el)continue;const _l=_feed>0?_w/_feed*FL:0;if(_l<0.5){this._sa(el,'opacity','0');continue;}this._sf(el,_k,loadF,'fr',_col,'0.75');el.style.strokeDasharray='0 '+(FP-_c-_l).toFixed(2)+' '+_l.toFixed(2)+' '+_c.toFixed(2);_c+=_l;}}
+{const _mx=[['fh','h',_sToH,'var(--green)'],['fh2','h2',_bDis,'var(--orange)'],['fh3','h3',_gImp,'var(--red)']],FL=this._hl,FP=this._hp;let _c=0;for(const [_id,_k,_w,_col] of _mx){const el=this._$(_id);if(!el)continue;const _l=_feed>0?_w/_feed*FL:0;if(_l<0.5){this._sa(el,'opacity','0');continue;}this._sf(el,_k,loadF,'fr',_col,'0.75');el.style.strokeDasharray='0 '+(FP-_c-_l).toFixed(2)+' '+_l.toFixed(2)+' '+_c.toFixed(2);_c+=_l;}}
 
 // EV node — visible only when ev_power/ev_soc configured
 const nEV=this._$('nEV');

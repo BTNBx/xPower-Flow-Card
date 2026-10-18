@@ -1,3 +1,7 @@
+## v1.3.50
+
+- House line comet is twice the `flow_length` (default 60% of the line, max 90%) so the solar / battery / grid split is easy to read; the other lines keep `flow_length`
+
 ## v1.3.49
 
 - Flow lines are now a short comet that runs along the track from end to end, instead of a long bar sweeping in and out
