@@ -1,10 +1,14 @@
 // xPower Flow Card — Modern power flow card for solar hybrid inverters
 // Copyright (C) 2025 BTNBx — MIT License
-const V='1.3.50';
+const V='1.3.51';
 
 /* ═══════════════════════════════════════
    CHANGELOG — full history in CHANGELOG.md
    ═══════════════════════════════════════
+## v1.3.51
+
+- All flow lines use the same comet length again: `flow_length` default is now 60% (10–80) for every line. The house line keeps its solar / battery / grid split
+
 ## v1.3.50
 
 - House line comet is twice the `flow_length` (default 60% of the line, max 90%) so the solar / battery / grid split is easy to read; the other lines keep `flow_length`
@@ -784,7 +788,7 @@ const bc=ser(c.battery_charge),bd=ser(c.battery_discharge);
 set('battery',bc||bd?(bc&&bd?bd.map((v,k)=>Math.abs(v-bc[k])):bd||bc):ser(c.battery));
 this._drawSparks();}catch(e){console.warn('xPower history:',e);}finally{this._histLoading=false;}}
 
-_render(){const FL=Math.min(80,Math.max(10,Number(this._c.flow_length)||30)),FP=100+FL,HL=Math.min(90,FL*2),HP=100+HL;this._fl=FL;this._fp=FP;this._hl=HL;this._hp=HP;this._elc={};this._fsp={};this._fs={};this._wxKey='';this._syncSpd=0;this._ringKey='';this._mwc=new Map();this._srTk=null;this._srLit=-1;this._srKey='';const L=this._lang;const INV=String(this._c.inverter_name||'').replace(/[<>&]/g,m=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[m]));const s=this.shadowRoot;s.innerHTML=`<style>
+_render(){const FL=Math.min(80,Math.max(10,Number(this._c.flow_length)||60)),FP=100+FL,HL=FL,HP=FP;this._fl=FL;this._fp=FP;this._hl=HL;this._hp=HP;this._elc={};this._fsp={};this._fs={};this._wxKey='';this._syncSpd=0;this._ringKey='';this._mwc=new Map();this._srTk=null;this._srLit=-1;this._srKey='';const L=this._lang;const INV=String(this._c.inverter_name||'').replace(/[<>&]/g,m=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[m]));const s=this.shadowRoot;s.innerHTML=`<style>
 :host{--solar:var(--xpf-solar,#FFB300);--battery:var(--xpf-battery,#7C4DFF);--grid:var(--xpf-grid,#42A5F5);--load:var(--xpf-load,#26C6DA);--green:var(--xpf-green,#66BB6A);--red:var(--xpf-red,#EF5350);--orange:var(--xpf-orange,#FFA726);--t1:var(--xpf-text,rgba(255,255,255,0.92));--t3:var(--xpf-text-secondary,rgba(255,255,255,0.45));--xpf-r:var(--xpf-radius,20px);--xpf-vm-size:var(--xpf-font-size,${this._c.font_size||24}px);--mps:var(--xpf-mppt-scale,${Math.min(1.6,Math.max(0.8,Number(this._c.mppt_scale)||1))});--flow-w:var(--xpf-flow-width,3);--fw:var(--xpf-frame-width,1px);--fo:var(--xpf-frame-opacity,0.7);--batf:#fff;--batn:#111;--batt:rgba(255,255,255,0.22)}
 :host(.light){--t1:var(--xpf-text,rgba(0,0,0,0.85));--t3:var(--xpf-text-secondary,rgba(0,0,0,0.45));--batf:rgba(0,0,0,0.85);--batn:#fff;--batt:rgba(0,0,0,0.12)}
 :host(.light) ha-card{background:var(--xpf-bg,rgba(255,255,255,0.92))}

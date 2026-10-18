@@ -1,3 +1,7 @@
+## v1.3.51
+
+- All flow lines use the same comet length again: `flow_length` default is now 60% (10–80) for every line. The house line keeps its solar / battery / grid split
+
 ## v1.3.50
 
 - House line comet is twice the `flow_length` (default 60% of the line, max 90%) so the solar / battery / grid split is easy to read; the other lines keep `flow_length`
