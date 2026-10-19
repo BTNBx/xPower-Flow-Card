@@ -12,10 +12,6 @@ const V='1.3.52';
 - New `flow_style` option (`chevron` / `comet`) and `flow_size` (0.5–2.5, default 0.7) to scale the chevrons and track; both in the visual editor
 - `flow_length` now applies to the comet style only
 - Browsers without CSS motion-path support fall back to the comet style
-
-## v1.3.51
-
-- All flow lines use the same comet length again: `flow_length` default is now 60% (10–80) for every line. The house line keeps its solar / battery / grid split
 */
 
 /* ═══════════════════════════════════════
