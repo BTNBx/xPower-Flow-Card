@@ -164,6 +164,7 @@ weather_humidity: sensor.my_outdoor_humidity
 | `bat_polarity` | `negative` | `negative` = charging (Deye) or `positive` = charging (Huawei) |
 | `grid_polarity` | `positive` | `positive` = import (Deye) or `negative` = import (SolarEdge) |
 | `shutdown_soc` | `20` | Battery shutdown SOC percentage |
+| `reserve_entity` | | Backup reserve SOC entity (e.g. the inverter's shutdown SOC `number`). Drives the hatched reserve zone and runtime instead of `shutdown_soc`; tap the battery icon to change it (optional) |
 | `battery_capacity` | `5120` | Battery capacity in Wh |
 | `solar2` | | Second MPPT solar power sensor (optional) |
 | `pv_voltage2` | | Second MPPT PV voltage sensor (optional) |

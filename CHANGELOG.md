@@ -1,3 +1,14 @@
+## v1.3.53
+
+- New battery icon: wide outlined body with a hatched amber backup-reserve zone and a marker at the reserve level
+- New optional `reserve_entity` (e.g. the inverter's shutdown/backup SOC `number`): when set, it drives the reserve zone and the runtime estimate instead of `shutdown_soc`; tapping the battery icon opens it (slider in more-info)
+- Battery fill is green by default, amber near the reserve (≤ reserve + 15%), red at or below it; bright green with a bolt while charging
+- SOC number: bold, switching colour exactly at the fill edge (dark on the fill, white on the empty part)
+- Battery runtime redesigned: clock icon + time left, then a bolt (charging) or arrow (discharging) with the target (100% / reserve) in colour and the clock time
+- Battery voltage/temperature labels left-aligned next to the wider icon
+- Inverter name moved to the upper-left of the inverter so the battery flow line no longer runs through it
+- Thinner flow track behind the chevrons (half the previous width, still scales with `flow_size`)
+
 ## v1.3.52
 
 - New flow style: animated chevrons (default). Each line shows arrows running in the direction of the energy, with speed proportional to power
