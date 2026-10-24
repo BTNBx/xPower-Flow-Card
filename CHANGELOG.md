@@ -1,3 +1,10 @@
+## v1.3.54
+
+- New grid icon: red hexagon with a lightning bolt
+- New house icon: shaded house with lit windows
+- Battery runtime line: a mini battery showing the target level (100% / reserve) in colour replaces the bolt / arrow
+- Battery icon: fill closer to the outline, outline 1.2, reserve marker thinner (0.6) and kept inside the outline
+
 ## v1.3.53
 
 - New battery icon: wide outlined body with a hatched amber backup-reserve zone and a marker at the reserve level
