@@ -1,3 +1,7 @@
+## v1.3.61
+
+- New option `detail`: `essential`, `normal` or `technical` to choose how much the card shows (essential = power, battery % and flows only; technical adds MPPT list, voltages, frequency, temperatures, price and the battery chart). Without it the card shows everything configured, as before; options you set yourself still win. Also in the visual editor
+
 ## v1.3.60
 
 - The energy-source frame now splits the house load exactly like the inverter → house line: when the battery discharges more than the house needs (e.g. battery to grid), only the part that reaches the house counts as battery

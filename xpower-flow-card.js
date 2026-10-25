@@ -1,16 +1,13 @@
 // xPower Flow Card — Modern power flow card for solar hybrid inverters
 // Copyright (C) 2025 BTNBx — MIT License
-const V='1.3.60';
+const V='1.3.61';
 
 /* ═══════════════════════════════════════
    CHANGELOG — full history in CHANGELOG.md
    ═══════════════════════════════════════
-## v1.3.60
+## v1.3.61
 
-- The energy-source frame now splits the house load exactly like the inverter → house line: when the battery discharges more than the house needs (e.g. battery to grid), only the part that reaches the house counts as battery
-- Flow pulses now also show power: fewer chevrons under 100 W, more as power rises, all of them above 1.5 kW (with a small margin so they don't flicker around a step). New option `flow_density`: `power` (default) or `full` for the old look; also in the visual editor
-- Energy split moved into one shared function with automated tests (`npm test`), run on every push
-- Removed unused legacy sparkline and tooltip code
+- New option `detail`: `essential`, `normal` or `technical` to choose how much the card shows (essential = power, battery % and flows only; technical adds MPPT list, voltages, frequency, temperatures, price and the battery chart). Without it the card shows everything configured, as before; options you set yourself still win. Also in the visual editor
 */
 
 /* ═══════════════════════════════════════
@@ -249,6 +246,7 @@ const DEFAULTS={
   animations:'auto',
   flow_speed:'proportional',
   flow_density:'power',
+  detail:'',
   flow_style:'chevron',flow_size:0.7,
   card_style:'xpower',
   energy_frame:true,
@@ -340,10 +338,15 @@ const xpfTier=(p,prev)=>{const a=Math.abs(p);let t=0;while(t<3&&a>=XPF_TIERS[t])
 // Evenly spread k of n pulses (k = n × density, at least 1)
 const xpfShow=(n,frac)=>{const k=Math.max(1,Math.min(n,Math.round(n*frac)));return i=>Math.floor((i+1)*k/n)>Math.floor(i*k/n);};
 
+// Detail level presets (option `detail`): defaults they bring, used only where the YAML doesn't set the option itself.
+// Unset = as before (everything configured is shown). What each level hides is in the card CSS (:host(.d-…)).
+const XPF_DETAIL={essential:{energy_chart:'off',battery_chart:'off',energy_frame:false},normal:{energy_chart:'bottom',battery_chart:'off',energy_frame:true},technical:{energy_chart:'bottom',battery_chart:'bottom',energy_frame:true}};
+const _xdet=(raw,cfg)=>{const P=XPF_DETAIL[raw.detail];if(!P)return;for(const k in P){if(raw[k]!==undefined)continue;if(k==='energy_frame'&&raw.autarky_frame!==undefined)continue;cfg[k]=P[k];}};
+
 class XPowerFlowCardEditor extends HTMLElement{
   constructor(){super();this._config={};this._hass=null;this._onchange=this._fire.bind(this);}
   _esc(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
-  setConfig(config){const merged={..._pdef(config.preset),...config};if(config.energy_frame===undefined&&config.autarky_frame!==undefined)merged.energy_frame=config.autarky_frame;delete merged.autarky_frame;if(this._ready&&JSON.stringify(merged)===JSON.stringify(this._config))return;this._config=merged;this._render();this._ready=true;}
+  setConfig(config){const merged={..._pdef(config.preset),...config};_xdet(config,merged);if(config.energy_frame===undefined&&config.autarky_frame!==undefined)merged.energy_frame=config.autarky_frame;delete merged.autarky_frame;if(this._ready&&JSON.stringify(merged)===JSON.stringify(this._config))return;this._config=merged;this._render();this._ready=true;}
   set hass(hass){const first=!this._hass;this._hass=hass;if(first&&this._ready&&!this._config.language)this._render();}
   disconnectedCallback(){const el=this.querySelector('.editor');if(el)el.removeEventListener('change',this._onchange);}
 
@@ -385,6 +388,7 @@ class XPowerFlowCardEditor extends HTMLElement{
     cfg.shutdown_soc=isNaN(socVal)?20:socVal;
     const capVal=parseInt(this.querySelector('#ed-cap').value,10);
     cfg.battery_capacity=isNaN(capVal)?5120:capVal;
+    {const dl=this.querySelector('#ed-detail');if(dl){const nd=dl.value;if(nd!==(this._config.detail||'')&&XPF_DETAIL[nd])Object.assign(cfg,XPF_DETAIL[nd]);if(nd)cfg.detail=nd;else delete cfg.detail;}}
     const newPreset=this.querySelector('#ed-preset').value;
     if(newPreset!==cfg.preset&&PRESETS[newPreset]){
       const p=PRESETS[newPreset];
@@ -572,6 +576,15 @@ class XPowerFlowCardEditor extends HTMLElement{
           </select>
         </div>
         <div class="field">
+          <label>Detail level</label>
+          <select id="ed-detail" style="${selStyle}">
+            <option value="" ${!XPF_DETAIL[c.detail]?'selected':''}>Everything configured</option>
+            <option value="essential" ${c.detail==='essential'?'selected':''}>Essential</option>
+            <option value="normal" ${c.detail==='normal'?'selected':''}>Normal</option>
+            <option value="technical" ${c.detail==='technical'?'selected':''}>Technical</option>
+          </select>
+        </div>
+        <div class="field">
           <label>Power unit</label>
           <select id="ed-punit" style="${selStyle}">
             <option value="auto" ${(c.power_unit||'auto')==='auto'?'selected':''}>Auto</option>
@@ -709,6 +722,7 @@ setConfig(c){
   this._c={};
   const B=_pdef(c.preset);Object.keys(DEFAULTS).forEach(k=>{this._c[k]=c[k]!==undefined?c[k]:B[k];});
   if(c.energy_frame===undefined&&c.autarky_frame!==undefined)this._c.energy_frame=c.autarky_frame;
+  _xdet(c,this._c);
   // Backward compatibility: migrate old hardcoded keys to the generic slot system
   if(!c.extra1_power&&c.appliance_power){this._c.extra1_power=c.appliance_power;this._c.extra1_name=c.appliance_name||'';this._c.extra1_icon='appliance';}
   if(!c.extra2_power&&c.heatpump_power){this._c.extra2_power=c.heatpump_power;this._c.extra2_name=c.heatpump_name||'';this._c.extra2_icon='heatpump';}
@@ -760,6 +774,7 @@ _applyTheme(){
   this.classList.toggle('compact',!!this._c.compact);
   this.classList.toggle('hast',this._c.card_style==='ha');
   this.classList.toggle('noaur',this._c.energy_frame===false);
+  {const d=XPF_DETAIL[this._c.detail]?this._c.detail:'';for(const k of ['essential','normal','technical'])this.classList.toggle('d-'+k,d===k);}
   this.classList.toggle('rm',this._rm&&this._c.animations!=='always');
   this._ringKey='';this._ringPath();
 }
@@ -918,7 +933,8 @@ svg{width:100%;height:auto;display:block}
 
 .wt{fill:var(--t3);font-size:11px;font-weight:500;text-anchor:start;dominant-baseline:middle;font-family:-apple-system,sans-serif}
 .wb{fill:none;stroke:var(--t3);stroke-width:0.5;rx:4;ry:4;opacity:0.4}
-.sr{display:flex;gap:6px;margin-top:8mm}.xch{display:flex;flex-direction:column;gap:6px}.xch:empty{display:none}#chT{margin:2px 0 12.5px}#chB{margin-top:6px}:host(.compact) .xch{display:none}.cbx{background:var(--xpf-sparkline-bg,rgba(255,255,255,0.02));border:1px solid rgba(127,127,127,0.12);border-radius:var(--xpf-sparkline-radius,12px);padding:8px 10px 6px;display:flex;flex-direction:column;gap:3px}.chd{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:baseline;gap:6px;height:16px;overflow:hidden}.chl{font-size:9px;font-weight:700;letter-spacing:0.1em;color:var(--t3);text-transform:uppercase}.chl.gh{visibility:hidden}.chv{display:flex;justify-content:center;gap:8px;font-size:10px;font-weight:600;white-space:nowrap;overflow:hidden}.csv{display:block;width:100%;height:70px;cursor:crosshair;touch-action:pan-y}.csv text{font-size:7.5px;fill:var(--t3)}.cgr{stroke:var(--t3);stroke-opacity:0.18;stroke-width:1;stroke-dasharray:2 3;fill:none}.cbl{stroke:var(--t3);stroke-opacity:0.35;stroke-width:1;fill:none}
+.sr{display:flex;gap:6px;margin-top:8mm}.xch{display:flex;flex-direction:column;gap:6px}.xch:empty{display:none}#chT{margin:2px 0 12.5px}#chB{margin-top:6px}:host(.compact) .xch{display:none}
+:host(.d-essential) :is(#tp,#bt,#bv,#gv,#pv,.mpr,#priceicons,#ds,#dg,#dl,#db,#de,#brg,#wicons,#sunRing),:host(.d-normal) :is(#tp,#bt,#bv,#gv,#pv,.mpr,#priceicons){display:none !important}.cbx{background:var(--xpf-sparkline-bg,rgba(255,255,255,0.02));border:1px solid rgba(127,127,127,0.12);border-radius:var(--xpf-sparkline-radius,12px);padding:8px 10px 6px;display:flex;flex-direction:column;gap:3px}.chd{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:baseline;gap:6px;height:16px;overflow:hidden}.chl{font-size:9px;font-weight:700;letter-spacing:0.1em;color:var(--t3);text-transform:uppercase}.chl.gh{visibility:hidden}.chv{display:flex;justify-content:center;gap:8px;font-size:10px;font-weight:600;white-space:nowrap;overflow:hidden}.csv{display:block;width:100%;height:70px;cursor:crosshair;touch-action:pan-y}.csv text{font-size:7.5px;fill:var(--t3)}.cgr{stroke:var(--t3);stroke-opacity:0.18;stroke-width:1;stroke-dasharray:2 3;fill:none}.cbl{stroke:var(--t3);stroke-opacity:0.35;stroke-width:1;fill:none}
 :host(.compact) .sr{display:none}
 :host(.compact) ha-card{padding:6px 8px 6px}
 .sb{flex:1;background:var(--xpf-sparkline-bg,rgba(255,255,255,0.02));border:1px solid rgba(255,255,255,0.04);border-radius:var(--xpf-sparkline-radius,12px);padding:10px 10px 8px;display:flex;flex-direction:column;gap:2px;overflow:hidden}
