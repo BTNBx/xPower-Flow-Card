@@ -8,6 +8,7 @@ const V='1.3.60';
 ## v1.3.60
 
 - The energy-source frame now splits the house load exactly like the inverter → house line: when the battery discharges more than the house needs (e.g. battery to grid), only the part that reaches the house counts as battery
+- Flow pulses now also show power: fewer chevrons under 100 W, more as power rises, all of them above 1.5 kW (with a small margin so they don't flicker around a step). New option `flow_density`: `power` (default) or `full` for the old look; also in the visual editor
 - Energy split moved into one shared function with automated tests (`npm test`), run on every push
 - Removed unused legacy sparkline and tooltip code
 */
@@ -247,6 +248,7 @@ const DEFAULTS={
   theme:'auto',
   animations:'auto',
   flow_speed:'proportional',
+  flow_density:'power',
   flow_style:'chevron',flow_size:0.7,
   card_style:'xpower',
   energy_frame:true,
@@ -332,6 +334,12 @@ const sL=Math.min(S,Ld),bDis=Math.min(Bd,Ld-sL),gImp=Math.max(0,Math.min(Gi,Ld-s
 const gB=Math.max(0,Math.min(Gi-gImp,Bc)),sB=Math.max(0,Bc-gB);
 return {sToH,bDis,gImp,gB,sB,feed,autarky:Ld>0?Math.max(0,Math.min(100,(Ld-gImp)/Ld*100)):0};};
 
+// Pulse density by power: tier 0 <100 W, 1 <500 W, 2 <1500 W, 3 above; ±10% hysteresis around each boundary
+const XPF_TIERS=[100,500,1500],XPF_DENS=[0.25,0.5,0.75,1];
+const xpfTier=(p,prev)=>{const a=Math.abs(p);let t=0;while(t<3&&a>=XPF_TIERS[t])t++;if(prev!=null&&prev!==t){const th=XPF_TIERS[Math.min(prev,t)];if(Math.abs(a-th)<th*0.1)return prev;}return t;};
+// Evenly spread k of n pulses (k = n × density, at least 1)
+const xpfShow=(n,frac)=>{const k=Math.max(1,Math.min(n,Math.round(n*frac)));return i=>Math.floor((i+1)*k/n)>Math.floor(i*k/n);};
+
 class XPowerFlowCardEditor extends HTMLElement{
   constructor(){super();this._config={};this._hass=null;this._onchange=this._fire.bind(this);}
   _esc(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
@@ -357,6 +365,7 @@ class XPowerFlowCardEditor extends HTMLElement{
     cfg.solar_forecast=this.querySelector('#ed-sfc').value!=='false';
     cfg.animations=this.querySelector('#ed-anim').value;
     cfg.flow_speed=this.querySelector('#ed-fspd').value;
+    {const fd=this.querySelector('#ed-fdens');if(fd)cfg.flow_density=fd.value;}
     cfg.flow_style=this.querySelector('#ed-fsty').value;
     const fszVal=parseFloat(this.querySelector('#ed-fsz').value);
     cfg.flow_size=isNaN(fszVal)?0.7:Math.min(2.5,Math.max(0.5,fszVal));
@@ -553,6 +562,13 @@ class XPowerFlowCardEditor extends HTMLElement{
           <select id="ed-fspd" style="${selStyle}">
             <option value="proportional" ${c.flow_speed!=='synced'?'selected':''}>Proportional to power</option>
             <option value="synced" ${c.flow_speed==='synced'?'selected':''}>Synced</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Flow density</label>
+          <select id="ed-fdens" style="${selStyle}">
+            <option value="power" ${c.flow_density!=='full'?'selected':''}>Proportional to power</option>
+            <option value="full" ${c.flow_density==='full'?'selected':''}>Full</option>
           </select>
         </div>
         <div class="field">
@@ -990,7 +1006,8 @@ _setupClicks(){const c=this._c;const bind=(id,entity)=>{const el=this._$(id);if(
 // Frame path + stroke width: scales with card width (≈0.75px phone, 1px desktop, 2px TV, max 3px); an explicit --xpf-frame-width wins
 _ringPath(){const card=this._$('xcard'),svg=this._$('aur');if(!card||!svg)return;const w=card.clientWidth,h=card.clientHeight;if(!w||!h)return;const cs=getComputedStyle(card);const bw=parseFloat(cs.borderTopWidth)||0;const ov=parseFloat(cs.getPropertyValue('--xpf-frame-width'));const dpr=window.devicePixelRatio||1;const sw=ov>0?ov:Math.min(3,Math.max(dpr>=1.5?0.75:1,Math.round(w/480*100)/100));const i=sw/2,W=w-sw,H=h-sw;let r=(parseFloat(cs.borderTopLeftRadius)||20)-bw-i;r=Math.max(0,Math.min(r,Math.min(W,H)/2));const key=w+'|'+h+'|'+r+'|'+sw;if(key===this._ringKey)return;this._ringKey=key;svg.style.setProperty('--fw',sw+'px');const q=v=>Math.round(v*4)/4;const d='M'+q(i+W/2)+','+q(i)+' H'+q(i+W-r)+' A'+q(r)+','+q(r)+' 0 0 1 '+q(i+W)+','+q(i+r)+' V'+q(i+H-r)+' A'+q(r)+','+q(r)+' 0 0 1 '+q(i+W-r)+','+q(i+H)+' H'+q(i+r)+' A'+q(r)+','+q(r)+' 0 0 1 '+q(i)+','+q(i+H-r)+' V'+q(i+r)+' A'+q(r)+','+q(r)+' 0 0 1 '+q(i+r)+','+q(i)+' Z';this._sa(svg,'viewBox','0 0 '+w+' '+h);['aut','au-s','au-b','au-g','aurhit'].forEach(id=>this._sa(this._$(id),'d',d));}
 _spd(p){const a=Math.abs(p);if(a<10)return 0;let s=Math.max(ANIM_MIN_SPD,ANIM_MAX_SPD-(a/ANIM_MAX_W)*(ANIM_MAX_SPD-ANIM_MIN_SPD));if(a>=3000)s*=0.4;else if(a>=2000)s*=0.6;else if(a>=1000)s*=0.8;return s;}
-_sf(el,id,p,d,c,o){if(!el)return;const cg=this._chv&&el.id!=='fh'?this._$('c'+el.id):null;if(Math.abs(p)<10){this._sa(el,'opacity','0');if(cg)this._sa(cg,'opacity','0');return;}if(cg){this._sa(cg,'stroke',c);this._sa(cg,'opacity','0.9');cg.classList.toggle('rv',d==='fL'||d==='fu');}this._sa(el,'stroke',c);this._sa(el,'opacity',o);if(this._fs[id]!==d){this._fs[id]=d;el.setAttribute('class','fa '+d);this._resync=true;}if(this._c.flow_speed!=='synced'){const fp=this._fsp||(this._fsp={});const sp=Math.min(6,Math.max(0.5,2500/Math.abs(p)));const o0=fp[id];if(!o0||Math.abs(sp-o0)/o0>0.15){fp[id]=sp;el.style.setProperty('--spd',sp.toFixed(2)+'s');if(cg)cg.style.setProperty('--spd',sp.toFixed(2)+'s');}}}
+_cvN(cg,p){if(!cg)return;const t=this._c.flow_density==='full'?3:xpfTier(p,cg.__tk);if(t===cg.__tk)return;cg.__tk=t;const cs=cg.children,show=xpfShow(cs.length,XPF_DENS[t]);for(let i=0;i<cs.length;i++)this._ss(cs[i],'visibility',show(i)?'':'hidden');}
+_sf(el,id,p,d,c,o){if(!el)return;const cg=this._chv&&el.id!=='fh'?this._$('c'+el.id):null;if(Math.abs(p)<10){this._sa(el,'opacity','0');if(cg)this._sa(cg,'opacity','0');return;}if(cg){this._sa(cg,'stroke',c);this._sa(cg,'opacity','0.9');this._cvN(cg,p);cg.classList.toggle('rv',d==='fL'||d==='fu');}this._sa(el,'stroke',c);this._sa(el,'opacity',o);if(this._fs[id]!==d){this._fs[id]=d;el.setAttribute('class','fa '+d);this._resync=true;}if(this._c.flow_speed!=='synced'){const fp=this._fsp||(this._fsp={});const sp=Math.min(6,Math.max(0.5,2500/Math.abs(p)));const o0=fp[id];if(!o0||Math.abs(sp-o0)/o0>0.15){fp[id]=sp;el.style.setProperty('--spd',sp.toFixed(2)+'s');if(cg)cg.style.setProperty('--spd',sp.toFixed(2)+'s');}}}
 _tween(id,target,fmt){const el=this._$(id);if(!el)return;if(target===null||(this._rm&&this._c.animations!=='always')){delete this._twq[id];this._st(el,fmt(target));this._twv[id]=target;return;}const from=this._twv[id];if(from===undefined||from===null||Math.abs(target-from)<1){delete this._twq[id];this._st(el,fmt(target));this._twv[id]=target;return;}this._twq[id]={el,from,to:target,fmt,t0:performance.now()};if(!this._twRaf)this._twRaf=requestAnimationFrame(t=>this._twStep(t));}
 _twStep(t){this._twRaf=null;const q=this._twq;let live=false;for(const id in q){const w=q[id];let k=Math.min(1,(t-w.t0)/600);k=1-Math.pow(1-k,3);this._st(w.el,w.fmt(w.from+(w.to-w.from)*k));if(k<1)live=true;else{this._twv[id]=w.to;delete q[id];}}if(live)this._twRaf=requestAnimationFrame(t2=>this._twStep(t2));}
 _chMk(pos){const c=this._c,L=this._lang;let o='';const box=(k,lbl)=>'<div class="cbx" id="cx'+k+'"><div class="chd"><span class="chl">'+lbl+'</span><span class="chv" id="cv'+k+'"></span><span class="chl gh" aria-hidden="true">'+lbl+'</span></div><svg class="csv" id="cs'+k+'" role="img" aria-label="'+lbl+'"><g id="cg'+k+'"></g><line id="cc'+k+'" y1="2" y2="59" stroke="var(--t3)" stroke-width="1" opacity="0" /><g id="cd'+k+'"></g></svg></div>';if((c.energy_chart||'bottom')===pos)o+=box('E',L.today||'TODAY');if((c.battery_chart||'off')===pos)o+=box('B',L.battery);return o;}
@@ -1089,7 +1106,7 @@ const FX=xpfFlows(solF,batF,gridF,loadF),{sToH:_sToH,bDis:_bDis,gImp:_gImp,gB:_g
 this._sf(this._$('fb'),'b',batF,batF<0?'fd':'fu',batF<0?(_gB>_sB?'var(--red)':'var(--green)'):'var(--solar)','0.75');
 {const cb=this._chv&&this._$('cfb');if(cb){const cs=cb.children;if(batF<-10&&_gB>0&&_sB>0){const nc=Math.min(10,cs.length),fG=_gB/_Bc;for(let i=0;i<cs.length;i++){const u=((cs.length-1-i)%nc+0.5)/nc;this._sa(cs[i],'stroke',u<1-fG?'var(--green)':'var(--red)');}}else{for(let i=0;i<cs.length;i++)this._sa(cs[i],'stroke','');}}}
 {const _sc=[[_sToH,'#66BB6A'],[_bDis,'#FFA726'],[_gImp,'#EF5350']];let _ac=0;for(let _i=0;_i<3;_i++){const _f=_feed>0?_sc[_i][0]/_feed*100:0;const _p0=this._$('hs'+(_i*2)),_p1=this._$('hs'+(_i*2+1));if(_p0){this._sa(_p0,'offset',_ac.toFixed(1)+'%');this._sa(_p0,'stop-color',_sc[_i][1]);}_ac+=_f;if(_p1){this._sa(_p1,'offset',_ac.toFixed(1)+'%');this._sa(_p1,'stop-color',_sc[_i][1]);}}}
-{const _mx=[['fh','h',_sToH,'var(--green)'],['fh2','h2',_bDis,'var(--orange)'],['fh3','h3',_gImp,'var(--red)']],FL=this._hl,FP=this._hp;let _c=0;for(const [_id,_k,_w,_col] of _mx){const el=this._$(_id);if(!el)continue;const _l=_feed>0?_w/_feed*FL:0;if(_l<0.5){this._sa(el,'opacity','0');continue;}this._sf(el,_k,loadF,'fr',_col,'0.75');el.style.strokeDasharray='0 '+(FP-_c-_l).toFixed(2)+' '+_l.toFixed(2)+' '+_c.toFixed(2);_c+=_l;}const cg=this._chv&&this._$('cfh');if(cg){if(loadF<10||_feed<=0)this._sa(cg,'opacity','0');else{this._sa(cg,'opacity','0.9');const mx=[[_sToH,'var(--green)'],[_bDis,'var(--orange)'],[_gImp,'var(--red)']].filter(m=>m[0]>0),cs=cg.children,nc=Math.min(10,cs.length);for(let i=0;i<cs.length;i++){const u=((cs.length-1-i)%nc+0.5)/nc;let a=0,col=mx[mx.length-1][1];for(const m of mx){a+=m[0]/_feed;if(u<a+1e-9){col=m[1];break;}}this._sa(cs[i],'stroke',col);}const sp=c.flow_speed==='synced'&&this._syncSpd>0?this._syncSpd:Math.min(6,Math.max(0.5,2500/loadF));const o0=this._cfhSp;if(!o0||Math.abs(sp-o0)/o0>0.15){this._cfhSp=sp;cg.style.setProperty('--spd',sp.toFixed(2)+'s');}}}}
+{const _mx=[['fh','h',_sToH,'var(--green)'],['fh2','h2',_bDis,'var(--orange)'],['fh3','h3',_gImp,'var(--red)']],FL=this._hl,FP=this._hp;let _c=0;for(const [_id,_k,_w,_col] of _mx){const el=this._$(_id);if(!el)continue;const _l=_feed>0?_w/_feed*FL:0;if(_l<0.5){this._sa(el,'opacity','0');continue;}this._sf(el,_k,loadF,'fr',_col,'0.75');el.style.strokeDasharray='0 '+(FP-_c-_l).toFixed(2)+' '+_l.toFixed(2)+' '+_c.toFixed(2);_c+=_l;}const cg=this._chv&&this._$('cfh');if(cg){if(loadF<10||_feed<=0)this._sa(cg,'opacity','0');else{this._sa(cg,'opacity','0.9');this._cvN(cg,loadF);const mx=[[_sToH,'var(--green)'],[_bDis,'var(--orange)'],[_gImp,'var(--red)']].filter(m=>m[0]>0),cs=cg.children,nc=Math.min(10,cs.length);for(let i=0;i<cs.length;i++){const u=((cs.length-1-i)%nc+0.5)/nc;let a=0,col=mx[mx.length-1][1];for(const m of mx){a+=m[0]/_feed;if(u<a+1e-9){col=m[1];break;}}this._sa(cs[i],'stroke',col);}const sp=c.flow_speed==='synced'&&this._syncSpd>0?this._syncSpd:Math.min(6,Math.max(0.5,2500/loadF));const o0=this._cfhSp;if(!o0||Math.abs(sp-o0)/o0>0.15){this._cfhSp=sp;cg.style.setProperty('--spd',sp.toFixed(2)+'s');}}}}
 
 // EV node — visible only when ev_power/ev_soc configured
 const nEV=this._$('nEV');

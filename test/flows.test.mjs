@@ -13,8 +13,8 @@ const ctx = {
   console: { info() {}, warn() {} },
 };
 vm.createContext(ctx);
-vm.runInContext(src + '\n;globalThis.__x={xpfFlows};', ctx);
-const { xpfFlows } = ctx.__x;
+vm.runInContext(src + '\n;globalThis.__x={xpfFlows,xpfTier,xpfShow};', ctx);
+const { xpfFlows, xpfTier, xpfShow } = ctx.__x;
 
 const near = (a, b) => assert.ok(Math.abs(a - b) < 1e-6, `${a} != ${b}`);
 
@@ -73,4 +73,29 @@ test('invariants over a grid of inputs', () => {
     near(f.gB + f.sB, Math.max(0, -b));
     assert.ok(f.autarky >= 0 && f.autarky <= 100);
   }
+});
+
+test('pulse tier by power', () => {
+  assert.equal(xpfTier(50), 0);
+  assert.equal(xpfTier(300), 1);
+  assert.equal(xpfTier(-1000), 2);
+  assert.equal(xpfTier(4000), 3);
+});
+
+test('pulse tier hysteresis near a boundary', () => {
+  assert.equal(xpfTier(95, 1), 1);    // just under 100 W keeps tier 1
+  assert.equal(xpfTier(85, 1), 0);    // clearly under drops
+  assert.equal(xpfTier(1540, 2), 2);  // just over 1500 W keeps tier 2
+  assert.equal(xpfTier(1700, 2), 3);
+  assert.equal(xpfTier(3000, 0), 3);  // big jumps are immediate
+});
+
+test('pulses evenly spread, at least one', () => {
+  const count = (n, f) => { const s = xpfShow(n, f); let k = 0; for (let i = 0; i < n; i++) if (s(i)) k++; return k; };
+  assert.equal(count(10, 1), 10);
+  assert.equal(count(10, 0.5), 5);
+  assert.equal(count(7, 0.25), 2);
+  assert.equal(count(2, 0.25), 1);
+  const s = xpfShow(12, 0.25), idx = [...Array(12).keys()].filter(s);
+  assert.deepEqual(idx, [3, 7, 11]);
 });
