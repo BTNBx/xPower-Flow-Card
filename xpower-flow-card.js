@@ -1,13 +1,16 @@
 // xPower Flow Card — Modern power flow card for solar hybrid inverters
 // Copyright (C) 2025 BTNBx — MIT License
-const V='1.3.61';
+const V='1.3.62';
 
 /* ═══════════════════════════════════════
    CHANGELOG — full history in CHANGELOG.md
    ═══════════════════════════════════════
-## v1.3.61
+## v1.3.62
 
-- New option `detail`: `essential`, `normal` or `technical` to choose how much the card shows (essential = power, battery % and flows only; technical adds MPPT list, voltages, frequency, temperatures, price and the battery chart). Without it the card shows everything configured, as before; options you set yourself still win. Also in the visual editor
+- Energy chart redrawn in a smoother style: curved lines (no more steps), soft fading areas under solar and grid import, the house line on top with a light shadow, no vertical grid lines, and the solar peak in a small labelled badge (e.g. "2.95 kW")
+- Thinner lines on both charts
+- The energy chart header now shows today's totals in kWh (solar, house, grid import) and the solar forecast for the whole day; touch or hover the chart to see the values at that time, forecast included
+- The red grid line is only drawn where the grid is actually used, not along the bottom all day
 */
 
 /* ═══════════════════════════════════════
@@ -17,7 +20,7 @@ const LANG={
   pt:{solar:'SOLAR',grid:'REDE',load:'CASA',battery:'BATERIA',ev:'CARRO',inverter:'Inversor',appliance:'Eletrodom\u00e9sticos',garage:'Garagem',heatpump:'Bomba de Calor',extra:'Extra',
       autarky:'Autossufici\u00EAncia',energy_src:'Origem da energia',runtime_to:'at\u00E9',
       charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
-      daily:'\u25B8',today:'HOJE',solar24:'SOLAR (24h)',load24:'CASA (24h)',grid24:'REDE (24h)',bat24:'BATERIA (24h)',
+      daily:'\u25B8',today:'HOJE',fcst:'prev.',solar24:'SOLAR (24h)',load24:'CASA (24h)',grid24:'REDE (24h)',bat24:'BATERIA (24h)',
       unavailable:'--',autodetect:'Auto-detetar',invalid:'entidade n\u00E3o existe',
       editor_title:'xPower Flow Card',editor_lang:'Idioma',editor_entities:'Entidades',
       editor_options:'Op\u00E7\u00F5es',editor_soc:'SOC M\u00EDnimo (%)',
@@ -28,7 +31,7 @@ const LANG={
   en:{solar:'SOLAR',grid:'GRID',load:'HOME',battery:'BATTERY',ev:'EV',inverter:'Inverter',appliance:'Appliances',garage:'Garage',heatpump:'Heat Pump',extra:'Extra',
       autarky:'Self-sufficiency',energy_src:'Energy source',runtime_to:'to',
       charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
-      daily:'\u25B8',today:'TODAY',solar24:'SOLAR (24h)',load24:'HOME (24h)',grid24:'GRID (24h)',bat24:'BATTERY (24h)',
+      daily:'\u25B8',today:'TODAY',fcst:'fcst',solar24:'SOLAR (24h)',load24:'HOME (24h)',grid24:'GRID (24h)',bat24:'BATTERY (24h)',
       unavailable:'--',autodetect:'Auto-detect',invalid:'entity not found',
       editor_title:'xPower Flow Card',editor_lang:'Language',editor_entities:'Entities',
       editor_options:'Options',editor_soc:'Shutdown SOC (%)',
@@ -39,7 +42,7 @@ const LANG={
   sv:{solar:'SOL',grid:'N\u00c4T',load:'HEM',battery:'BATTERI',ev:'ELBIL',inverter:'V\u00e4xelriktare',appliance:'Vitvaror',garage:'Garage',heatpump:'V\u00e4rmepump',extra:'\u00d6vrigt',
       autarky:'Sj\u00e4lvf\u00f6rs\u00f6rjning',energy_src:'Energik\u00e4lla',runtime_to:'till',
       charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
-      daily:'\u25B8',today:'IDAG',solar24:'SOL (24h)',load24:'HEM (24h)',grid24:'N\u00c4T (24h)',bat24:'BATTERI (24h)',
+      daily:'\u25B8',today:'IDAG',fcst:'prog.',solar24:'SOL (24h)',load24:'HEM (24h)',grid24:'N\u00c4T (24h)',bat24:'BATTERI (24h)',
       unavailable:'--',autodetect:'Auto-detektera',invalid:'entitet hittades inte',
       editor_title:'xPower Flow Card',editor_lang:'Spr\u00e5k',editor_entities:'Entiteter',
       editor_options:'Alternativ',editor_soc:'Avstängnings-SOC (%)',
@@ -50,7 +53,7 @@ const LANG={
   de:{solar:'SOLAR',grid:'NETZ',load:'HAUS',battery:'BATTERIE',ev:'E-AUTO',inverter:'Wechselrichter',appliance:'Ger\u00e4te',garage:'Garage',heatpump:'W\u00e4rmepumpe',extra:'Sonstiges',
       autarky:'Autarkie',energy_src:'Energiequelle',runtime_to:'bis',
       charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
-      daily:'\u25B8',today:'HEUTE',solar24:'SOLAR (24h)',load24:'HAUS (24h)',grid24:'NETZ (24h)',bat24:'BATTERIE (24h)',
+      daily:'\u25B8',today:'HEUTE',fcst:'Prog.',solar24:'SOLAR (24h)',load24:'HAUS (24h)',grid24:'NETZ (24h)',bat24:'BATTERIE (24h)',
       unavailable:'--',autodetect:'Auto-Erkennung',invalid:'Entit\u00E4t existiert nicht',
       editor_title:'xPower Flow Card',editor_lang:'Sprache',editor_entities:'Entit\u00E4ten',
       editor_options:'Optionen',editor_soc:'Abschalt-SOC (%)',
@@ -61,7 +64,7 @@ const LANG={
   fr:{solar:'SOLAIRE',grid:'R\u00C9SEAU',load:'MAISON',battery:'BATTERIE',ev:'VOITURE',inverter:'Onduleur',appliance:'\u00c9lectrom\u00e9nager',garage:'Garage',heatpump:'Pompe \u00e0 chaleur',extra:'Autre',
       autarky:'Autosuffisance',energy_src:'Source d\u2019\u00e9nergie',runtime_to:'jusqu\u0027\u00E0',
       charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
-      daily:'\u25B8',today:'AUJOURD\u0027HUI',solar24:'SOLAIRE (24h)',load24:'MAISON (24h)',grid24:'R\u00C9SEAU (24h)',bat24:'BATTERIE (24h)',
+      daily:'\u25B8',today:'AUJOURD\u0027HUI',fcst:'pr\u00e9v.',solar24:'SOLAIRE (24h)',load24:'MAISON (24h)',grid24:'R\u00C9SEAU (24h)',bat24:'BATTERIE (24h)',
       unavailable:'--',autodetect:'D\u00E9tection auto',invalid:'entit\u00E9 introuvable',
       editor_title:'xPower Flow Card',editor_lang:'Langue',editor_entities:'Entit\u00E9s',
       editor_options:'Options',editor_soc:'SOC Minimum (%)',
@@ -72,7 +75,7 @@ const LANG={
   es:{solar:'SOLAR',grid:'RED',load:'HOGAR',battery:'BATER\u00CDAS',ev:'COCHE',inverter:'Inversor',appliance:'Electrodom\u00e9sticos',garage:'Garaje',heatpump:'Bomba de Calor',extra:'Extra',
       autarky:'Autosuficiencia',energy_src:'Origen de la energ\u00eda',runtime_to:'hasta',
       charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
-      daily:'\u25B8',today:'HOY',solar24:'SOLAR (24h)',load24:'HOGAR (24h)',grid24:'RED (24h)',bat24:'BATERÍA (24h)',
+      daily:'\u25B8',today:'HOY',fcst:'prev.',solar24:'SOLAR (24h)',load24:'HOGAR (24h)',grid24:'RED (24h)',bat24:'BATERÍA (24h)',
       unavailable:'--',autodetect:'Autodetectar',invalid:'entidad no existe',
       editor_title:'xPower Flow Card',editor_lang:'Idioma',editor_entities:'Entidades',
       editor_options:'Opciones',editor_soc:'SOC M\u00EDnimo (%)',
@@ -83,7 +86,7 @@ const LANG={
   it:{solar:'SOLARE',grid:'RETE',load:'CASA',battery:'BATTERIA',ev:'AUTO',inverter:'Inverter',appliance:'Elettrodomestici',garage:'Garage',heatpump:'Pompa di Calore',extra:'Extra',
       autarky:'Autosufficienza',energy_src:'Origine dell\u2019energia',runtime_to:'fino a',
       charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
-      daily:'\u25B8',today:'OGGI',solar24:'SOLARE (24h)',load24:'CASA (24h)',grid24:'RETE (24h)',bat24:'BATTERIA (24h)',
+      daily:'\u25B8',today:'OGGI',fcst:'prev.',solar24:'SOLARE (24h)',load24:'CASA (24h)',grid24:'RETE (24h)',bat24:'BATTERIA (24h)',
       unavailable:'--',autodetect:'Rilevamento auto',invalid:'entit\u00E0 inesistente',
       editor_title:'xPower Flow Card',editor_lang:'Lingua',editor_entities:'Entit\u00E0',
       editor_options:'Opzioni',editor_soc:'SOC Minimo (%)',
@@ -94,7 +97,7 @@ const LANG={
   nl:{solar:'ZONNE',grid:'NET',load:'HUIS',battery:'BATTERIJ',ev:'EV',inverter:'Omvormer',appliance:'Apparaten',garage:'Garage',heatpump:'Warmtepomp',extra:'Overig',
       autarky:'Zelfvoorziening',energy_src:'Energiebron',runtime_to:'tot',
       charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
-      daily:'\u25B8',today:'VANDAAG',solar24:'ZONNE (24h)',load24:'HUIS (24h)',grid24:'NET (24h)',bat24:'BATTERIJ (24h)',
+      daily:'\u25B8',today:'VANDAAG',fcst:'verw.',solar24:'ZONNE (24h)',load24:'HUIS (24h)',grid24:'NET (24h)',bat24:'BATTERIJ (24h)',
       unavailable:'--',autodetect:'Auto-detectie',invalid:'entiteit bestaat niet',
       editor_title:'xPower Flow Card',editor_lang:'Taal',editor_entities:'Entiteiten',
       editor_options:'Opties',editor_soc:'Uitschakel-SOC (%)',
@@ -105,7 +108,7 @@ const LANG={
   pl:{solar:'SOLAR',grid:'SIE\u0106',load:'DOM',battery:'BATERIA',ev:'EV',inverter:'Falownik',appliance:'AGD',garage:'Gara\u017c',heatpump:'Pompa Ciep\u0142a',extra:'Inne',
       autarky:'Samowystarczalno\u015B\u0107',energy_src:'\u0179r\u00f3d\u0142o energii',runtime_to:'do',
       charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
-      daily:'\u25B8',today:'DZI\u015a',solar24:'SOLAR (24h)',load24:'DOM (24h)',grid24:'SIE\u0106 (24h)',bat24:'BATERIA (24h)',
+      daily:'\u25B8',today:'DZI\u015a',fcst:'prog.',solar24:'SOLAR (24h)',load24:'DOM (24h)',grid24:'SIE\u0106 (24h)',bat24:'BATERIA (24h)',
       unavailable:'--',autodetect:'Autowykrywanie',invalid:'encja nie istnieje',
       editor_title:'xPower Flow Card',editor_lang:'J\u0119zyk',editor_entities:'Encje',
       editor_options:'Opcje',editor_soc:'Min. SOC (%)',
@@ -336,6 +339,12 @@ return {sToH,bDis,gImp,gB,sB,feed,autarky:Ld>0?Math.max(0,Math.min(100,(Ld-gImp)
 const XPF_TIERS=[100,500,1500],XPF_DENS=[0.25,0.5,0.75,1];
 const xpfTier=(p,prev)=>{const a=Math.abs(p);let t=0;while(t<3&&a>=XPF_TIERS[t])t++;if(prev!=null&&prev!==t){const th=XPF_TIERS[Math.min(prev,t)];if(Math.abs(a-th)<th*0.1)return prev;}return t;};
 // Evenly spread k of n pulses (k = n × density, at least 1)
+// Chart paths: monotone cubic (Fritsch–Carlson) through [[x,y],…] — smooth without overshooting the data
+const xpfSmooth=P=>{const n=P.length;if(!n)return'';const f=v=>v.toFixed(1);if(n<2)return'M'+f(P[0][0])+' '+f(P[0][1]);const d=[],m=[];for(let i=0;i<n-1;i++)d.push((P[i+1][1]-P[i][1])/(P[i+1][0]-P[i][0]||1));m[0]=d[0];m[n-1]=d[n-2];for(let i=1;i<n-1;i++)m[i]=d[i-1]*d[i]<=0?0:(d[i-1]+d[i])/2;for(let i=0;i<n-1;i++){if(d[i]===0){m[i]=m[i+1]=0;continue;}const a=m[i]/d[i],b=m[i+1]/d[i],q=a*a+b*b;if(q>9){const t=3/Math.sqrt(q);m[i]=t*a*d[i];m[i+1]=t*b*d[i];}}let o='M'+f(P[0][0])+' '+f(P[0][1]);for(let i=0;i<n-1;i++){const h=(P[i+1][0]-P[i][0])/3;o+='C'+f(P[i][0]+h)+' '+f(P[i][1]+m[i]*h)+' '+f(P[i+1][0]-h)+' '+f(P[i+1][1]-m[i+1]*h)+' '+f(P[i+1][0])+' '+f(P[i+1][1]);}return o;};
+// Contiguous non-null runs of a 96-slot series as point lists
+const xpfRuns=(a,X,Y)=>{const r=[];let cur=null;for(let k=0;k<a.length;k++){const v=a[k];if(v===null||v===undefined){cur=null;continue;}if(!cur){cur=[];r.push(cur);}cur.push([X(k),Y(v)]);}return r;};
+// Energy (kWh) of a series of 15-min average powers (W)
+const xpfKWh=a=>{let e=0;for(const v of a||[])if(v>0)e+=v;return e/4000;};
 const xpfShow=(n,frac)=>{const k=Math.max(1,Math.min(n,Math.round(n*frac)));return i=>Math.floor((i+1)*k/n)>Math.floor(i*k/n);};
 
 // Detail level presets (option `detail`): defaults they bring, used only where the YAML doesn't set the option itself.
@@ -1030,30 +1039,33 @@ _chMk(pos){const c=this._c,L=this._lang;let o='';const box=(k,lbl)=>'<div class=
 _cGeo(svg){const W=Math.max(120,Math.round(svg.clientWidth||svg.getBoundingClientRect().width||300)),H=Math.max(70,Math.min(140,Math.round(W*0.12))),T0=6,B0=H-11,L0=22,n=HIST_POINTS;if(svg.style.height!==H+'px')svg.style.height=H+'px';const cl=svg.querySelector('line[id^="cc"]');if(cl)cl.setAttribute('y2',B0);return {W,H,T0,B0,L0,n,X:i=>L0+(i+0.5)/n*(W-L0)};}
 _drawSparks(){this._drawChartE();this._drawChartB();this._chHead();}
 _drawChartE(){const svg=this._$('csE'),g=this._$('cgE');if(!svg||!g)return;const G=this._cGeo(svg);const {W,H,T0,B0,L0,n,X}=G;svg.setAttribute('viewBox','0 0 '+W+' '+H);const Hh=this._hist||{},S=Hh.solar||[],Ld=Hh.load||[],Gr=Hh.grid||[],F=this._fc||[];let mx=1000;for(const a of [S,Ld,Gr,F])for(const v of a)if(v>mx)mx=v;const step=mx>6000?2000:1000;mx=Math.ceil(mx/step)*step;const Y=v=>B0-v/mx*(B0-T0);G.Y=Y;G.mx=mx;this._cgE=G;
-let o='';let gp='';for(let v=step;v<=mx;v+=step){const y=Y(v).toFixed(1);gp+='M'+L0+' '+y+'H'+W;o+='<text x="17" y="'+(+y+2.5).toFixed(1)+'" text-anchor="end">'+(v/1000)+'k</text>';}
-for(const h of [3,6,9,12,15,18,21])gp+='M'+(L0+h/24*(W-L0)).toFixed(1)+' '+T0+'V'+B0;o='<path class="cgr" d="'+gp+'"/><path class="cbl" d="M'+L0+' '+B0+'H'+W+'"/><text x="17" y="'+(B0+2.5)+'" text-anchor="end">0</text>'+o;
+const gr=(id,c)=>'<linearGradient id="'+id+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:'+c+';stop-opacity:0.32"/><stop offset="1" style="stop-color:'+c+';stop-opacity:0"/></linearGradient>';
+let o='<defs>'+gr('egS','var(--green)')+gr('egG','var(--red)')+'<filter id="egSh" x="-5%" y="-30%" width="110%" height="160%"><feDropShadow dx="0" dy="0" stdDeviation="1.4" flood-color="#000" flood-opacity="0.45"/></filter></defs>';
+let gp='';for(let v=step;v<=mx;v+=step){const y=Y(v).toFixed(1);gp+='M'+L0+' '+y+'H'+W;o+='<text x="17" y="'+(+y+2.5).toFixed(1)+'" text-anchor="end">'+(v/1000)+(v===mx?' kW':'')+'</text>';}
+o+='<path class="cgr" d="'+gp+'"/><path class="cbl" d="M'+L0+' '+B0+'H'+W+'"/><text x="17" y="'+(B0+2.5)+'" text-anchor="end">0</text>';
 [0,6,12,18,24].forEach((h,k)=>{o+='<text x="'+(L0+h/24*(W-L0)).toFixed(1)+'" y="'+(H-1)+'" text-anchor="'+(k===0?'start':k===4?'end':'middle')+'">'+String(h).padStart(2,'0')+'h</text>';});
-const line=a=>{let d='',pen=false;for(let k=0;k<n;k++){const v=a[k];if(v===null||v===undefined){pen=false;continue;}d+=(pen?'L':'M')+X(k).toFixed(1)+' '+Y(v).toFixed(1);pen=true;}return d;};
-let last=-1;for(let k=0;k<n;k++)if(S[k]!==null&&S[k]!==undefined)last=k;
-if(last>0){o+='<path d="'+line(S)+'L'+X(last).toFixed(1)+' '+B0+'L'+X(0).toFixed(1)+' '+B0+'Z" fill="var(--green)" opacity="0.14"/>';}
-if(F.length)o+='<path d="'+line(F)+'" fill="none" stroke="#FFCA28" stroke-width="1.2" stroke-dasharray="4 3" opacity="0.85"/>';
-o+='<path d="'+line(Gr)+'" fill="none" stroke="var(--red)" stroke-width="1.3" stroke-linejoin="round"/><path d="'+line(Ld)+'" fill="none" stroke="var(--load)" stroke-width="1.5" stroke-linejoin="round"/><path d="'+line(S)+'" fill="none" stroke="var(--green)" stroke-width="1.6" stroke-linejoin="round"/>';
-const nk=Math.floor((Date.now()-(this._histT0||this._mid()))/HIST_SLOT);if(nk>=0&&nk<n){const nx=(L0+(Date.now()-(this._histT0||this._mid()))/86400000*(W-L0)).toFixed(1);o+='<line x1="'+nx+'" x2="'+nx+'" y1="2" y2="'+B0+'" stroke="var(--t1)" stroke-width="1" stroke-dasharray="3 3" opacity="0.45"/>';}
-let pk=-1;for(let k=0;k<n;k++)if(S[k]!==null&&S[k]!==undefined&&(pk<0||S[k]>S[pk]))pk=k;if(pk>=0&&S[pk]>=50){const px=X(pk),py=Y(S[pk]);const tx=Math.min(W-12,Math.max(L0+12,px));o+='<circle cx="'+px.toFixed(1)+'" cy="'+py.toFixed(1)+'" r="2.6" fill="none" stroke="var(--green)" stroke-width="1.4"/><text x="'+tx.toFixed(1)+'" y="'+Math.max(7,py-4.5).toFixed(1)+'" text-anchor="middle" style="fill:var(--green);font-weight:700;font-size:8.5px">'+(S[pk]/1000).toFixed(2)+'</text>';}
+const line=(a,st)=>{let d='';for(const r of xpfRuns(a,X,Y))d+=xpfSmooth(r);return d?'<path d="'+d+'" fill="none" '+st+' stroke-linejoin="round" stroke-linecap="round"/>':'';};
+const area=(a,fid)=>{let d='';for(const r of xpfRuns(a,X,Y)){if(r.length<2)continue;d+=xpfSmooth(r)+'L'+r[r.length-1][0].toFixed(1)+' '+B0+'L'+r[0][0].toFixed(1)+' '+B0+'Z';}return d?'<path d="'+d+'" fill="url(#'+fid+')"/>':'';};
+if(F.length)o+=line(F,'stroke="#FFCA28" stroke-width="1" stroke-dasharray="3 3" opacity="0.8"');
+o+=area(Gr,'egG')+line(Gr.map((v,k)=>v>1||Gr[k-1]>1||Gr[k+1]>1?v:null),'stroke="var(--red)" stroke-width="1"');
+o+=area(S,'egS')+line(S,'stroke="var(--green)" stroke-width="1.2"');
+o+=line(Ld,'stroke="var(--t1)" stroke-width="1.2" filter="url(#egSh)"');
+const now=Date.now(),t0=this._histT0||this._mid(),nk=Math.floor((now-t0)/HIST_SLOT);if(nk>=0&&nk<n){const nx=(L0+(now-t0)/86400000*(W-L0)).toFixed(1);o+='<line x1="'+nx+'" x2="'+nx+'" y1="2" y2="'+B0+'" stroke="var(--t1)" stroke-width="0.8" stroke-dasharray="2 3" opacity="0.4"/>';}
+let pk=-1;for(let k=0;k<n;k++)if(S[k]!==null&&S[k]!==undefined&&(pk<0||S[k]>S[pk]))pk=k;if(pk>=0&&S[pk]>=50){const px=X(pk),py=Y(S[pk]),t=(S[pk]/1000).toFixed(2)+' kW',bw=t.length*4.3+8,bx=Math.min(W-bw/2-1,Math.max(L0+bw/2,px)),by=Math.max(1,py-15);o+='<circle cx="'+px.toFixed(1)+'" cy="'+py.toFixed(1)+'" r="2.4" style="fill:var(--green)" stroke="rgba(0,0,0,0.35)" stroke-width="1"/><rect x="'+(bx-bw/2).toFixed(1)+'" y="'+by.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="11" rx="3" style="fill:var(--green)"/><text x="'+bx.toFixed(1)+'" y="'+(by+8).toFixed(1)+'" text-anchor="middle" style="fill:#10240f;font-weight:700;font-size:7.5px">'+t+'</text>';}
 g.innerHTML=o;}
 _drawChartB(){const svg=this._$('csB'),g=this._$('cgB');if(!svg||!g)return;const G=this._cGeo(svg);const {W,H,T0,B0,L0,n,X}=G;svg.setAttribute('viewBox','0 0 '+W+' '+H);const Hh=this._hist||{},C=Hh.soc||[],B=Hh.bat||[];const Y=v=>B0-Math.max(0,Math.min(100,v))/100*(B0-T0);G.Y=Y;this._cgB=G;
-let gp='';for(const v of [25,50,75,100])gp+='M'+L0+' '+Y(v).toFixed(1)+'H'+W;for(const h of [3,6,9,12,15,18,21])gp+='M'+(L0+h/24*(W-L0)).toFixed(1)+' '+T0+'V'+B0;
+let gp='';for(const v of [25,50,75,100])gp+='M'+L0+' '+Y(v).toFixed(1)+'H'+W;
 let o='<path class="cgr" d="'+gp+'"/><path class="cbl" d="M'+L0+' '+B0+'H'+W+'"/>';[[100,'100'],[50,'50'],[0,'0']].forEach(a=>{o+='<text x="17" y="'+(Y(a[0])+2.5).toFixed(1)+'" text-anchor="end">'+a[1]+'</text>';});
 [0,6,12,18,24].forEach((h,k)=>{o+='<text x="'+(L0+h/24*(W-L0)).toFixed(1)+'" y="'+(H-1)+'" text-anchor="'+(k===0?'start':k===4?'end':'middle')+'">'+String(h).padStart(2,'0')+'h</text>';});
 const st=k=>{const b=B[k];return b===null||b===undefined?'I':b<-20?'C':b>20?'D':'I';};const ln={C:'',D:'',I:''},ar={C:'',D:'',I:''};
 for(let k=0;k<n-1;k++){const a=C[k],b=C[k+1];if(a===null||a===undefined||b===null||b===undefined)continue;const s=st(k+1),x0=X(k).toFixed(1),x1=X(k+1).toFixed(1),y0=Y(a).toFixed(1),y1=Y(b).toFixed(1);ln[s]+='M'+x0+' '+y0+'L'+x1+' '+y1;ar[s]+='M'+x0+' '+y0+'L'+x1+' '+y1+'L'+x1+' '+B0+'L'+x0+' '+B0+'Z';}
-const col={C:'var(--green)',D:'var(--orange)',I:'#9aa0a6'};for(const s of ['I','D','C']){if(ar[s])o+='<path d="'+ar[s]+'" fill="'+col[s]+'" opacity="'+(s==='I'?0.1:0.16)+'"/>';}for(const s of ['I','D','C']){if(ln[s])o+='<path d="'+ln[s]+'" fill="none" stroke="'+col[s]+'" stroke-width="1.8" stroke-linecap="round"/>';}
+const col={C:'var(--green)',D:'var(--orange)',I:'#9aa0a6'};for(const s of ['I','D','C']){if(ar[s])o+='<path d="'+ar[s]+'" fill="'+col[s]+'" opacity="'+(s==='I'?0.1:0.16)+'"/>';}for(const s of ['I','D','C']){if(ln[s])o+='<path d="'+ln[s]+'" fill="none" stroke="'+col[s]+'" stroke-width="1.2" stroke-linecap="round"/>';}
 const nx=(L0+(Date.now()-(this._histT0||this._mid()))/86400000*(W-L0));if(nx>=L0&&nx<=W)o+='<line x1="'+nx.toFixed(1)+'" x2="'+nx.toFixed(1)+'" y1="2" y2="'+B0+'" stroke="var(--t1)" stroke-width="1" stroke-dasharray="3 3" opacity="0.45"/>';
 g.innerHTML=o;}
 _chHead(){const L=this._lang,fmt=v=>this._fmt(v),c=this._c;const eE=this._$('cvE'),eB=this._$('cvB');const k=this._chK,Hh=this._hist||{};const at=(a)=>k!==null&&k!==undefined&&a&&a[k]!==null&&a[k]!==undefined?a[k]:null;
-if(eE){let s,l,g;if(k!==null&&k!==undefined){s=at(Hh.solar);l=at(Hh.load);g=at(Hh.grid);}else{const lv=this._live||{};s=lv.s;l=lv.l;g=lv.g;}const sp=(cl,t)=>'<span style="color:'+cl+'">'+t+'</span>';const html=sp('var(--green)','☀ '+(s===null||s===undefined?L.unavailable:fmt(s)))+sp('var(--load)','⌂ '+(l===null||l===undefined?L.unavailable:fmt(l)))+sp('var(--red)','⚡ '+(g===null||g===undefined?L.unavailable:fmt(Math.max(0,g))));if(eE._h!==html){eE._h=html;eE.innerHTML=html;}}
+if(eE){const sp=(cl,t)=>'<span style="color:'+cl+'">'+t+'</span>',kw=v=>v===null||v===undefined?L.unavailable:v.toFixed(1)+' kWh',fw=v=>v===null||v===undefined?L.unavailable:fmt(Math.max(0,v));let html;if(k!==null&&k!==undefined){const f=this._fc;html=sp('var(--green)','☀ '+fw(at(Hh.solar)))+sp('var(--t1)','⌂ '+fw(at(Hh.load)))+sp('var(--red)','⚡ '+fw(at(Hh.grid)))+(f?sp('#FFCA28',L.fcst+' '+fw(f[k])):'');}else{const dv=e=>e?this._gv(e):null;let dS=dv(c.daily_solar),dL=dv(c.daily_load),dI=dv(c.daily_import);if(dS===null)dS=Hh.solar?xpfKWh(Hh.solar):null;if(dL===null)dL=Hh.load?xpfKWh(Hh.load):null;if(dI===null)dI=Hh.grid?xpfKWh(Hh.grid):null;html=sp('var(--green)','☀ '+kw(dS))+sp('var(--t1)','⌂ '+kw(dL))+sp('var(--red)','⚡ '+kw(dI))+(this._fc?sp('#FFCA28',L.fcst+' '+kw(xpfKWh(this._fc))):'');}if(eE._h!==html){eE._h=html;eE.innerHTML=html;}}
 if(eB){let soc,b;if(k!==null&&k!==undefined){soc=at(Hh.soc);b=at(Hh.bat);}else{const lv=this._live||{};soc=lv.soc;b=lv.b;}const stt=b===null||b===undefined?'I':b<-20?'C':b>20?'D':'I';const cl=stt==='C'?'var(--green)':stt==='D'?'var(--orange)':'#9aa0a6';const html='<span style="color:'+cl+'">'+(soc===null||soc===undefined?L.unavailable:Math.round(soc)+'%')+'</span><span style="color:var(--t2,var(--t1));opacity:0.8">'+(stt==='C'?'▾ '+fmt(-b):stt==='D'?'▴ '+fmt(b):'')+'</span>';if(eB._h!==html){eB._h=html;eB.innerHTML=html;}}}
-_setupCharts(){this._chK=null;for(const k of ['E','B']){const svg=this._$('cs'+k);if(!svg)continue;const show=cx=>{const G=k==='E'?this._cgE:this._cgB;if(!G)return;const r=svg.getBoundingClientRect();const x=(cx-r.left)/r.width*G.W;let i=Math.floor((x-G.L0)/(G.W-G.L0)*G.n);i=Math.max(0,Math.min(G.n-1,i));const nk=Math.floor((Date.now()-(this._histT0||this._mid()))/HIST_SLOT);i=Math.min(i,Math.max(0,nk));this._chK=i;const X=G.X(i).toFixed(1);for(const q of ['E','B']){const ln=this._$('cc'+q),G2=q==='E'?this._cgE:this._cgB,d=this._$('cd'+q);if(!ln||!G2)continue;const X2=G2.X(i).toFixed(1);ln.setAttribute('x1',X2);ln.setAttribute('x2',X2);ln.setAttribute('opacity','0.7');const Hh=this._hist||{};let dots='';const dot=(v,cl)=>{if(v!==null&&v!==undefined)dots+='<circle cx="'+X2+'" cy="'+G2.Y(v).toFixed(1)+'" r="2.6" fill="'+cl+'"/>';};if(q==='E'){dot(Hh.solar&&Hh.solar[i],'var(--green)');dot(Hh.load&&Hh.load[i],'var(--load)');}else{const b=Hh.bat&&Hh.bat[i];dot(Hh.soc&&Hh.soc[i],b<-20?'var(--green)':b>20?'var(--orange)':'#9aa0a6');}d.innerHTML=dots;}this._chHead();};const hide=()=>{this._chK=null;for(const q of ['E','B']){const ln=this._$('cc'+q),d=this._$('cd'+q);if(ln)ln.setAttribute('opacity','0');if(d)d.innerHTML='';}this._chHead();};svg.addEventListener('mousemove',e=>show(e.clientX));svg.addEventListener('mouseleave',hide);let tx=0,ty=0;svg.addEventListener('touchstart',e=>{const t=e.touches[0];tx=t.clientX;ty=t.clientY;show(t.clientX);},{passive:true});svg.addEventListener('touchmove',e=>{const t=e.touches[0];if(Math.abs(t.clientY-ty)>Math.abs(t.clientX-tx)+6)return hide();show(t.clientX);},{passive:true});svg.addEventListener('touchend',hide);svg.addEventListener('touchcancel',hide);}}
+_setupCharts(){this._chK=null;for(const k of ['E','B']){const svg=this._$('cs'+k);if(!svg)continue;const show=cx=>{const G=k==='E'?this._cgE:this._cgB;if(!G)return;const r=svg.getBoundingClientRect();const x=(cx-r.left)/r.width*G.W;let i=Math.floor((x-G.L0)/(G.W-G.L0)*G.n);i=Math.max(0,Math.min(G.n-1,i));const nk=Math.floor((Date.now()-(this._histT0||this._mid()))/HIST_SLOT);i=Math.min(i,Math.max(0,nk));this._chK=i;const X=G.X(i).toFixed(1);for(const q of ['E','B']){const ln=this._$('cc'+q),G2=q==='E'?this._cgE:this._cgB,d=this._$('cd'+q);if(!ln||!G2)continue;const X2=G2.X(i).toFixed(1);ln.setAttribute('x1',X2);ln.setAttribute('x2',X2);ln.setAttribute('opacity','0.7');const Hh=this._hist||{};let dots='';const dot=(v,cl)=>{if(v!==null&&v!==undefined)dots+='<circle cx="'+X2+'" cy="'+G2.Y(v).toFixed(1)+'" r="2.6" fill="'+cl+'"/>';};if(q==='E'){dot(Hh.solar&&Hh.solar[i],'var(--green)');dot(Hh.load&&Hh.load[i],'var(--t1)');}else{const b=Hh.bat&&Hh.bat[i];dot(Hh.soc&&Hh.soc[i],b<-20?'var(--green)':b>20?'var(--orange)':'#9aa0a6');}d.innerHTML=dots;}this._chHead();};const hide=()=>{this._chK=null;for(const q of ['E','B']){const ln=this._$('cc'+q),d=this._$('cd'+q);if(ln)ln.setAttribute('opacity','0');if(d)d.innerHTML='';}this._chHead();};svg.addEventListener('mousemove',e=>show(e.clientX));svg.addEventListener('mouseleave',hide);let tx=0,ty=0;svg.addEventListener('touchstart',e=>{const t=e.touches[0];tx=t.clientX;ty=t.clientY;show(t.clientX);},{passive:true});svg.addEventListener('touchmove',e=>{const t=e.touches[0];if(Math.abs(t.clientY-ty)>Math.abs(t.clientX-tx)+6)return hide();show(t.clientX);},{passive:true});svg.addEventListener('touchend',hide);svg.addEventListener('touchcancel',hide);}}
 
 _update(){if(!this._h||!this.shadowRoot.getElementById('vs'))return;
 const c=this._c,L=this._lang;

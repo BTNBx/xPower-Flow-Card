@@ -99,3 +99,18 @@ test('pulses evenly spread, at least one', () => {
   const s = xpfShow(12, 0.25), idx = [...Array(12).keys()].filter(s);
   assert.deepEqual(idx, [3, 7, 11]);
 });
+
+test('chart helpers: smooth path, runs, kWh', () => {
+  const ctx2 = { HTMLElement: class {}, customElements: { define() {}, get() {} }, window: {}, console: { info() {}, warn() {} } };
+  vm.createContext(ctx2);
+  vm.runInContext(src + '\n;globalThis.__y={xpfSmooth,xpfRuns,xpfKWh};', ctx2);
+  const { xpfSmooth, xpfRuns, xpfKWh } = ctx2.__y;
+  assert.equal(xpfSmooth([]), '');
+  assert.match(xpfSmooth([[0, 0], [10, 5], [20, 0]]), /^M0\.0 0\.0C/);
+  // monotone: a flat segment stays flat (no overshoot)
+  assert.ok(xpfSmooth([[0, 5], [10, 5], [20, 5]]).split(/[ MC]/).filter(Boolean).every(v => v === '5.0' || /^\d+\.\d$/.test(v)));
+  const r = xpfRuns([1, 2, null, 3, undefined, 4, 5], k => k, v => v);
+  assert.equal(r.length, 3); assert.equal(JSON.stringify(r[2]), "[[5,4],[6,5]]");
+  assert.equal(xpfKWh(new Array(96).fill(1000)), 24);
+  assert.equal(xpfKWh([null, -50, 4000]), 1);
+});

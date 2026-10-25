@@ -1,3 +1,10 @@
+## v1.3.62
+
+- Energy chart redrawn in a smoother style: curved lines (no more steps), soft fading areas under solar and grid import, the house line on top with a light shadow, no vertical grid lines, and the solar peak in a small labelled badge (e.g. "2.95 kW")
+- Thinner lines on both charts
+- The energy chart header now shows today's totals in kWh (solar, house, grid import) and the solar forecast for the whole day; touch or hover the chart to see the values at that time, forecast included
+- The red grid line is only drawn where the grid is actually used, not along the bottom all day
+
 ## v1.3.61
 
 - New option `detail`: `essential`, `normal` or `technical` to choose how much the card shows (essential = power, battery % and flows only; technical adds MPPT list, voltages, frequency, temperatures, price and the battery chart). Without it the card shows everything configured, as before; options you set yourself still win. Also in the visual editor
