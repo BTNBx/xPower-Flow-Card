@@ -1,13 +1,16 @@
 // xPower Flow Card — Modern power flow card for solar hybrid inverters
 // Copyright (C) 2025 BTNBx — MIT License
-const V='1.3.59';
+const V='1.3.60';
 
 /* ═══════════════════════════════════════
    CHANGELOG — full history in CHANGELOG.md
    ═══════════════════════════════════════
-## v1.3.59
+## v1.3.60
 
-- Charts scale their height with the card width (70 px on phones up to 140 px on wide screens) so they no longer look squashed on desktop
+- The energy-source frame now splits the house load exactly like the inverter → house line: when the battery discharges more than the house needs (e.g. battery to grid), only the part that reaches the house counts as battery
+- Flow pulses now also show power: fewer chevrons under 100 W, more as power rises, all of them above 1.5 kW (with a small margin so they don't flicker around a step). New option `flow_density`: `power` (default) or `full` for the old look; also in the visual editor
+- Energy split moved into one shared function with automated tests (`npm test`), run on every push
+- Removed unused legacy sparkline and tooltip code
 */
 
 /* ═══════════════════════════════════════
@@ -245,6 +248,7 @@ const DEFAULTS={
   theme:'auto',
   animations:'auto',
   flow_speed:'proportional',
+  flow_density:'power',
   flow_style:'chevron',flow_size:0.7,
   card_style:'xpower',
   energy_frame:true,
@@ -322,6 +326,20 @@ const ANIM_MAX_W=6000;
 const ANIM_MIN_SPD=1.5;
 const ANIM_MAX_SPD=3.5;
 
+// Energy decomposition — pure, no DOM; unit-tested in test/flows.test.mjs
+// Inputs in W. Sign: bat + = discharge / − = charge; grid + = import / − = export.
+// Home is fed solar first, then battery, then grid; battery charge comes from grid first, then solar.
+const xpfFlows=(sol,bat,grid,load)=>{const S=sol>0?sol:0,Gi=grid>0?grid:0,Bd=bat>0?bat:0,Bc=bat<0?-bat:0,Ld=load>0?load:0;
+const sL=Math.min(S,Ld),bDis=Math.min(Bd,Ld-sL),gImp=Math.max(0,Math.min(Gi,Ld-sL-bDis)),sToH=Math.max(0,Ld-bDis-gImp),feed=gImp+bDis+sToH;
+const gB=Math.max(0,Math.min(Gi-gImp,Bc)),sB=Math.max(0,Bc-gB);
+return {sToH,bDis,gImp,gB,sB,feed,autarky:Ld>0?Math.max(0,Math.min(100,(Ld-gImp)/Ld*100)):0};};
+
+// Pulse density by power: tier 0 <100 W, 1 <500 W, 2 <1500 W, 3 above; ±10% hysteresis around each boundary
+const XPF_TIERS=[100,500,1500],XPF_DENS=[0.25,0.5,0.75,1];
+const xpfTier=(p,prev)=>{const a=Math.abs(p);let t=0;while(t<3&&a>=XPF_TIERS[t])t++;if(prev!=null&&prev!==t){const th=XPF_TIERS[Math.min(prev,t)];if(Math.abs(a-th)<th*0.1)return prev;}return t;};
+// Evenly spread k of n pulses (k = n × density, at least 1)
+const xpfShow=(n,frac)=>{const k=Math.max(1,Math.min(n,Math.round(n*frac)));return i=>Math.floor((i+1)*k/n)>Math.floor(i*k/n);};
+
 class XPowerFlowCardEditor extends HTMLElement{
   constructor(){super();this._config={};this._hass=null;this._onchange=this._fire.bind(this);}
   _esc(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
@@ -347,6 +365,7 @@ class XPowerFlowCardEditor extends HTMLElement{
     cfg.solar_forecast=this.querySelector('#ed-sfc').value!=='false';
     cfg.animations=this.querySelector('#ed-anim').value;
     cfg.flow_speed=this.querySelector('#ed-fspd').value;
+    {const fd=this.querySelector('#ed-fdens');if(fd)cfg.flow_density=fd.value;}
     cfg.flow_style=this.querySelector('#ed-fsty').value;
     const fszVal=parseFloat(this.querySelector('#ed-fsz').value);
     cfg.flow_size=isNaN(fszVal)?0.7:Math.min(2.5,Math.max(0.5,fszVal));
@@ -546,6 +565,13 @@ class XPowerFlowCardEditor extends HTMLElement{
           </select>
         </div>
         <div class="field">
+          <label>Flow density</label>
+          <select id="ed-fdens" style="${selStyle}">
+            <option value="power" ${c.flow_density!=='full'?'selected':''}>Proportional to power</option>
+            <option value="full" ${c.flow_density==='full'?'selected':''}>Full</option>
+          </select>
+        </div>
+        <div class="field">
           <label>Power unit</label>
           <select id="ed-punit" style="${selStyle}">
             <option value="auto" ${(c.power_unit||'auto')==='auto'?'selected':''}>Auto</option>
@@ -674,7 +700,7 @@ class XPowerFlowCardEditor extends HTMLElement{
 customElements.define('xpower-flow-card-editor',XPowerFlowCardEditor);
 
 class XPowerFlowCard extends HTMLElement{
-constructor(){super();this.attachShadow({mode:'open'});this._c={};this._h=null;this._prev={solar:0,bat:0,grid:0,load:0};this._hist={solar:[],load:[],grid:[],battery:[]};this._histMax={solar:1,load:1,grid:1,battery:1};this._fs={};this._histTimer=null;this._histLastLoad=0;this._histLoading=false;this._syncSpd=0;this._resync=false;this._rafId=null;this._twv={};this._twq={};this._twRaf=null;this._entList=[];this._srKey='';this._rm=!!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);this._mq=window.matchMedia?window.matchMedia('(prefers-color-scheme: light)'):null;this._onMq=()=>this._applyTheme();this._mwc=new Map();this._io=null;this._ro=null;this._ringKey='';this._auT=null;this._srT=null;this._vis=true;this._srTk=null;this._srLit=-1;this._onVis=()=>{if(!document.hidden&&this._h){this._histLastLoad=0;this._schedule();}};}
+constructor(){super();this.attachShadow({mode:'open'});this._c={};this._h=null;this._prev={solar:0,bat:0,grid:0,load:0};this._hist={solar:[],load:[],grid:[],battery:[]};this._fs={};this._histTimer=null;this._histLastLoad=0;this._histLoading=false;this._syncSpd=0;this._resync=false;this._rafId=null;this._twv={};this._twq={};this._twRaf=null;this._entList=[];this._srKey='';this._rm=!!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);this._mq=window.matchMedia?window.matchMedia('(prefers-color-scheme: light)'):null;this._onMq=()=>this._applyTheme();this._mwc=new Map();this._io=null;this._ro=null;this._ringKey='';this._auT=null;this._srT=null;this._vis=true;this._srTk=null;this._srLit=-1;this._onVis=()=>{if(!document.hidden&&this._h){this._histLastLoad=0;this._schedule();}};}
 
 static getConfigElement(){return document.createElement('xpower-flow-card-editor');}
 static getStubConfig(){return{...DEFAULTS};}
@@ -979,45 +1005,11 @@ _rsv(){const c=this._c;const v=c.reserve_entity?this._gv(c.reserve_entity):null;
 _setupClicks(){const c=this._c;const bind=(id,entity)=>{const el=this._$(id);if(el&&entity)el.addEventListener('click',()=>this._moreInfo(entity));};bind('nSolar',c.solar);bind('nGrid',c.grid);bind('nLoad',c.load);bind('nBat',c.battery||c.soc);{const bi=this._$('batIcon');if(bi&&c.reserve_entity)bi.addEventListener('click',(e)=>{e.stopPropagation();this._moreInfo(c.reserve_entity);});}bind('nEV',c.ev_power||c.ev_soc);bind('nExtra1',c.extra1_power);bind('nExtra2',c.extra2_power);bind('nExtra3',c.extra3_power);const hit=this._$('srhit'),sg=this._$('sunRing');if(hit&&sg)hit.addEventListener('click',(e)=>{e.stopPropagation();sg.classList.add('srshow');clearTimeout(this._srT);this._srT=setTimeout(()=>sg.classList.remove('srshow'),3000);});[1,2,3].forEach(k=>{const g=this._$('mp'+k);if(g)g.addEventListener('click',(e)=>{e.stopPropagation();this._moreInfo(g.dataset.e);});});const aH=this._$('auhit'),aB=this._$('aulbl');if(aH&&aB){const show=()=>{aB.classList.add('show');clearTimeout(this._auT);this._auT=setTimeout(()=>aB.classList.remove('show'),3000);};aH.addEventListener('pointerenter',show);aH.addEventListener('pointerdown',e=>{e.stopPropagation();show();});aH.addEventListener('click',e=>e.stopPropagation());aH.addEventListener('pointerleave',()=>{clearTimeout(this._auT);this._auT=setTimeout(()=>aB.classList.remove('show'),600);});}}
 // Frame path + stroke width: scales with card width (≈0.75px phone, 1px desktop, 2px TV, max 3px); an explicit --xpf-frame-width wins
 _ringPath(){const card=this._$('xcard'),svg=this._$('aur');if(!card||!svg)return;const w=card.clientWidth,h=card.clientHeight;if(!w||!h)return;const cs=getComputedStyle(card);const bw=parseFloat(cs.borderTopWidth)||0;const ov=parseFloat(cs.getPropertyValue('--xpf-frame-width'));const dpr=window.devicePixelRatio||1;const sw=ov>0?ov:Math.min(3,Math.max(dpr>=1.5?0.75:1,Math.round(w/480*100)/100));const i=sw/2,W=w-sw,H=h-sw;let r=(parseFloat(cs.borderTopLeftRadius)||20)-bw-i;r=Math.max(0,Math.min(r,Math.min(W,H)/2));const key=w+'|'+h+'|'+r+'|'+sw;if(key===this._ringKey)return;this._ringKey=key;svg.style.setProperty('--fw',sw+'px');const q=v=>Math.round(v*4)/4;const d='M'+q(i+W/2)+','+q(i)+' H'+q(i+W-r)+' A'+q(r)+','+q(r)+' 0 0 1 '+q(i+W)+','+q(i+r)+' V'+q(i+H-r)+' A'+q(r)+','+q(r)+' 0 0 1 '+q(i+W-r)+','+q(i+H)+' H'+q(i+r)+' A'+q(r)+','+q(r)+' 0 0 1 '+q(i)+','+q(i+H-r)+' V'+q(i+r)+' A'+q(r)+','+q(r)+' 0 0 1 '+q(i+r)+','+q(i)+' Z';this._sa(svg,'viewBox','0 0 '+w+' '+h);['aut','au-s','au-b','au-g','aurhit'].forEach(id=>this._sa(this._$(id),'d',d));}
-_setupTooltipsOld(){
-  const self=this;
-  const setup=(svgParent,cursorId,dotId,tipId,dataKey,color)=>{
-    const svg=self.shadowRoot.querySelector('#'+cursorId)?.closest('svg');
-    if(!svg)return;
-    const cursor=self._$(cursorId);const dot=self._$(dotId);const tip=self._$(tipId);
-    if(!cursor||!dot||!tip)return;
-    const show=(cx)=>{
-      const data=self._hist[dataKey];if(!data||!data.length)return;
-      const rect=svg.getBoundingClientRect();
-      const x=(cx-rect.left)/rect.width;
-      const idx=Math.min(Math.max(Math.round(x*(data.length-1)),0),data.length-1);
-      const val=data[idx];const svgX=x*200;
-      const max=self._sparkM||self._histMax[dataKey]||1;const svgY=2+(1-val/max)*51;
-      cursor.setAttribute('x1',svgX);cursor.setAttribute('x2',svgX);cursor.style.display='';
-      dot.setAttribute('cx',svgX);dot.setAttribute('cy',svgY);dot.style.display='';dot.setAttribute('fill',color);
-      const when=new Date((self._histT0||Date.now()-86400000)+idx*HIST_SLOT);
-      const hh=String(when.getHours()).padStart(2,'0');const mm=String(when.getMinutes()).padStart(2,'0');
-      tip.textContent=(val>=1000?(val/1000).toFixed(1)+' kW':val.toFixed(0)+' W')+' · '+hh+':'+mm;
-      tip.style.color=color;tip.classList.add('show');
-    };
-    const hide=()=>{cursor.style.display='none';dot.style.display='none';tip.classList.remove('show');};
-    svg.addEventListener('mousemove',(e)=>show(e.clientX));
-    svg.addEventListener('mouseleave',hide);
-    let tx=0,ty=0;svg.addEventListener('touchstart',(e)=>{const t=e.touches[0];tx=t.clientX;ty=t.clientY;},{passive:true});
-    svg.addEventListener('touchmove',(e)=>{const t=e.touches[0];if(Math.abs(t.clientY-ty)>Math.abs(t.clientX-tx))return hide();show(t.clientX);},{passive:true});
-    svg.addEventListener('touchcancel',hide);
-    svg.addEventListener('touchend',hide);
-  };
-  setup(null,'cg','dg2','tg','grid','#42A5F5');
-  setup(null,'cs','ds2','ts','solar','#66BB6A');
-  setup(null,'cl','dl2','tl','load','#26C6DA');
-  setup(null,'cb','db2','tb','battery','#7C4DFF');
-}
 _spd(p){const a=Math.abs(p);if(a<10)return 0;let s=Math.max(ANIM_MIN_SPD,ANIM_MAX_SPD-(a/ANIM_MAX_W)*(ANIM_MAX_SPD-ANIM_MIN_SPD));if(a>=3000)s*=0.4;else if(a>=2000)s*=0.6;else if(a>=1000)s*=0.8;return s;}
-_sf(el,id,p,d,c,o){if(!el)return;const cg=this._chv&&el.id!=='fh'?this._$('c'+el.id):null;if(Math.abs(p)<10){this._sa(el,'opacity','0');if(cg)this._sa(cg,'opacity','0');return;}if(cg){this._sa(cg,'stroke',c);this._sa(cg,'opacity','0.9');cg.classList.toggle('rv',d==='fL'||d==='fu');}this._sa(el,'stroke',c);this._sa(el,'opacity',o);if(this._fs[id]!==d){this._fs[id]=d;el.setAttribute('class','fa '+d);this._resync=true;}if(this._c.flow_speed!=='synced'){const fp=this._fsp||(this._fsp={});const sp=Math.min(6,Math.max(0.5,2500/Math.abs(p)));const o0=fp[id];if(!o0||Math.abs(sp-o0)/o0>0.15){fp[id]=sp;el.style.setProperty('--spd',sp.toFixed(2)+'s');if(cg)cg.style.setProperty('--spd',sp.toFixed(2)+'s');}}}
+_cvN(cg,p){if(!cg)return;const t=this._c.flow_density==='full'?3:xpfTier(p,cg.__tk);if(t===cg.__tk)return;cg.__tk=t;const cs=cg.children,show=xpfShow(cs.length,XPF_DENS[t]);for(let i=0;i<cs.length;i++)this._ss(cs[i],'visibility',show(i)?'':'hidden');}
+_sf(el,id,p,d,c,o){if(!el)return;const cg=this._chv&&el.id!=='fh'?this._$('c'+el.id):null;if(Math.abs(p)<10){this._sa(el,'opacity','0');if(cg)this._sa(cg,'opacity','0');return;}if(cg){this._sa(cg,'stroke',c);this._sa(cg,'opacity','0.9');this._cvN(cg,p);cg.classList.toggle('rv',d==='fL'||d==='fu');}this._sa(el,'stroke',c);this._sa(el,'opacity',o);if(this._fs[id]!==d){this._fs[id]=d;el.setAttribute('class','fa '+d);this._resync=true;}if(this._c.flow_speed!=='synced'){const fp=this._fsp||(this._fsp={});const sp=Math.min(6,Math.max(0.5,2500/Math.abs(p)));const o0=fp[id];if(!o0||Math.abs(sp-o0)/o0>0.15){fp[id]=sp;el.style.setProperty('--spd',sp.toFixed(2)+'s');if(cg)cg.style.setProperty('--spd',sp.toFixed(2)+'s');}}}
 _tween(id,target,fmt){const el=this._$(id);if(!el)return;if(target===null||(this._rm&&this._c.animations!=='always')){delete this._twq[id];this._st(el,fmt(target));this._twv[id]=target;return;}const from=this._twv[id];if(from===undefined||from===null||Math.abs(target-from)<1){delete this._twq[id];this._st(el,fmt(target));this._twv[id]=target;return;}this._twq[id]={el,from,to:target,fmt,t0:performance.now()};if(!this._twRaf)this._twRaf=requestAnimationFrame(t=>this._twStep(t));}
 _twStep(t){this._twRaf=null;const q=this._twq;let live=false;for(const id in q){const w=q[id];let k=Math.min(1,(t-w.t0)/600);k=1-Math.pow(1-k,3);this._st(w.el,w.fmt(w.from+(w.to-w.from)*k));if(k<1)live=true;else{this._twv[id]=w.to;delete q[id];}}if(live)this._twRaf=requestAnimationFrame(t2=>this._twStep(t2));}
-_spark(id,aid,data,mx){const el=this._$(id);const af=this._$(aid);if(!el)return;if(!data.length){el.removeAttribute('d');if(af)af.removeAttribute('d');return;}const w=200,h=55,py=2,max=mx||Math.max(...data)||1;const pts=data.map((v,i)=>[(i/(data.length-1))*w,py+(1-v/max)*(h-py*2)]);if(pts.length<2)return;const tension=0.3;const cp=(p0,p1,p2,t)=>[p1[0]+(p2[0]-p0[0])*t,p1[1]+(p2[1]-p0[1])*t];let d='M'+pts[0][0].toFixed(1)+','+pts[0][1].toFixed(1);for(let i=0;i<pts.length-1;i++){const p0=pts[Math.max(0,i-1)];const p1=pts[i];const p2=pts[i+1];const p3=pts[Math.min(pts.length-1,i+2)];const c1=cp(p0,p1,p2,tension);const c2=[p2[0]-(p3[0]-p1[0])*tension,p2[1]-(p3[1]-p1[1])*tension];d+=' C'+c1[0].toFixed(1)+','+c1[1].toFixed(1)+' '+c2[0].toFixed(1)+','+c2[1].toFixed(1)+' '+p2[0].toFixed(1)+','+p2[1].toFixed(1);}el.setAttribute('d',d);if(af){af.setAttribute('d',d+'L'+w+','+h+'L0,'+h+'Z');}}
 _chMk(pos){const c=this._c,L=this._lang;let o='';const box=(k,lbl)=>'<div class="cbx" id="cx'+k+'"><div class="chd"><span class="chl">'+lbl+'</span><span class="chv" id="cv'+k+'"></span><span class="chl gh" aria-hidden="true">'+lbl+'</span></div><svg class="csv" id="cs'+k+'" role="img" aria-label="'+lbl+'"><g id="cg'+k+'"></g><line id="cc'+k+'" y1="2" y2="59" stroke="var(--t3)" stroke-width="1" opacity="0" /><g id="cd'+k+'"></g></svg></div>';if((c.energy_chart||'bottom')===pos)o+=box('E',L.today||'TODAY');if((c.battery_chart||'off')===pos)o+=box('B',L.battery);return o;}
 _cGeo(svg){const W=Math.max(120,Math.round(svg.clientWidth||svg.getBoundingClientRect().width||300)),H=Math.max(70,Math.min(140,Math.round(W*0.12))),T0=6,B0=H-11,L0=22,n=HIST_POINTS;if(svg.style.height!==H+'px')svg.style.height=H+'px';const cl=svg.querySelector('line[id^="cc"]');if(cl)cl.setAttribute('y2',B0);return {W,H,T0,B0,L0,n,X:i=>L0+(i+0.5)/n*(W-L0)};}
 _drawSparks(){this._drawChartE();this._drawChartB();this._chHead();}
@@ -1046,7 +1038,6 @@ _chHead(){const L=this._lang,fmt=v=>this._fmt(v),c=this._c;const eE=this._$('cvE
 if(eE){let s,l,g;if(k!==null&&k!==undefined){s=at(Hh.solar);l=at(Hh.load);g=at(Hh.grid);}else{const lv=this._live||{};s=lv.s;l=lv.l;g=lv.g;}const sp=(cl,t)=>'<span style="color:'+cl+'">'+t+'</span>';const html=sp('var(--green)','☀ '+(s===null||s===undefined?L.unavailable:fmt(s)))+sp('var(--load)','⌂ '+(l===null||l===undefined?L.unavailable:fmt(l)))+sp('var(--red)','⚡ '+(g===null||g===undefined?L.unavailable:fmt(Math.max(0,g))));if(eE._h!==html){eE._h=html;eE.innerHTML=html;}}
 if(eB){let soc,b;if(k!==null&&k!==undefined){soc=at(Hh.soc);b=at(Hh.bat);}else{const lv=this._live||{};soc=lv.soc;b=lv.b;}const stt=b===null||b===undefined?'I':b<-20?'C':b>20?'D':'I';const cl=stt==='C'?'var(--green)':stt==='D'?'var(--orange)':'#9aa0a6';const html='<span style="color:'+cl+'">'+(soc===null||soc===undefined?L.unavailable:Math.round(soc)+'%')+'</span><span style="color:var(--t2,var(--t1));opacity:0.8">'+(stt==='C'?'▾ '+fmt(-b):stt==='D'?'▴ '+fmt(b):'')+'</span>';if(eB._h!==html){eB._h=html;eB.innerHTML=html;}}}
 _setupCharts(){this._chK=null;for(const k of ['E','B']){const svg=this._$('cs'+k);if(!svg)continue;const show=cx=>{const G=k==='E'?this._cgE:this._cgB;if(!G)return;const r=svg.getBoundingClientRect();const x=(cx-r.left)/r.width*G.W;let i=Math.floor((x-G.L0)/(G.W-G.L0)*G.n);i=Math.max(0,Math.min(G.n-1,i));const nk=Math.floor((Date.now()-(this._histT0||this._mid()))/HIST_SLOT);i=Math.min(i,Math.max(0,nk));this._chK=i;const X=G.X(i).toFixed(1);for(const q of ['E','B']){const ln=this._$('cc'+q),G2=q==='E'?this._cgE:this._cgB,d=this._$('cd'+q);if(!ln||!G2)continue;const X2=G2.X(i).toFixed(1);ln.setAttribute('x1',X2);ln.setAttribute('x2',X2);ln.setAttribute('opacity','0.7');const Hh=this._hist||{};let dots='';const dot=(v,cl)=>{if(v!==null&&v!==undefined)dots+='<circle cx="'+X2+'" cy="'+G2.Y(v).toFixed(1)+'" r="2.6" fill="'+cl+'"/>';};if(q==='E'){dot(Hh.solar&&Hh.solar[i],'var(--green)');dot(Hh.load&&Hh.load[i],'var(--load)');}else{const b=Hh.bat&&Hh.bat[i];dot(Hh.soc&&Hh.soc[i],b<-20?'var(--green)':b>20?'var(--orange)':'#9aa0a6');}d.innerHTML=dots;}this._chHead();};const hide=()=>{this._chK=null;for(const q of ['E','B']){const ln=this._$('cc'+q),d=this._$('cd'+q);if(ln)ln.setAttribute('opacity','0');if(d)d.innerHTML='';}this._chHead();};svg.addEventListener('mousemove',e=>show(e.clientX));svg.addEventListener('mouseleave',hide);let tx=0,ty=0;svg.addEventListener('touchstart',e=>{const t=e.touches[0];tx=t.clientX;ty=t.clientY;show(t.clientX);},{passive:true});svg.addEventListener('touchmove',e=>{const t=e.touches[0];if(Math.abs(t.clientY-ty)>Math.abs(t.clientX-tx)+6)return hide();show(t.clientX);},{passive:true});svg.addEventListener('touchend',hide);svg.addEventListener('touchcancel',hide);}}
-_drawSparksOld(){const H=this._hist;let mx=0;if(this._c.sparkline_shared_scale){for(const k of ['solar','load','grid','battery']){const a=H[k];if(a&&a.length){const m=Math.max(...a);if(m>mx)mx=m;}}mx=mx||1;}const M=mx||undefined;this._sparkM=M;this._spark('hs','hsa',H.solar,M);this._spark('hl','hla',H.load,M);this._spark('hg','hga',H.grid,M);this._spark('hb2','hb2a',H.battery,M);}
 
 _update(){if(!this._h||!this.shadowRoot.getElementById('vs'))return;
 const c=this._c,L=this._lang;
@@ -1111,13 +1102,11 @@ const syncSpd=maxP>10?this._spd(maxP):3;
 if(c.flow_speed==='synced'&&(this._syncSpd<=0||Math.abs(syncSpd-this._syncSpd)/this._syncSpd>0.1)){this._syncSpd=syncSpd;const spd=syncSpd.toFixed(1)+'s';['fs','fg','fb','fh','fh2','fh3','fe','fex1','fex2','fex3'].forEach(id=>{const el=this._$(id);if(el)el.style.setProperty('--spd',spd);const cg=this._$('c'+id);if(cg)cg.style.setProperty('--spd',spd);});this._resync=true;}
 this._sf(this._$('fs'),'s',solF,'fd','var(--green)','0.8');
 this._sf(this._$('fg'),'g',gridF,gridF>0?'fr':'fL',gridF>0?'var(--red)':'var(--green)','0.7');
-const _S=solF>0?solF:0,_Gi=gridF>0?gridF:0,_Bd=batF>0?batF:0,_Bc=batF<0?-batF:0,_Ld=loadF>0?loadF:0;
-const _sL=Math.min(_S,_Ld),_bDis=Math.min(_Bd,_Ld-_sL),_gImp=Math.max(0,Math.min(_Gi,_Ld-_sL-_bDis)),_sToH=Math.max(0,_Ld-_bDis-_gImp),_feed=_gImp+_bDis+_sToH;
-const _gB=Math.max(0,Math.min(_Gi-_gImp,_Bc)),_sB=Math.max(0,_Bc-_gB);
+const FX=xpfFlows(solF,batF,gridF,loadF),{sToH:_sToH,bDis:_bDis,gImp:_gImp,gB:_gB,sB:_sB,feed:_feed}=FX,_Bc=batF<0?-batF:0;
 this._sf(this._$('fb'),'b',batF,batF<0?'fd':'fu',batF<0?(_gB>_sB?'var(--red)':'var(--green)'):'var(--solar)','0.75');
 {const cb=this._chv&&this._$('cfb');if(cb){const cs=cb.children;if(batF<-10&&_gB>0&&_sB>0){const nc=Math.min(10,cs.length),fG=_gB/_Bc;for(let i=0;i<cs.length;i++){const u=((cs.length-1-i)%nc+0.5)/nc;this._sa(cs[i],'stroke',u<1-fG?'var(--green)':'var(--red)');}}else{for(let i=0;i<cs.length;i++)this._sa(cs[i],'stroke','');}}}
 {const _sc=[[_sToH,'#66BB6A'],[_bDis,'#FFA726'],[_gImp,'#EF5350']];let _ac=0;for(let _i=0;_i<3;_i++){const _f=_feed>0?_sc[_i][0]/_feed*100:0;const _p0=this._$('hs'+(_i*2)),_p1=this._$('hs'+(_i*2+1));if(_p0){this._sa(_p0,'offset',_ac.toFixed(1)+'%');this._sa(_p0,'stop-color',_sc[_i][1]);}_ac+=_f;if(_p1){this._sa(_p1,'offset',_ac.toFixed(1)+'%');this._sa(_p1,'stop-color',_sc[_i][1]);}}}
-{const _mx=[['fh','h',_sToH,'var(--green)'],['fh2','h2',_bDis,'var(--orange)'],['fh3','h3',_gImp,'var(--red)']],FL=this._hl,FP=this._hp;let _c=0;for(const [_id,_k,_w,_col] of _mx){const el=this._$(_id);if(!el)continue;const _l=_feed>0?_w/_feed*FL:0;if(_l<0.5){this._sa(el,'opacity','0');continue;}this._sf(el,_k,loadF,'fr',_col,'0.75');el.style.strokeDasharray='0 '+(FP-_c-_l).toFixed(2)+' '+_l.toFixed(2)+' '+_c.toFixed(2);_c+=_l;}const cg=this._chv&&this._$('cfh');if(cg){if(loadF<10||_feed<=0)this._sa(cg,'opacity','0');else{this._sa(cg,'opacity','0.9');const mx=[[_sToH,'var(--green)'],[_bDis,'var(--orange)'],[_gImp,'var(--red)']].filter(m=>m[0]>0),cs=cg.children,nc=Math.min(10,cs.length);for(let i=0;i<cs.length;i++){const u=((cs.length-1-i)%nc+0.5)/nc;let a=0,col=mx[mx.length-1][1];for(const m of mx){a+=m[0]/_feed;if(u<a+1e-9){col=m[1];break;}}this._sa(cs[i],'stroke',col);}const sp=c.flow_speed==='synced'&&this._syncSpd>0?this._syncSpd:Math.min(6,Math.max(0.5,2500/loadF));const o0=this._cfhSp;if(!o0||Math.abs(sp-o0)/o0>0.15){this._cfhSp=sp;cg.style.setProperty('--spd',sp.toFixed(2)+'s');}}}}
+{const _mx=[['fh','h',_sToH,'var(--green)'],['fh2','h2',_bDis,'var(--orange)'],['fh3','h3',_gImp,'var(--red)']],FL=this._hl,FP=this._hp;let _c=0;for(const [_id,_k,_w,_col] of _mx){const el=this._$(_id);if(!el)continue;const _l=_feed>0?_w/_feed*FL:0;if(_l<0.5){this._sa(el,'opacity','0');continue;}this._sf(el,_k,loadF,'fr',_col,'0.75');el.style.strokeDasharray='0 '+(FP-_c-_l).toFixed(2)+' '+_l.toFixed(2)+' '+_c.toFixed(2);_c+=_l;}const cg=this._chv&&this._$('cfh');if(cg){if(loadF<10||_feed<=0)this._sa(cg,'opacity','0');else{this._sa(cg,'opacity','0.9');this._cvN(cg,loadF);const mx=[[_sToH,'var(--green)'],[_bDis,'var(--orange)'],[_gImp,'var(--red)']].filter(m=>m[0]>0),cs=cg.children,nc=Math.min(10,cs.length);for(let i=0;i<cs.length;i++){const u=((cs.length-1-i)%nc+0.5)/nc;let a=0,col=mx[mx.length-1][1];for(const m of mx){a+=m[0]/_feed;if(u<a+1e-9){col=m[1];break;}}this._sa(cs[i],'stroke',col);}const sp=c.flow_speed==='synced'&&this._syncSpd>0?this._syncSpd:Math.min(6,Math.max(0.5,2500/loadF));const o0=this._cfhSp;if(!o0||Math.abs(sp-o0)/o0>0.15){this._cfhSp=sp;cg.style.setProperty('--spd',sp.toFixed(2)+'s');}}}}
 
 // EV node — visible only when ev_power/ev_soc configured
 const nEV=this._$('nEV');
@@ -1203,9 +1192,8 @@ if(!rt){if(brG)this._ss(brG,'display','none');}else if(brG&&brEl&&br2){const pad
 
 // Self-sufficiency frame — segments anchored to their source: solar top (0), battery bottom (50), grid left (75); smaller segments weigh more (1/f²)
 const gridImp=_gImp;
-const au=loadF>0?Math.max(0,Math.min(100,((loadF-gridImp)/loadF)*100)):0;
-this._tween('va',au,v=>Math.round(v)+'%');
-const _batDis=batF>0?batF:0;const _solH=Math.max(0,loadF-gridImp-_batDis);const _tot=gridImp+_batDis+_solH;const _seg=(k,st,ln)=>{const el=this._$('au-'+k),l=Math.max(0,ln);if(el){this._sa(el,'stroke-dasharray',l.toFixed(2)+' '+(100-l).toFixed(2));this._sa(el,'stroke-dashoffset',(-st).toFixed(2));}};if(_tot>0){const fS=_solH/_tot*100,fB=_batDis/_tot*100,fG=gridImp/_tot*100;const nb=fB+fG;let t=0;if(nb>0){const cen=(50*fB+75*fG)/nb;t=((cen+nb/2)%100+100)%100;}_seg('s',t,fS);_seg('b',t+fS,fB);_seg('g',t+fS+fB,fG);}else{_seg('s',0,0);_seg('b',0,0);_seg('g',0,0);}
+this._tween('va',FX.autarky,v=>Math.round(v)+'%');
+const _batDis=_bDis,_solH=_sToH,_tot=_feed;const _seg=(k,st,ln)=>{const el=this._$('au-'+k),l=Math.max(0,ln);if(el){this._sa(el,'stroke-dasharray',l.toFixed(2)+' '+(100-l).toFixed(2));this._sa(el,'stroke-dashoffset',(-st).toFixed(2));}};if(_tot>0){const fS=_solH/_tot*100,fB=_batDis/_tot*100,fG=gridImp/_tot*100;const nb=fB+fG;let t=0;if(nb>0){const cen=(50*fB+75*fG)/nb;t=((cen+nb/2)%100+100)%100;}_seg('s',t,fS);_seg('b',t+fS,fB);_seg('g',t+fS+fB,fG);}else{_seg('s',0,0);_seg('b',0,0);_seg('g',0,0);}
 
 const wA=c.weather_entity&&this._h.states[c.weather_entity]?this._h.states[c.weather_entity].attributes||{}:null;const wtv=c.weather_temp?this._gv(c.weather_temp):(wA&&typeof wA.temperature==='number'?wA.temperature:null);const whv=c.weather_humidity?this._gv(c.weather_humidity):(wA&&typeof wA.humidity==='number'?wA.humidity:null);
 const wicons=this._$('wicons');const wdrop=this._$('wdrop');const wdiv=this._$('wdiv');

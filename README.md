@@ -25,7 +25,7 @@ Select your brand in the visual editor. Entities and polarity are configured aut
 * Dual MPPT support, configure two solar strings independently
 * Optional EV charging node with animated flow, blinking bolt, SOC and daily energy
 * Extra consumption nodes, appliances, garage, heat pump, and custom loads, each with its own power sensor, icon, and label
-* Animated chevron flow lines (or comet style) with speed proportional to power output; size adjustable with `flow_size`
+* Animated chevron flow lines (or comet style) with speed and pulse density proportional to power output (`flow_density: full` keeps every pulse); size adjustable with `flow_size`
 * Inverter → home flow coloured by the mix feeding the home (solar green / battery amber / grid red)
 * Color-coded values: solar (green), grid (red), home (cyan), battery (yellow)
 * Inverter icon with 4 status LEDs indicating active energy flows
