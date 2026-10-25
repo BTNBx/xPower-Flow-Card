@@ -1,18 +1,13 @@
 // xPower Flow Card — Modern power flow card for solar hybrid inverters
 // Copyright (C) 2025 BTNBx — MIT License
-const V='1.3.58';
+const V='1.3.59';
 
 /* ═══════════════════════════════════════
    CHANGELOG — full history in CHANGELOG.md
    ═══════════════════════════════════════
-## v1.3.58
+## v1.3.59
 
-- The four 24h sparklines are replaced by two charts for today (00:00–24:00):
-  - Energy chart: solar (with soft area), house and grid import on one chart, kW grid lines with a scale, a marker on today's solar peak and a dashed "now" line. If a solar forecast is configured in the Energy dashboard (Forecast.Solar, Solcast…), the forecast is drawn as a dashed line for the whole day
-  - Battery chart: state of charge (0–100%), coloured by what the battery is doing — green charging, amber discharging, grey idle
-- Each chart can be placed above or below the power flow, or turned off: new options `energy_chart` and `battery_chart` (`top` / `bottom` / `off`), and `solar_forecast` (on by default); all in the visual editor
-- Touch or hover a chart to read the values at that time in its header; otherwise the header shows the live values
-- Battery icon and its voltage / temperature moved up slightly so the power value sits at the same distance from the icon as on the house node
+- Charts scale their height with the card width (70 px on phones up to 140 px on wide screens) so they no longer look squashed on desktop
 */
 
 /* ═══════════════════════════════════════
@@ -1024,7 +1019,7 @@ _tween(id,target,fmt){const el=this._$(id);if(!el)return;if(target===null||(this
 _twStep(t){this._twRaf=null;const q=this._twq;let live=false;for(const id in q){const w=q[id];let k=Math.min(1,(t-w.t0)/600);k=1-Math.pow(1-k,3);this._st(w.el,w.fmt(w.from+(w.to-w.from)*k));if(k<1)live=true;else{this._twv[id]=w.to;delete q[id];}}if(live)this._twRaf=requestAnimationFrame(t2=>this._twStep(t2));}
 _spark(id,aid,data,mx){const el=this._$(id);const af=this._$(aid);if(!el)return;if(!data.length){el.removeAttribute('d');if(af)af.removeAttribute('d');return;}const w=200,h=55,py=2,max=mx||Math.max(...data)||1;const pts=data.map((v,i)=>[(i/(data.length-1))*w,py+(1-v/max)*(h-py*2)]);if(pts.length<2)return;const tension=0.3;const cp=(p0,p1,p2,t)=>[p1[0]+(p2[0]-p0[0])*t,p1[1]+(p2[1]-p0[1])*t];let d='M'+pts[0][0].toFixed(1)+','+pts[0][1].toFixed(1);for(let i=0;i<pts.length-1;i++){const p0=pts[Math.max(0,i-1)];const p1=pts[i];const p2=pts[i+1];const p3=pts[Math.min(pts.length-1,i+2)];const c1=cp(p0,p1,p2,tension);const c2=[p2[0]-(p3[0]-p1[0])*tension,p2[1]-(p3[1]-p1[1])*tension];d+=' C'+c1[0].toFixed(1)+','+c1[1].toFixed(1)+' '+c2[0].toFixed(1)+','+c2[1].toFixed(1)+' '+p2[0].toFixed(1)+','+p2[1].toFixed(1);}el.setAttribute('d',d);if(af){af.setAttribute('d',d+'L'+w+','+h+'L0,'+h+'Z');}}
 _chMk(pos){const c=this._c,L=this._lang;let o='';const box=(k,lbl)=>'<div class="cbx" id="cx'+k+'"><div class="chd"><span class="chl">'+lbl+'</span><span class="chv" id="cv'+k+'"></span><span class="chl gh" aria-hidden="true">'+lbl+'</span></div><svg class="csv" id="cs'+k+'" role="img" aria-label="'+lbl+'"><g id="cg'+k+'"></g><line id="cc'+k+'" y1="2" y2="59" stroke="var(--t3)" stroke-width="1" opacity="0" /><g id="cd'+k+'"></g></svg></div>';if((c.energy_chart||'bottom')===pos)o+=box('E',L.today||'TODAY');if((c.battery_chart||'off')===pos)o+=box('B',L.battery);return o;}
-_cGeo(svg){const W=Math.max(120,Math.round(svg.clientWidth||svg.getBoundingClientRect().width||300)),H=70,T0=6,B0=H-11,L0=22,n=HIST_POINTS;return {W,H,T0,B0,L0,n,X:i=>L0+(i+0.5)/n*(W-L0)};}
+_cGeo(svg){const W=Math.max(120,Math.round(svg.clientWidth||svg.getBoundingClientRect().width||300)),H=Math.max(70,Math.min(140,Math.round(W*0.12))),T0=6,B0=H-11,L0=22,n=HIST_POINTS;if(svg.style.height!==H+'px')svg.style.height=H+'px';const cl=svg.querySelector('line[id^="cc"]');if(cl)cl.setAttribute('y2',B0);return {W,H,T0,B0,L0,n,X:i=>L0+(i+0.5)/n*(W-L0)};}
 _drawSparks(){this._drawChartE();this._drawChartB();this._chHead();}
 _drawChartE(){const svg=this._$('csE'),g=this._$('cgE');if(!svg||!g)return;const G=this._cGeo(svg);const {W,H,T0,B0,L0,n,X}=G;svg.setAttribute('viewBox','0 0 '+W+' '+H);const Hh=this._hist||{},S=Hh.solar||[],Ld=Hh.load||[],Gr=Hh.grid||[],F=this._fc||[];let mx=1000;for(const a of [S,Ld,Gr,F])for(const v of a)if(v>mx)mx=v;const step=mx>6000?2000:1000;mx=Math.ceil(mx/step)*step;const Y=v=>B0-v/mx*(B0-T0);G.Y=Y;G.mx=mx;this._cgE=G;
 let o='';let gp='';for(let v=step;v<=mx;v+=step){const y=Y(v).toFixed(1);gp+='M'+L0+' '+y+'H'+W;o+='<text x="17" y="'+(+y+2.5).toFixed(1)+'" text-anchor="end">'+(v/1000)+'k</text>';}

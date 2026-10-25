@@ -1,3 +1,7 @@
+## v1.3.59
+
+- Charts scale their height with the card width (70 px on phones up to 140 px on wide screens) so they no longer look squashed on desktop
+
 ## v1.3.58
 
 - The four 24h sparklines are replaced by two charts for today (00:00–24:00):
