@@ -1,14 +1,18 @@
 // xPower Flow Card — Modern power flow card for solar hybrid inverters
 // Copyright (C) 2025 BTNBx — MIT License
-const V='1.3.57';
+const V='1.3.58';
 
 /* ═══════════════════════════════════════
    CHANGELOG — full history in CHANGELOG.md
    ═══════════════════════════════════════
-## v1.3.57
+## v1.3.58
 
-- Grid energy is now traced to where it goes: the inverter → house line only turns red for the part of the load the grid actually covers, and the inverter → battery line turns red when the battery is charging from the grid (split green/red when solar and grid charge it together)
-- Self-sufficiency and the energy-source frame no longer count grid power used to charge the battery as house consumption
+- The four 24h sparklines are replaced by two charts for today (00:00–24:00):
+  - Energy chart: solar (with soft area), house and grid import on one chart, kW grid lines with a scale, a marker on today's solar peak and a dashed "now" line. If a solar forecast is configured in the Energy dashboard (Forecast.Solar, Solcast…), the forecast is drawn as a dashed line for the whole day
+  - Battery chart: state of charge (0–100%), coloured by what the battery is doing — green charging, amber discharging, grey idle
+- Each chart can be placed above or below the power flow, or turned off: new options `energy_chart` and `battery_chart` (`top` / `bottom` / `off`), and `solar_forecast` (on by default); all in the visual editor
+- Touch or hover a chart to read the values at that time in its header; otherwise the header shows the live values
+- Battery icon and its voltage / temperature moved up slightly so the power value sits at the same distance from the icon as on the house node
 */
 
 /* ═══════════════════════════════════════
@@ -18,7 +22,7 @@ const LANG={
   pt:{solar:'SOLAR',grid:'REDE',load:'CASA',battery:'BATERIA',ev:'CARRO',inverter:'Inversor',appliance:'Eletrodom\u00e9sticos',garage:'Garagem',heatpump:'Bomba de Calor',extra:'Extra',
       autarky:'Autossufici\u00EAncia',energy_src:'Origem da energia',runtime_to:'at\u00E9',
       charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
-      daily:'\u25B8',solar24:'SOLAR (24h)',load24:'CASA (24h)',grid24:'REDE (24h)',bat24:'BATERIA (24h)',
+      daily:'\u25B8',today:'HOJE',solar24:'SOLAR (24h)',load24:'CASA (24h)',grid24:'REDE (24h)',bat24:'BATERIA (24h)',
       unavailable:'--',autodetect:'Auto-detetar',invalid:'entidade n\u00E3o existe',
       editor_title:'xPower Flow Card',editor_lang:'Idioma',editor_entities:'Entidades',
       editor_options:'Op\u00E7\u00F5es',editor_soc:'SOC M\u00EDnimo (%)',
@@ -29,7 +33,7 @@ const LANG={
   en:{solar:'SOLAR',grid:'GRID',load:'HOME',battery:'BATTERY',ev:'EV',inverter:'Inverter',appliance:'Appliances',garage:'Garage',heatpump:'Heat Pump',extra:'Extra',
       autarky:'Self-sufficiency',energy_src:'Energy source',runtime_to:'to',
       charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
-      daily:'\u25B8',solar24:'SOLAR (24h)',load24:'HOME (24h)',grid24:'GRID (24h)',bat24:'BATTERY (24h)',
+      daily:'\u25B8',today:'TODAY',solar24:'SOLAR (24h)',load24:'HOME (24h)',grid24:'GRID (24h)',bat24:'BATTERY (24h)',
       unavailable:'--',autodetect:'Auto-detect',invalid:'entity not found',
       editor_title:'xPower Flow Card',editor_lang:'Language',editor_entities:'Entities',
       editor_options:'Options',editor_soc:'Shutdown SOC (%)',
@@ -40,7 +44,7 @@ const LANG={
   sv:{solar:'SOL',grid:'N\u00c4T',load:'HEM',battery:'BATTERI',ev:'ELBIL',inverter:'V\u00e4xelriktare',appliance:'Vitvaror',garage:'Garage',heatpump:'V\u00e4rmepump',extra:'\u00d6vrigt',
       autarky:'Sj\u00e4lvf\u00f6rs\u00f6rjning',energy_src:'Energik\u00e4lla',runtime_to:'till',
       charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
-      daily:'\u25B8',solar24:'SOL (24h)',load24:'HEM (24h)',grid24:'N\u00c4T (24h)',bat24:'BATTERI (24h)',
+      daily:'\u25B8',today:'IDAG',solar24:'SOL (24h)',load24:'HEM (24h)',grid24:'N\u00c4T (24h)',bat24:'BATTERI (24h)',
       unavailable:'--',autodetect:'Auto-detektera',invalid:'entitet hittades inte',
       editor_title:'xPower Flow Card',editor_lang:'Spr\u00e5k',editor_entities:'Entiteter',
       editor_options:'Alternativ',editor_soc:'Avstängnings-SOC (%)',
@@ -51,7 +55,7 @@ const LANG={
   de:{solar:'SOLAR',grid:'NETZ',load:'HAUS',battery:'BATTERIE',ev:'E-AUTO',inverter:'Wechselrichter',appliance:'Ger\u00e4te',garage:'Garage',heatpump:'W\u00e4rmepumpe',extra:'Sonstiges',
       autarky:'Autarkie',energy_src:'Energiequelle',runtime_to:'bis',
       charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
-      daily:'\u25B8',solar24:'SOLAR (24h)',load24:'HAUS (24h)',grid24:'NETZ (24h)',bat24:'BATTERIE (24h)',
+      daily:'\u25B8',today:'HEUTE',solar24:'SOLAR (24h)',load24:'HAUS (24h)',grid24:'NETZ (24h)',bat24:'BATTERIE (24h)',
       unavailable:'--',autodetect:'Auto-Erkennung',invalid:'Entit\u00E4t existiert nicht',
       editor_title:'xPower Flow Card',editor_lang:'Sprache',editor_entities:'Entit\u00E4ten',
       editor_options:'Optionen',editor_soc:'Abschalt-SOC (%)',
@@ -62,7 +66,7 @@ const LANG={
   fr:{solar:'SOLAIRE',grid:'R\u00C9SEAU',load:'MAISON',battery:'BATTERIE',ev:'VOITURE',inverter:'Onduleur',appliance:'\u00c9lectrom\u00e9nager',garage:'Garage',heatpump:'Pompe \u00e0 chaleur',extra:'Autre',
       autarky:'Autosuffisance',energy_src:'Source d\u2019\u00e9nergie',runtime_to:'jusqu\u0027\u00E0',
       charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
-      daily:'\u25B8',solar24:'SOLAIRE (24h)',load24:'MAISON (24h)',grid24:'R\u00C9SEAU (24h)',bat24:'BATTERIE (24h)',
+      daily:'\u25B8',today:'AUJOURD\u0027HUI',solar24:'SOLAIRE (24h)',load24:'MAISON (24h)',grid24:'R\u00C9SEAU (24h)',bat24:'BATTERIE (24h)',
       unavailable:'--',autodetect:'D\u00E9tection auto',invalid:'entit\u00E9 introuvable',
       editor_title:'xPower Flow Card',editor_lang:'Langue',editor_entities:'Entit\u00E9s',
       editor_options:'Options',editor_soc:'SOC Minimum (%)',
@@ -73,7 +77,7 @@ const LANG={
   es:{solar:'SOLAR',grid:'RED',load:'HOGAR',battery:'BATER\u00CDAS',ev:'COCHE',inverter:'Inversor',appliance:'Electrodom\u00e9sticos',garage:'Garaje',heatpump:'Bomba de Calor',extra:'Extra',
       autarky:'Autosuficiencia',energy_src:'Origen de la energ\u00eda',runtime_to:'hasta',
       charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
-      daily:'\u25B8',solar24:'SOLAR (24h)',load24:'HOGAR (24h)',grid24:'RED (24h)',bat24:'BATERÍA (24h)',
+      daily:'\u25B8',today:'HOY',solar24:'SOLAR (24h)',load24:'HOGAR (24h)',grid24:'RED (24h)',bat24:'BATERÍA (24h)',
       unavailable:'--',autodetect:'Autodetectar',invalid:'entidad no existe',
       editor_title:'xPower Flow Card',editor_lang:'Idioma',editor_entities:'Entidades',
       editor_options:'Opciones',editor_soc:'SOC M\u00EDnimo (%)',
@@ -84,7 +88,7 @@ const LANG={
   it:{solar:'SOLARE',grid:'RETE',load:'CASA',battery:'BATTERIA',ev:'AUTO',inverter:'Inverter',appliance:'Elettrodomestici',garage:'Garage',heatpump:'Pompa di Calore',extra:'Extra',
       autarky:'Autosufficienza',energy_src:'Origine dell\u2019energia',runtime_to:'fino a',
       charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
-      daily:'\u25B8',solar24:'SOLARE (24h)',load24:'CASA (24h)',grid24:'RETE (24h)',bat24:'BATTERIA (24h)',
+      daily:'\u25B8',today:'OGGI',solar24:'SOLARE (24h)',load24:'CASA (24h)',grid24:'RETE (24h)',bat24:'BATTERIA (24h)',
       unavailable:'--',autodetect:'Rilevamento auto',invalid:'entit\u00E0 inesistente',
       editor_title:'xPower Flow Card',editor_lang:'Lingua',editor_entities:'Entit\u00E0',
       editor_options:'Opzioni',editor_soc:'SOC Minimo (%)',
@@ -95,7 +99,7 @@ const LANG={
   nl:{solar:'ZONNE',grid:'NET',load:'HUIS',battery:'BATTERIJ',ev:'EV',inverter:'Omvormer',appliance:'Apparaten',garage:'Garage',heatpump:'Warmtepomp',extra:'Overig',
       autarky:'Zelfvoorziening',energy_src:'Energiebron',runtime_to:'tot',
       charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
-      daily:'\u25B8',solar24:'ZONNE (24h)',load24:'HUIS (24h)',grid24:'NET (24h)',bat24:'BATTERIJ (24h)',
+      daily:'\u25B8',today:'VANDAAG',solar24:'ZONNE (24h)',load24:'HUIS (24h)',grid24:'NET (24h)',bat24:'BATTERIJ (24h)',
       unavailable:'--',autodetect:'Auto-detectie',invalid:'entiteit bestaat niet',
       editor_title:'xPower Flow Card',editor_lang:'Taal',editor_entities:'Entiteiten',
       editor_options:'Opties',editor_soc:'Uitschakel-SOC (%)',
@@ -106,7 +110,7 @@ const LANG={
   pl:{solar:'SOLAR',grid:'SIE\u0106',load:'DOM',battery:'BATERIA',ev:'EV',inverter:'Falownik',appliance:'AGD',garage:'Gara\u017c',heatpump:'Pompa Ciep\u0142a',extra:'Inne',
       autarky:'Samowystarczalno\u015B\u0107',energy_src:'\u0179r\u00f3d\u0142o energii',runtime_to:'do',
       charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
-      daily:'\u25B8',solar24:'SOLAR (24h)',load24:'DOM (24h)',grid24:'SIE\u0106 (24h)',bat24:'BATERIA (24h)',
+      daily:'\u25B8',today:'DZI\u015a',solar24:'SOLAR (24h)',load24:'DOM (24h)',grid24:'SIE\u0106 (24h)',bat24:'BATERIA (24h)',
       unavailable:'--',autodetect:'Autowykrywanie',invalid:'encja nie istnieje',
       editor_title:'xPower Flow Card',editor_lang:'J\u0119zyk',editor_entities:'Encje',
       editor_options:'Opcje',editor_soc:'Min. SOC (%)',
@@ -242,7 +246,7 @@ const DEFAULTS={
   extra2_power:'',extra2_name:'',extra2_icon:'heatpump',
   extra3_power:'',extra3_name:'',extra3_icon:'garage',
   import_cost:'',export_cost:'',
-  compact:false,sparkline_shared_scale:false,
+  compact:false,sparkline_shared_scale:false,energy_chart:'bottom',battery_chart:'off',solar_forecast:true,
   theme:'auto',
   animations:'auto',
   flow_speed:'proportional',
@@ -315,7 +319,7 @@ const EDL={"pt":{"rsv":"Reserva Backup SOC (opcional)","wx":"Entidade Meteo (\u0
 
 const _lk=(l,h)=>{const k=l||String(h?.locale?.language||h?.language||'en').toLowerCase().slice(0,2);return LANG[k]?k:'en';};
 
-const HIST_POINTS=48;
+const HIST_POINTS=96;
 const HIST_INTERVAL=5*60*1000;
 const HIST_SLOT=24*60*60*1000/HIST_POINTS;
 const RUNTIME_MIN_W=50;
@@ -343,7 +347,9 @@ class XPowerFlowCardEditor extends HTMLElement{
     cfg.extra3_icon=this.querySelector('#ed-ex3icon').value;
     cfg.theme=this.querySelector('#ed-theme').value;
     cfg.compact=this.querySelector('#ed-compact').value==='true';
-    cfg.sparkline_shared_scale=this.querySelector('#ed-sshare').value==='true';
+    cfg.energy_chart=this.querySelector('#ed-ech').value;
+    cfg.battery_chart=this.querySelector('#ed-bch').value;
+    cfg.solar_forecast=this.querySelector('#ed-sfc').value!=='false';
     cfg.animations=this.querySelector('#ed-anim').value;
     cfg.flow_speed=this.querySelector('#ed-fspd').value;
     cfg.flow_style=this.querySelector('#ed-fsty').value;
@@ -561,10 +567,11 @@ class XPowerFlowCardEditor extends HTMLElement{
           </select>
         </div>
         <div class="field">
-          <label>Sparkline scale</label>
-          <select id="ed-sshare" style="${selStyle}">
-            <option value="false" ${!c.sparkline_shared_scale?'selected':''}>Independent</option>
-            <option value="true" ${c.sparkline_shared_scale?'selected':''}>Shared</option>
+          <label>Energy chart</label>
+          <select id="ed-ech" style="${selStyle}">
+            <option value="top" ${(c.energy_chart||'bottom')==='top'?'selected':''}>Top</option>
+            <option value="bottom" ${(c.energy_chart||'bottom')==='bottom'?'selected':''}>Bottom</option>
+            <option value="off" ${(c.energy_chart||'bottom')==='off'?'selected':''}>Off</option>
           </select>
         </div>
         <div class="field">
@@ -576,6 +583,23 @@ class XPowerFlowCardEditor extends HTMLElement{
         <div class="field">
           <label>MPPT text scale</label>
           <input type="number" id="ed-mps" min="0.8" max="1.6" step="0.1" value="${c.mppt_scale??1}">
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>Battery chart</label>
+          <select id="ed-bch" style="${selStyle}">
+            <option value="top" ${(c.battery_chart||'off')==='top'?'selected':''}>Top</option>
+            <option value="bottom" ${(c.battery_chart||'off')==='bottom'?'selected':''}>Bottom</option>
+            <option value="off" ${(c.battery_chart||'off')==='off'?'selected':''}>Off</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Solar forecast (chart)</label>
+          <select id="ed-sfc" style="${selStyle}">
+            <option value="true" ${c.solar_forecast!==false?'selected':''}>On</option>
+            <option value="false" ${c.solar_forecast===false?'selected':''}>Off</option>
+          </select>
         </div>
       </div>
       <div class="row">
@@ -681,7 +705,7 @@ connectedCallback(){
   if(!this._c.compact&&!this._histTimer)this._histTimer=setInterval(()=>{if(this._h&&!document.hidden&&this._vis&&Date.now()-this._histLastLoad>=HIST_INTERVAL-5000)this._loadHistory();},HIST_INTERVAL);
   // Pause animations + skip updates while scrolled out of view
   if(!this._io&&'IntersectionObserver' in window){this._io=new IntersectionObserver(en=>{const v=en[en.length-1].isIntersecting;if(v===this._vis)return;this._vis=v;this.classList.toggle('off',!v);if(v&&this._h)this._schedule();},{threshold:0});this._io.observe(this);}
-  if(!this._ro&&'ResizeObserver' in window){this._ro=new ResizeObserver(()=>this._ringPath());const cd=this._$('xcard');if(cd)this._ro.observe(cd);}
+  if(!this._ro&&'ResizeObserver' in window){this._ro=new ResizeObserver(()=>{this._ringPath();this._drawSparks();});const cd=this._$('xcard');if(cd)this._ro.observe(cd);}
   this._ringKey='';this._ringPath();
 }
 
@@ -778,28 +802,31 @@ _norm(raw,type){
   return raw;
 }
 
-// 24h charts: 48 clock-aligned 30-min slots, time-weighted (a value holds until it changes); after the first load only new data is fetched
-_histKey(){const c=this._c;return [c.solar,c.solar2,c.solar3,c.load,c.grid,c.battery,c.battery_charge,c.battery_discharge,c.power_unit].join('|');}
+// Today charts: 96 clock-aligned 15-min slots from local midnight, time-weighted (a value holds until it changes); after the first load only new data is fetched
+_mid(){const d=new Date();d.setHours(0,0,0,0);return d.getTime();}
+_histKey(){const c=this._c;return [c.solar,c.solar2,c.solar3,c.load,c.grid,c.battery,c.battery_charge,c.battery_discharge,c.soc,c.power_unit,c.bat_polarity,c.grid_polarity,this._mid()].join('|');}
 _hAdd(E,t1,w0){let a=Math.max(E.t,w0);if(E.v===null||!(t1>a))return;while(a<t1){const i=Math.floor(a/HIST_SLOT),b=Math.min(t1,(i+1)*HIST_SLOT),s=E.s[i]||(E.s[i]=[0,0]);s[0]+=E.v*(b-a);s[1]+=b-a;a=b;}}
-_hSeries(E,i0,now){const n=HIST_POINTS,out=new Array(n),sm=new Array(n);let prev=0;for(let k=0;k<n;k++){const i=i0+k,s=E.s[i];let w=s?s[0]:0,d=s?s[1]:0;if(E.v!==null){const a=Math.max(E.t,i*HIST_SLOT),b=Math.min(now,(i+1)*HIST_SLOT);if(b>a){w+=E.v*(b-a);d+=b-a;}}out[k]=d>0?w/d:prev;prev=out[k];}for(let k=0;k<n;k++)sm[k]=(out[k>0?k-1:k]+out[k]*2+out[k<n-1?k+1:k])/4;return sm;}
-async _loadHistory(){if(this._histLoading||!this._h)return;const c=this._c;const ids=[...new Set([c.solar,c.solar2,c.solar3,c.load,c.grid,c.battery,c.battery_charge,c.battery_discharge].filter(Boolean))];if(!ids.length)return;this._histLoading=true;this._histLastLoad=Date.now();try{
-const now=Date.now(),i0=Math.floor(now/HIST_SLOT)-HIST_POINTS+1,w0=i0*HIST_SLOT,key=this._histKey();
+_hSeries(E,i0,now,raw){const n=HIST_POINTS,out=new Array(n).fill(null),last=Math.min(n-1,Math.floor(now/HIST_SLOT)-i0);let prev=null;for(let k=0;k<=last;k++){const i=i0+k,s=E.s[i];let w=s?s[0]:0,d=s?s[1]:0;if(E.v!==null){const a=Math.max(E.t,i*HIST_SLOT),b=Math.min(now,(i+1)*HIST_SLOT);if(b>a){w+=E.v*(b-a);d+=b-a;}}out[k]=d>0?w/d:prev;prev=out[k];}if(raw)return out;const sm=out.slice();for(let k=1;k<last;k++){if(out[k-1]!==null&&out[k]!==null&&out[k+1]!==null)sm[k]=(out[k-1]+out[k]*2+out[k+1])/4;}return sm;}
+async _loadHistory(){if(this._histLoading||!this._h)return;const c=this._c;if(c.energy_chart==='off'&&c.battery_chart==='off')return;const ids=[...new Set([c.solar,c.solar2,c.solar3,c.load,c.grid,c.battery,c.battery_charge,c.battery_discharge,c.soc].filter(Boolean))];if(!ids.length)return;this._histLoading=true;this._histLastLoad=Date.now();try{
+const now=Date.now(),i0=Math.floor(this._mid()/HIST_SLOT),w0=i0*HIST_SLOT,key=this._histKey();
 let hs=this._hs;if(!hs||hs.key!==key||hs.until<w0||hs.until>now)hs={key,until:0,e:{}};
 const full=!hs.until,from=full?w0:hs.until-60000;
 const res=await this._h.callApi('GET','history/period/'+encodeURIComponent(new Date(from).toISOString())+'?filter_entity_id='+encodeURIComponent(ids.join(','))+'&minimal_response&no_attributes&significant_changes_only');
 if(!Array.isArray(res))return;if(this._histKey()!==key){this._histLastLoad=0;return;}
-for(const series of res){const id=series&&series.length&&series[0].entity_id;if(!id)continue;const f=this._pf(id);const E=hs.e[id]||(hs.e[id]={v:null,t:w0,n:0,s:{}});
-for(const p of series){let t=Date.parse(p.last_changed||p.last_updated);if(isNaN(t))continue;if(t<E.t){if(E.n)continue;t=E.t;}const v=parseFloat(p.state);this._hAdd(E,t,w0);E.t=t;E.v=isNaN(v)?null:Math.abs(v)*f;E.n++;}}
+const typ=id=>id===c.soc?'soc':id===c.grid?'grid':id===c.battery?'bat':'abs';
+for(const series of res){const id=series&&series.length&&series[0].entity_id;if(!id)continue;const ty=typ(id),f=ty==='soc'?1:this._pf(id);const E=hs.e[id]||(hs.e[id]={v:null,t:w0,n:0,s:{}});
+for(const p of series){let t=Date.parse(p.last_changed||p.last_updated);if(isNaN(t))continue;if(t<E.t){if(E.n)continue;t=E.t;}const v=parseFloat(p.state);this._hAdd(E,t,w0);E.t=t;E.v=isNaN(v)?null:ty==='abs'?Math.abs(v)*f:ty==='soc'?v:this._norm(v*f,ty);E.n++;}}
 for(const id in hs.e){const sl=hs.e[id].s;for(const i in sl)if(+i<i0)delete sl[i];}
 hs.until=now;this._hs=hs;this._histT0=w0;
-if(full){this._hist={solar:[],load:[],grid:[],battery:[]};this._histMax={solar:1,load:1,grid:1,battery:1};}
-const ser=e=>e&&hs.e[e]?this._hSeries(hs.e[e],i0,now):null;
-const set=(k,a)=>{if(!a)return;this._hist[k]=a;this._histMax[k]=Math.max(...a)||1;};
-const sA=[...new Set([c.solar,c.solar2,c.solar3].filter(Boolean))].map(ser).filter(Boolean);
-if(sA.length)set('solar',sA[0].map((_,k)=>sA.reduce((a,x)=>a+x[k],0)));
-set('load',ser(c.load));set('grid',ser(c.grid));
-const bc=ser(c.battery_charge),bd=ser(c.battery_discharge);
-set('battery',bc||bd?(bc&&bd?bd.map((v,k)=>Math.abs(v-bc[k])):bd||bc):ser(c.battery));
+const ser=(e,raw)=>e&&hs.e[e]?this._hSeries(hs.e[e],i0,now,raw):null;
+const H={solar:null,load:null,grid:null,bat:null,soc:null};
+const sA=[...new Set([c.solar,c.solar2,c.solar3].filter(Boolean))].map(e=>ser(e)).filter(Boolean);
+if(sA.length)H.solar=sA[0].map((v,k)=>v===null?null:sA.reduce((a,x)=>a+(x[k]||0),0));
+H.load=ser(c.load);const g=ser(c.grid);if(g)H.grid=g.map(v=>v===null?null:Math.max(0,v));
+const bc=ser(c.battery_charge,true),bd=ser(c.battery_discharge,true);
+H.bat=bc||bd?(bd||bc).map((_,k)=>{const a=bd?bd[k]:0,b=bc?bc[k]:0;return a===null&&b===null?null:Math.abs(a||0)-Math.abs(b||0);}):ser(c.battery,true);
+H.soc=ser(c.soc,true);this._hist=H;
+if(c.solar_forecast!==false&&c.energy_chart!=='off'&&(!this._fcT||now-this._fcT>30*60000||this._fcD!==this._mid())){this._fcT=now;this._fcD=this._mid();try{const fr=await this._h.callWS({type:'energy/solar_forecast'});const fc=new Array(HIST_POINTS).fill(0);let any=false;if(fr)for(const eid in fr){const wh=fr[eid]&&fr[eid].wh_hours;if(!wh)continue;for(const ts in wh){const t=Date.parse(ts),k=Math.floor(t/HIST_SLOT)-i0;const W=+wh[ts];if(isNaN(t)||isNaN(W))continue;for(let q=0;q<4;q++){const kk=k+q;if(kk>=0&&kk<HIST_POINTS){fc[kk]+=W;any=true;}}}}if(any){const sm=fc.slice();for(let k=1;k<HIST_POINTS-1;k++)sm[k]=(fc[k-1]+fc[k]*2+fc[k+1])/4;this._fc=sm;}else this._fc=null;}catch(e){this._fc=null;}}
 this._drawSparks();}catch(e){console.warn('xPower history:',e);}finally{this._histLoading=false;}}
 
 _render(){this._cfhSp=0;const CHV=this._c.flow_style!=='comet'&&!!(window.CSS&&CSS.supports&&CSS.supports('offset-path',"path('M0,0 L1,1')")),FZ=Math.min(2.5,Math.max(0.5,Number(this._c.flow_size)||0.7)),CSP=Math.max(6,13*FZ),CA=(3*FZ).toFixed(2),CB=(4*FZ).toFixed(2),CC=(2*FZ).toFixed(2);this._chv=CHV;const CV=(id,d)=>{if(!CHV)return '';const p=d.match(/-?[\d.]+/g).map(Number);let len=0;for(let i=2;i<p.length;i+=2)len+=Math.hypot(p[i]-p[i-2],p[i+1]-p[i-1]);const n=Math.max(2,Math.round(len/CSP));let o='<g id="c'+id+'" class="cvg" opacity="0">';for(let i=0;i<n;i++)o+='<path class="cv" d="M-'+CA+',-'+CB+' L'+CC+',0 L-'+CA+','+CB+'" style="offset-path:path(\''+d+'\');offset-distance:'+((i+0.5)/n*100).toFixed(1)+'%;animation-delay:calc(var(--spd,3s) * -'+(i/n).toFixed(3)+')"/>';return o+'</g>';};const FL=Math.min(80,Math.max(10,Number(this._c.flow_length)||60)),FP=100+FL,HL=FL,HP=FP;this._fl=FL;this._fp=FP;this._hl=HL;this._hp=HP;this._elc={};this._fsp={};this._fs={};this._wxKey='';this._hmN=undefined;this._syncSpd=0;this._ringKey='';this._mwc=new Map();this._srTk=null;this._srLit=-1;this._srKey='';const L=this._lang;const INV=String(this._c.inverter_name||'').replace(/[<>&]/g,m=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[m]));const s=this.shadowRoot;s.innerHTML=`<style>
@@ -870,7 +897,7 @@ svg{width:100%;height:auto;display:block}
 
 .wt{fill:var(--t3);font-size:11px;font-weight:500;text-anchor:start;dominant-baseline:middle;font-family:-apple-system,sans-serif}
 .wb{fill:none;stroke:var(--t3);stroke-width:0.5;rx:4;ry:4;opacity:0.4}
-.sr{display:flex;gap:6px;margin-top:8mm}
+.sr{display:flex;gap:6px;margin-top:8mm}.xch{display:flex;flex-direction:column;gap:6px}.xch:empty{display:none}#chT{margin:2px 0 12.5px}#chB{margin-top:6px}:host(.compact) .xch{display:none}.cbx{background:var(--xpf-sparkline-bg,rgba(255,255,255,0.02));border:1px solid rgba(127,127,127,0.12);border-radius:var(--xpf-sparkline-radius,12px);padding:8px 10px 6px;display:flex;flex-direction:column;gap:3px}.chd{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:baseline;gap:6px;height:16px;overflow:hidden}.chl{font-size:9px;font-weight:700;letter-spacing:0.1em;color:var(--t3);text-transform:uppercase}.chl.gh{visibility:hidden}.chv{display:flex;justify-content:center;gap:8px;font-size:10px;font-weight:600;white-space:nowrap;overflow:hidden}.csv{display:block;width:100%;height:70px;cursor:crosshair;touch-action:pan-y}.csv text{font-size:7.5px;fill:var(--t3)}.cgr{stroke:var(--t3);stroke-opacity:0.18;stroke-width:1;stroke-dasharray:2 3;fill:none}.cbl{stroke:var(--t3);stroke-opacity:0.35;stroke-width:1;fill:none}
 :host(.compact) .sr{display:none}
 :host(.compact) ha-card{padding:6px 8px 6px}
 .sb{flex:1;background:var(--xpf-sparkline-bg,rgba(255,255,255,0.02));border:1px solid rgba(255,255,255,0.04);border-radius:var(--xpf-sparkline-radius,12px);padding:10px 10px 8px;display:flex;flex-direction:column;gap:2px;overflow:hidden}
@@ -888,7 +915,7 @@ svg{width:100%;height:auto;display:block}
 .ss #hs{fill:none;stroke:rgba(102,187,106,0.7);stroke-width:1.2}.sc #hl{fill:none;stroke:rgba(38,198,218,0.7);stroke-width:1.2}.sg #hg{fill:none;stroke:rgba(66,165,245,0.7);stroke-width:1.2}.sbt #hb2{fill:none;stroke:rgba(124,77,255,0.7);stroke-width:1.2}
 .ss #hsa{fill:url(#sgd-s);stroke:none}.sc #hla{fill:url(#sgd-l);stroke:none}.sg #hga{fill:url(#sgd-g);stroke:none}.sbt #hb2a{fill:url(#sgd-b);stroke:none}
 </style>
-<ha-card id="xcard"><svg id="aur" role="img" aria-label="${L.energy_src}"><path id="aut" class="au-track"/><path id="au-s" stroke="var(--green)" pathLength="100" stroke-dasharray="0 100"/><path id="au-b" stroke="var(--orange)" pathLength="100" stroke-dasharray="0 100"/><path id="au-g" stroke="var(--red)" pathLength="100" stroke-dasharray="0 100"/><path id="aurhit"><title>${L.energy_src}</title></path></svg><svg id="main" viewBox="0 -8 526 478"><defs><linearGradient id="sunrg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#FF8F00"/><stop offset="1" stop-color="#FFD54F"/></linearGradient><clipPath id="bat-clip"><rect x="206" y="385" width="88" height="30" rx="6.5"/></clipPath><clipPath id="bkf"><rect id="bkfr" x="196" y="372" width="0" height="50"/></clipPath><clipPath id="bke"><rect id="bker" x="206" y="372" width="100" height="50"/></clipPath><pattern id="batrz" patternUnits="userSpaceOnUse" width="7" height="7" patternTransform="rotate(45)"><rect width="3.5" height="7" fill="#FFA726"/><rect x="3.5" width="3.5" height="7" fill="#6b4a1c"/></pattern><clipPath id="ev-clip"><rect x="420.5" y="450.5" width="24" height="12" rx="4"/></clipPath><radialGradient id="sundisc" cx="38%" cy="34%" r="72%"><stop offset="0" stop-color="#FFE082"/><stop offset="0.55" stop-color="#FFC107"/><stop offset="1" stop-color="#FF9800"/></radialGradient><radialGradient id="sunhl" cx="50%" cy="50%" r="50%"><stop offset="0.55" stop-color="#FFC107" stop-opacity="0.30"/><stop offset="1" stop-color="#FFC107" stop-opacity="0"/></radialGradient><radialGradient id="moonhl" cx="50%" cy="50%" r="50%"><stop offset="0.55" stop-color="#90CAF9" stop-opacity="0.22"/><stop offset="1" stop-color="#90CAF9" stop-opacity="0"/></radialGradient><radialGradient id="moondisc" cx="35%" cy="35%" r="75%"><stop offset="0" stop-color="#ECEFF1"/><stop offset="1" stop-color="#B0BEC5"/></radialGradient><mask id="moonmask" maskUnits="userSpaceOnUse" x="200" y="-12" width="100" height="100"><rect x="200" y="-12" width="100" height="100" fill="#fff"/><circle cx="259" cy="31" r="14" fill="#000"/></mask><linearGradient id="ivbody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#E9ECEF"/></linearGradient><linearGradient id="ivpill" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#34373B"/><stop offset="0.55" stop-color="#2B2E31"/><stop offset="0.56" stop-color="#3C4045"/><stop offset="1" stop-color="#2B2E31"/></linearGradient><linearGradient id="hsrc" gradientUnits="userSpaceOnUse" x1="287.4" y1="225" x2="395" y2="225"><stop id="hs0" offset="0%" stop-color="#66BB6A"/><stop id="hs1" offset="60%" stop-color="#66BB6A"/><stop id="hs2" offset="60%" stop-color="#FFA726"/><stop id="hs3" offset="60%" stop-color="#FFA726"/><stop id="hs4" offset="60%" stop-color="#EF5350"/><stop id="hs5" offset="100%" stop-color="#EF5350"/></linearGradient></defs><g transform="translate(25.5,10) scale(0.95)">
+<ha-card id="xcard"><svg id="aur" role="img" aria-label="${L.energy_src}"><path id="aut" class="au-track"/><path id="au-s" stroke="var(--green)" pathLength="100" stroke-dasharray="0 100"/><path id="au-b" stroke="var(--orange)" pathLength="100" stroke-dasharray="0 100"/><path id="au-g" stroke="var(--red)" pathLength="100" stroke-dasharray="0 100"/><path id="aurhit"><title>${L.energy_src}</title></path></svg><div class="xch" id="chT">${this._chMk('top')}</div><svg id="main" viewBox="0 -8 526 478"><defs><linearGradient id="sunrg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#FF8F00"/><stop offset="1" stop-color="#FFD54F"/></linearGradient><clipPath id="bat-clip"><rect x="206" y="385" width="88" height="30" rx="6.5"/></clipPath><clipPath id="bkf"><rect id="bkfr" x="196" y="372" width="0" height="50"/></clipPath><clipPath id="bke"><rect id="bker" x="206" y="372" width="100" height="50"/></clipPath><pattern id="batrz" patternUnits="userSpaceOnUse" width="7" height="7" patternTransform="rotate(45)"><rect width="3.5" height="7" fill="#FFA726"/><rect x="3.5" width="3.5" height="7" fill="#6b4a1c"/></pattern><clipPath id="ev-clip"><rect x="420.5" y="450.5" width="24" height="12" rx="4"/></clipPath><radialGradient id="sundisc" cx="38%" cy="34%" r="72%"><stop offset="0" stop-color="#FFE082"/><stop offset="0.55" stop-color="#FFC107"/><stop offset="1" stop-color="#FF9800"/></radialGradient><radialGradient id="sunhl" cx="50%" cy="50%" r="50%"><stop offset="0.55" stop-color="#FFC107" stop-opacity="0.30"/><stop offset="1" stop-color="#FFC107" stop-opacity="0"/></radialGradient><radialGradient id="moonhl" cx="50%" cy="50%" r="50%"><stop offset="0.55" stop-color="#90CAF9" stop-opacity="0.22"/><stop offset="1" stop-color="#90CAF9" stop-opacity="0"/></radialGradient><radialGradient id="moondisc" cx="35%" cy="35%" r="75%"><stop offset="0" stop-color="#ECEFF1"/><stop offset="1" stop-color="#B0BEC5"/></radialGradient><mask id="moonmask" maskUnits="userSpaceOnUse" x="200" y="-12" width="100" height="100"><rect x="200" y="-12" width="100" height="100" fill="#fff"/><circle cx="259" cy="31" r="14" fill="#000"/></mask><linearGradient id="ivbody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#E9ECEF"/></linearGradient><linearGradient id="ivpill" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#34373B"/><stop offset="0.55" stop-color="#2B2E31"/><stop offset="0.56" stop-color="#3C4045"/><stop offset="1" stop-color="#2B2E31"/></linearGradient><linearGradient id="hsrc" gradientUnits="userSpaceOnUse" x1="287.4" y1="225" x2="395" y2="225"><stop id="hs0" offset="0%" stop-color="#66BB6A"/><stop id="hs1" offset="60%" stop-color="#66BB6A"/><stop id="hs2" offset="60%" stop-color="#FFA726"/><stop id="hs3" offset="60%" stop-color="#FFA726"/><stop id="hs4" offset="60%" stop-color="#EF5350"/><stop id="hs5" offset="100%" stop-color="#EF5350"/></linearGradient></defs><g transform="translate(25.5,10) scale(0.95)">
 <g id="wicons" style="display:none" transform="translate(-20,0)">
 <rect class="wb" x="-2" y="-4" width="86" height="20"/>
 <g transform="translate(0,1)"><rect x="6" y="0" width="2.5" height="7" rx="1.2" fill="none" stroke="var(--t3)" stroke-width="0.7"/><circle cx="7.2" cy="9" r="2.5" fill="none" stroke="var(--t3)" stroke-width="0.7"/><line x1="7.2" y1="3" x2="7.2" y2="7" stroke="var(--red)" stroke-width="1" stroke-linecap="round"/><circle cx="7.2" cy="9" r="1.2" fill="var(--red)"/></g>
@@ -910,7 +937,7 @@ svg{width:100%;height:auto;display:block}
 <g><g transform="translate(250,225) scale(1.65)"><rect x="-19" y="-19" width="38" height="38" rx="5" fill="url(#ivbody)" stroke="rgba(0,0,0,0.18)" stroke-width="0.5"/><rect x="-11" y="18" width="4.5" height="2.4" rx="0.8" fill="rgba(0,0,0,0.35)"/><rect x="-2.25" y="18" width="4.5" height="2.4" rx="0.8" fill="rgba(0,0,0,0.35)"/><rect x="6.5" y="18" width="4.5" height="2.4" rx="0.8" fill="rgba(0,0,0,0.35)"/><rect x="-11" y="-4.6" width="22" height="9.2" rx="4.6" fill="url(#ivpill)"/><circle id="led1" cx="-4" cy="-0.6" r="1.15" fill="rgba(255,255,255,0.12)"/><circle id="led2" cx="0" cy="-0.6" r="1.15" fill="rgba(255,255,255,0.12)"/><circle id="led3" cx="4" cy="-0.6" r="1.15" fill="rgba(255,255,255,0.12)"/><rect id="ivbar" x="-3" y="2.6" width="6" height="0.9" rx="0.45" fill="#E4002B"/></g>${INV?'<text x="217.95" y="189.25" class="il" style="text-anchor:end">'+INV+'</text>':''}<text x="296" y="264" class="vc" id="tp" text-anchor="start"></text></g>
 <g id="nGrid" class="ct"><g id="gridIcon" transform="translate(66,225) scale(0.85) translate(-32,-32)"><path d="M32 4 L56 18 V46 L32 60 L8 46 V18 Z" fill="var(--red)"/><path d="M32 9 L51.5 20.5 V43.5 L32 55 L12.5 43.5 V20.5 Z" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.2"/><path d="M35.5 16 L23.5 34 H31 L28.5 48 L40.5 30 H33 Z" fill="rgba(0,0,0,0.6)"/></g><text x="66" y="265" class="vm" style="fill:var(--red)" id="vg"></text><text x="66" y="190" class="vl">${L.grid}</text><text x="66" y="286" class="vc" id="gv"></text><circle id="gsd" cx="92" cy="189" r="4" fill="rgba(255,255,255,0.12)"/><text x="66" y="300" class="vd" id="dg"></text></g>
 <g id="nLoad" class="ct"><g id="loadIcon" transform="translate(434,224) scale(1.05) translate(-32,-34)"><defs><linearGradient id="hmW" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#DCE1E5"/></linearGradient><linearGradient id="hmR" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4DD0E1"/><stop offset="1" stop-color="#00838F"/></linearGradient><radialGradient id="hmG" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#FFD54F" stop-opacity="0.6"/><stop offset="1" stop-color="#FFD54F" stop-opacity="0"/></radialGradient><linearGradient id="hmD" x1="0" y1="0" x2="0" y2="1"><stop id="hmDa" offset="0" stop-color="#B3E5FC"/><stop id="hmDb" offset="1" stop-color="#4FC3F7"/></linearGradient></defs><ellipse cx="32" cy="59" rx="24" ry="2.2" fill="#000" opacity="0.35"/><rect x="44" y="12" width="6" height="12" rx="1.2" fill="#00838F"/><rect x="11" y="30" width="42" height="28" rx="1.8" fill="url(#hmW)" stroke="rgba(0,0,0,0.18)" stroke-width="0.5"/><path d="M5 31.5 L32 9 L59 31.5 Q59.4 33 58 33 H6 Q4.6 33 5 31.5 Z" fill="url(#hmR)"/><path d="M8.6 30 L32 10.8 L33.4 12 L10.6 31 Z" fill="#fff" opacity="0.28"/><g id="hmGl" opacity="0"><circle cx="20.5" cy="40" r="9" fill="url(#hmG)"/><circle cx="43.5" cy="40" r="9" fill="url(#hmG)"/></g><rect x="15.5" y="35.5" width="10" height="9" rx="1" fill="url(#hmD)" stroke="#90A4AE" stroke-width="1"/><rect x="38.5" y="35.5" width="10" height="9" rx="1" fill="url(#hmD)" stroke="#90A4AE" stroke-width="1"/><path d="M20.5 35.5 V44.5 M15.5 40 H25.5 M43.5 35.5 V44.5 M38.5 40 H48.5" stroke="#90A4AE" stroke-width="0.9"/><path id="hmSh" d="M17 37 L19.5 37 M40 37 L42.5 37" stroke="#fff" stroke-width="0.8" stroke-linecap="round" opacity="0.8"/><rect x="27.5" y="43" width="9" height="15" rx="1.4" fill="#00838F"/><circle cx="34.6" cy="51" r="0.8" fill="#E0F7FA"/></g><text x="434" y="268" class="vm" style="fill:var(--load)" id="vl"></text><text x="434" y="190" class="vl">${L.load}</text><text x="434" y="288" class="vd" id="dl"></text></g>
-<g id="nBat" class="ct"><g id="batIcon"><rect x="204" y="383" width="92" height="34" rx="8.5" fill="none" stroke="var(--batb)" stroke-width="1.2"/><rect x="297" y="394" width="3.4" height="12" rx="1.7" fill="var(--batb)"/><g clip-path="url(#bat-clip)"><rect x="206" y="385" width="88" height="30" fill="var(--batbg)"/><rect id="bl" x="206" y="385" width="0" height="30" fill="#66BB6A"/><rect id="brz" x="206" y="385" width="17.6" height="30" fill="url(#batrz)" opacity="0.85"/></g><line id="brm" x1="223.6" y1="384" x2="223.6" y2="416" stroke="#FFA726" stroke-width="0.6" stroke-linecap="round"/><g id="bpn" style="display:none"><text id="bps" x="250" y="406.5" dx="0.3" font-family="-apple-system,sans-serif" font-size="16" font-weight="800" text-anchor="middle" fill="#000" opacity="0.35">--</text><text id="bp" x="250" y="405.8" font-family="-apple-system,sans-serif" font-size="16" font-weight="800" text-anchor="middle" fill="#fff">--</text></g><g id="bpsp"><text id="bpf" clip-path="url(#bkf)" x="252" y="405.8" font-family="-apple-system,sans-serif" font-size="16" font-weight="800" text-anchor="middle" fill="#111">--</text><text id="bpe" clip-path="url(#bke)" x="252" y="405.8" font-family="-apple-system,sans-serif" font-size="16" font-weight="800" text-anchor="middle" fill="#fff">--</text></g><path id="bbolt" d="M285.5,389.5 L277.5,401 L283,401 L280.5,410.5 L289,398.5 L283.5,398.5 Z" fill="#fff" style="display:none"/></g><text x="250" y="432" class="vm" style="fill:var(--solar)" id="vb"></text><text id="meas" class="vm" x="0" y="-999" visibility="hidden"></text><g id="as" data-vx="250" data-vy="81"><g><path fill="none" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/><path fill="none" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" style="display:none"/></g></g><g id="ag" data-vx="66" data-vy="265"><g><path fill="none" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/><path fill="none" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" style="display:none"/></g></g><g id="al" data-vx="434" data-vy="268"><g><path fill="none" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/><path fill="none" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" style="display:none"/></g></g><g id="ab" data-vx="250" data-vy="432"><g><path fill="none" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/><path fill="none" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" style="display:none"/></g></g><text x="250" y="372" class="vl">${L.battery}</text><text x="308" y="394" class="vc" id="bv" text-anchor="start" style="text-anchor:start"></text><text x="308" y="406" class="vc" id="bt" text-anchor="start" style="text-anchor:start"></text><text x="250" y="452" class="vd" id="db"></text><g id="brg" style="display:none"><g id="brclk" fill="none" stroke="var(--t3)" stroke-width="1.3" stroke-linecap="round"><circle cx="4.5" cy="4.5" r="4"/><path d="M4.5 2.3v2.4l1.6 1"/></g><g id="brsun" style="display:none"><circle cx="4.5" cy="4.5" r="2.1" fill="#FFB300"/><path d="M4.5 0.2v1.2M4.5 7.6v1.2M0.2 4.5h1.2M7.6 4.5h1.2M1.45 1.45l.85.85M6.7 6.7l.85.85M1.45 7.55l.85-.85M6.7 2.3l.85-.85" stroke="#FFB300" stroke-width="1.1" stroke-linecap="round"/></g><text id="br" x="216" y="468" class="vc" style="text-anchor:start;fill:var(--t1);font-weight:700"></text><line id="brdv" x1="0" y1="462" x2="0" y2="474" stroke="var(--t3)" stroke-opacity="0.45" stroke-width="0.8"/><g id="bric"><rect x="0.45" y="1.25" width="10.6" height="6.5" rx="1.7" fill="none" stroke="var(--t3)" stroke-width="0.9"/><rect x="11.6" y="3.2" width="1.3" height="2.6" rx="0.55" fill="var(--t3)"/><rect id="bricf" x="1.65" y="2.45" width="8.2" height="4.1" rx="0.8"/></g><text id="br2" x="260" y="468" class="vc" style="text-anchor:start"><tspan id="brt" style="font-weight:700"></tspan><tspan id="bra" dx="4" style="fill:var(--t3);font-weight:600"></tspan></text></g></g>
+<g id="nBat" class="ct"><g id="batIcon" transform="translate(0,-4)"><rect x="204" y="383" width="92" height="34" rx="8.5" fill="none" stroke="var(--batb)" stroke-width="1.2"/><rect x="297" y="394" width="3.4" height="12" rx="1.7" fill="var(--batb)"/><g clip-path="url(#bat-clip)"><rect x="206" y="385" width="88" height="30" fill="var(--batbg)"/><rect id="bl" x="206" y="385" width="0" height="30" fill="#66BB6A"/><rect id="brz" x="206" y="385" width="17.6" height="30" fill="url(#batrz)" opacity="0.85"/></g><line id="brm" x1="223.6" y1="384" x2="223.6" y2="416" stroke="#FFA726" stroke-width="0.6" stroke-linecap="round"/><g id="bpn" style="display:none"><text id="bps" x="250" y="406.5" dx="0.3" font-family="-apple-system,sans-serif" font-size="16" font-weight="800" text-anchor="middle" fill="#000" opacity="0.35">--</text><text id="bp" x="250" y="405.8" font-family="-apple-system,sans-serif" font-size="16" font-weight="800" text-anchor="middle" fill="#fff">--</text></g><g id="bpsp"><text id="bpf" clip-path="url(#bkf)" x="252" y="405.8" font-family="-apple-system,sans-serif" font-size="16" font-weight="800" text-anchor="middle" fill="#111">--</text><text id="bpe" clip-path="url(#bke)" x="252" y="405.8" font-family="-apple-system,sans-serif" font-size="16" font-weight="800" text-anchor="middle" fill="#fff">--</text></g><path id="bbolt" d="M285.5,389.5 L277.5,401 L283,401 L280.5,410.5 L289,398.5 L283.5,398.5 Z" fill="#fff" style="display:none"/></g><text x="250" y="432" class="vm" style="fill:var(--solar)" id="vb"></text><text id="meas" class="vm" x="0" y="-999" visibility="hidden"></text><g id="as" data-vx="250" data-vy="81"><g><path fill="none" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/><path fill="none" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" style="display:none"/></g></g><g id="ag" data-vx="66" data-vy="265"><g><path fill="none" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/><path fill="none" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" style="display:none"/></g></g><g id="al" data-vx="434" data-vy="268"><g><path fill="none" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/><path fill="none" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" style="display:none"/></g></g><g id="ab" data-vx="250" data-vy="432"><g><path fill="none" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/><path fill="none" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" style="display:none"/></g></g><text x="250" y="372" class="vl">${L.battery}</text><text x="308" y="390" class="vc" id="bv" text-anchor="start" style="text-anchor:start"></text><text x="308" y="402" class="vc" id="bt" text-anchor="start" style="text-anchor:start"></text><text x="250" y="452" class="vd" id="db"></text><g id="brg" style="display:none"><g id="brclk" fill="none" stroke="var(--t3)" stroke-width="1.3" stroke-linecap="round"><circle cx="4.5" cy="4.5" r="4"/><path d="M4.5 2.3v2.4l1.6 1"/></g><g id="brsun" style="display:none"><circle cx="4.5" cy="4.5" r="2.1" fill="#FFB300"/><path d="M4.5 0.2v1.2M4.5 7.6v1.2M0.2 4.5h1.2M7.6 4.5h1.2M1.45 1.45l.85.85M6.7 6.7l.85.85M1.45 7.55l.85-.85M6.7 2.3l.85-.85" stroke="#FFB300" stroke-width="1.1" stroke-linecap="round"/></g><text id="br" x="216" y="468" class="vc" style="text-anchor:start;fill:var(--t1);font-weight:700"></text><line id="brdv" x1="0" y1="462" x2="0" y2="474" stroke="var(--t3)" stroke-opacity="0.45" stroke-width="0.8"/><g id="bric"><rect x="0.45" y="1.25" width="10.6" height="6.5" rx="1.7" fill="none" stroke="var(--t3)" stroke-width="0.9"/><rect x="11.6" y="3.2" width="1.3" height="2.6" rx="0.55" fill="var(--t3)"/><rect id="bricf" x="1.65" y="2.45" width="8.2" height="4.1" rx="0.8"/></g><text id="br2" x="260" y="468" class="vc" style="text-anchor:start"><tspan id="brt" style="font-weight:700"></tspan><tspan id="bra" dx="4" style="fill:var(--t3);font-weight:600"></tspan></text></g></g>
 <g id="nEV" class="ct" style="display:none"><path class="fl" d="M434,302 L434,362"/><path id="fe" class="fa" d="M434,302 L434,362" pathLength="100" opacity="0"/>${CV('fe','M434,302 L434,362')}<text x="434" y="372" class="vl">${L.ev}</text><g id="evIcon" transform="translate(434,398) scale(1.65) translate(-434,-398)"><path d="M419.5,402.5 Q419.3,398.2 424,397.1 Q426.5,391.6 432,390.9 L437,390.9 Q442.3,391.3 445.3,395.2 Q449.1,396.1 449.4,399.6 Q449.6,402.5 446.6,402.5 L422.4,402.5 Q419.6,402.5 419.5,402.5 Z" fill="var(--load)" opacity="0.8"/><path d="M427.6,395.9 Q429.1,392.6 432.6,392.3 L433.6,392.3 L433.6,395.9 Z" fill="rgba(0,0,0,0.35)"/><path d="M435.1,392.3 L436.9,392.3 Q440.4,392.7 442.4,395.9 L435.1,395.9 Z" fill="rgba(0,0,0,0.35)"/><circle cx="426" cy="402.4" r="3.1" fill="rgba(0,0,0,0.55)"/><circle cx="426" cy="402.4" r="1.4" fill="rgba(255,255,255,0.35)"/><circle cx="442.3" cy="402.4" r="3.1" fill="rgba(0,0,0,0.55)"/><circle cx="442.3" cy="402.4" r="1.4" fill="rgba(255,255,255,0.35)"/><path id="evbolt" d="M452.5,391 L450.5,396 L453.5,396 L451.5,401" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.3)" stroke-width="0.5"/></g><text x="434" y="440" class="vm" style="fill:var(--green)" id="ve"></text><g id="evPill" style="display:none"><rect x="420.5" y="450.5" width="24" height="12" rx="4" fill="var(--batt)"/><rect id="evl" x="420.5" y="450.5" width="0" height="12" fill="var(--batf)" clip-path="url(#ev-clip)"/><rect x="444.9" y="453.3" width="3" height="6.4" rx="1.5" fill="var(--batt)"/><svg id="evA" x="420.5" y="450.5" width="24" height="12" viewBox="420.5 450.5 24 12" preserveAspectRatio="xMinYMin slice"><text id="evsoc" x="432.5" y="459.8" font-family="-apple-system,sans-serif" font-size="9.5" font-weight="800" fill="var(--batn)" text-anchor="middle"></text></svg><svg id="evB" x="444.5" y="450.5" width="0" height="12" viewBox="444.5 450.5 0.01 12" preserveAspectRatio="xMinYMin slice"><text id="evsoc2" x="432.5" y="459.8" font-family="-apple-system,sans-serif" font-size="9.5" font-weight="800" fill="var(--batf)" text-anchor="middle"></text></svg></g><text x="434" y="476" class="vd" id="de"></text></g>
 <g id="nExtra1" class="ct" style="display:none">
 <path class="fl" d="M434,204 L434,160 L381,160"/>
@@ -949,12 +976,7 @@ svg{width:100%;height:auto;display:block}
 <text x="499" y="183" class="vm" style="fill:var(--load);font-size:13px" id="ex3val"></text>
 </g>
 </g></svg>
-<div class="sr" style="margin-top:4px">
-<div class="sb sg"><div class="sb-header"><span class="sl">${L.grid24}</span><span class="sv" id="hz"></span></div><svg viewBox="0 0 200 55" preserveAspectRatio="none"><defs><linearGradient id="sgd-g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(66,165,245,0.30)"/><stop offset="1" stop-color="rgba(66,165,245,0)"/></linearGradient></defs><path id="hga"/><path id="hg"/><line class="cursor" id="cg" x1="0" y1="0" x2="0" y2="55"/><circle class="cursor-dot" id="dg2" cx="0" cy="0" r="3"/></svg><span class="sb-tip" id="tg"></span></div>
-<div class="sb ss"><div class="sb-header"><span class="sl">${L.solar24}</span><span class="sv" id="hv"></span></div><svg viewBox="0 0 200 55" preserveAspectRatio="none"><defs><linearGradient id="sgd-s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(102,187,106,0.30)"/><stop offset="1" stop-color="rgba(102,187,106,0)"/></linearGradient></defs><path id="hsa"/><path id="hs"/><line class="cursor" id="cs" x1="0" y1="0" x2="0" y2="55"/><circle class="cursor-dot" id="ds2" cx="0" cy="0" r="3"/></svg><span class="sb-tip" id="ts"></span></div>
-<div class="sb sc"><div class="sb-header"><span class="sl">${L.load24}</span><span class="sv" id="hx"></span></div><svg viewBox="0 0 200 55" preserveAspectRatio="none"><defs><linearGradient id="sgd-l" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(38,198,218,0.30)"/><stop offset="1" stop-color="rgba(38,198,218,0)"/></linearGradient></defs><path id="hla"/><path id="hl"/><line class="cursor" id="cl" x1="0" y1="0" x2="0" y2="55"/><circle class="cursor-dot" id="dl2" cx="0" cy="0" r="3"/></svg><span class="sb-tip" id="tl"></span></div>
-<div class="sb sbt"><div class="sb-header"><span class="sl">${L.bat24}</span><span class="sv" id="hy"></span></div><svg viewBox="0 0 200 55" preserveAspectRatio="none"><defs><linearGradient id="sgd-b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(124,77,255,0.30)"/><stop offset="1" stop-color="rgba(124,77,255,0)"/></linearGradient></defs><path id="hb2a"/><path id="hb2"/><line class="cursor" id="cb" x1="0" y1="0" x2="0" y2="55"/><circle class="cursor-dot" id="db2" cx="0" cy="0" r="3"/></svg><span class="sb-tip" id="tb"></span></div>
-</div></ha-card>`;this._setupTooltips();this._setupClicks();this._drawSparks();this._ringPath();requestAnimationFrame(()=>this._ringPath());if(this._ro)this._ro.disconnect();if('ResizeObserver' in window){this._ro=new ResizeObserver(()=>this._ringPath());const cd=this._$('xcard');if(cd)this._ro.observe(cd);}}
+<div class="xch" id="chB">${this._chMk('bottom')}</div></ha-card>`;this._setupCharts();this._setupClicks();this._drawSparks();this._ringPath();requestAnimationFrame(()=>this._ringPath());if(this._ro)this._ro.disconnect();if('ResizeObserver' in window){this._ro=new ResizeObserver(()=>{this._ringPath();this._drawSparks();});const cd=this._$('xcard');if(cd)this._ro.observe(cd);}}
 
 _$(id){let c=this._elc;if(!c)c=this._elc={};let el=c[id];if(el&&el.isConnected)return el;el=this.shadowRoot.getElementById(id);c[id]=el;return el;}
 _rsv(){const c=this._c;const v=c.reserve_entity?this._gv(c.reserve_entity):null;return v!==null&&!isNaN(v)?v:(c.shutdown_soc??20);}
@@ -962,7 +984,7 @@ _rsv(){const c=this._c;const v=c.reserve_entity?this._gv(c.reserve_entity):null;
 _setupClicks(){const c=this._c;const bind=(id,entity)=>{const el=this._$(id);if(el&&entity)el.addEventListener('click',()=>this._moreInfo(entity));};bind('nSolar',c.solar);bind('nGrid',c.grid);bind('nLoad',c.load);bind('nBat',c.battery||c.soc);{const bi=this._$('batIcon');if(bi&&c.reserve_entity)bi.addEventListener('click',(e)=>{e.stopPropagation();this._moreInfo(c.reserve_entity);});}bind('nEV',c.ev_power||c.ev_soc);bind('nExtra1',c.extra1_power);bind('nExtra2',c.extra2_power);bind('nExtra3',c.extra3_power);const hit=this._$('srhit'),sg=this._$('sunRing');if(hit&&sg)hit.addEventListener('click',(e)=>{e.stopPropagation();sg.classList.add('srshow');clearTimeout(this._srT);this._srT=setTimeout(()=>sg.classList.remove('srshow'),3000);});[1,2,3].forEach(k=>{const g=this._$('mp'+k);if(g)g.addEventListener('click',(e)=>{e.stopPropagation();this._moreInfo(g.dataset.e);});});const aH=this._$('auhit'),aB=this._$('aulbl');if(aH&&aB){const show=()=>{aB.classList.add('show');clearTimeout(this._auT);this._auT=setTimeout(()=>aB.classList.remove('show'),3000);};aH.addEventListener('pointerenter',show);aH.addEventListener('pointerdown',e=>{e.stopPropagation();show();});aH.addEventListener('click',e=>e.stopPropagation());aH.addEventListener('pointerleave',()=>{clearTimeout(this._auT);this._auT=setTimeout(()=>aB.classList.remove('show'),600);});}}
 // Frame path + stroke width: scales with card width (≈0.75px phone, 1px desktop, 2px TV, max 3px); an explicit --xpf-frame-width wins
 _ringPath(){const card=this._$('xcard'),svg=this._$('aur');if(!card||!svg)return;const w=card.clientWidth,h=card.clientHeight;if(!w||!h)return;const cs=getComputedStyle(card);const bw=parseFloat(cs.borderTopWidth)||0;const ov=parseFloat(cs.getPropertyValue('--xpf-frame-width'));const dpr=window.devicePixelRatio||1;const sw=ov>0?ov:Math.min(3,Math.max(dpr>=1.5?0.75:1,Math.round(w/480*100)/100));const i=sw/2,W=w-sw,H=h-sw;let r=(parseFloat(cs.borderTopLeftRadius)||20)-bw-i;r=Math.max(0,Math.min(r,Math.min(W,H)/2));const key=w+'|'+h+'|'+r+'|'+sw;if(key===this._ringKey)return;this._ringKey=key;svg.style.setProperty('--fw',sw+'px');const q=v=>Math.round(v*4)/4;const d='M'+q(i+W/2)+','+q(i)+' H'+q(i+W-r)+' A'+q(r)+','+q(r)+' 0 0 1 '+q(i+W)+','+q(i+r)+' V'+q(i+H-r)+' A'+q(r)+','+q(r)+' 0 0 1 '+q(i+W-r)+','+q(i+H)+' H'+q(i+r)+' A'+q(r)+','+q(r)+' 0 0 1 '+q(i)+','+q(i+H-r)+' V'+q(i+r)+' A'+q(r)+','+q(r)+' 0 0 1 '+q(i+r)+','+q(i)+' Z';this._sa(svg,'viewBox','0 0 '+w+' '+h);['aut','au-s','au-b','au-g','aurhit'].forEach(id=>this._sa(this._$(id),'d',d));}
-_setupTooltips(){
+_setupTooltipsOld(){
   const self=this;
   const setup=(svgParent,cursorId,dotId,tipId,dataKey,color)=>{
     const svg=self.shadowRoot.querySelector('#'+cursorId)?.closest('svg');
@@ -1001,7 +1023,35 @@ _sf(el,id,p,d,c,o){if(!el)return;const cg=this._chv&&el.id!=='fh'?this._$('c'+el
 _tween(id,target,fmt){const el=this._$(id);if(!el)return;if(target===null||(this._rm&&this._c.animations!=='always')){delete this._twq[id];this._st(el,fmt(target));this._twv[id]=target;return;}const from=this._twv[id];if(from===undefined||from===null||Math.abs(target-from)<1){delete this._twq[id];this._st(el,fmt(target));this._twv[id]=target;return;}this._twq[id]={el,from,to:target,fmt,t0:performance.now()};if(!this._twRaf)this._twRaf=requestAnimationFrame(t=>this._twStep(t));}
 _twStep(t){this._twRaf=null;const q=this._twq;let live=false;for(const id in q){const w=q[id];let k=Math.min(1,(t-w.t0)/600);k=1-Math.pow(1-k,3);this._st(w.el,w.fmt(w.from+(w.to-w.from)*k));if(k<1)live=true;else{this._twv[id]=w.to;delete q[id];}}if(live)this._twRaf=requestAnimationFrame(t2=>this._twStep(t2));}
 _spark(id,aid,data,mx){const el=this._$(id);const af=this._$(aid);if(!el)return;if(!data.length){el.removeAttribute('d');if(af)af.removeAttribute('d');return;}const w=200,h=55,py=2,max=mx||Math.max(...data)||1;const pts=data.map((v,i)=>[(i/(data.length-1))*w,py+(1-v/max)*(h-py*2)]);if(pts.length<2)return;const tension=0.3;const cp=(p0,p1,p2,t)=>[p1[0]+(p2[0]-p0[0])*t,p1[1]+(p2[1]-p0[1])*t];let d='M'+pts[0][0].toFixed(1)+','+pts[0][1].toFixed(1);for(let i=0;i<pts.length-1;i++){const p0=pts[Math.max(0,i-1)];const p1=pts[i];const p2=pts[i+1];const p3=pts[Math.min(pts.length-1,i+2)];const c1=cp(p0,p1,p2,tension);const c2=[p2[0]-(p3[0]-p1[0])*tension,p2[1]-(p3[1]-p1[1])*tension];d+=' C'+c1[0].toFixed(1)+','+c1[1].toFixed(1)+' '+c2[0].toFixed(1)+','+c2[1].toFixed(1)+' '+p2[0].toFixed(1)+','+p2[1].toFixed(1);}el.setAttribute('d',d);if(af){af.setAttribute('d',d+'L'+w+','+h+'L0,'+h+'Z');}}
-_drawSparks(){const H=this._hist;let mx=0;if(this._c.sparkline_shared_scale){for(const k of ['solar','load','grid','battery']){const a=H[k];if(a&&a.length){const m=Math.max(...a);if(m>mx)mx=m;}}mx=mx||1;}const M=mx||undefined;this._sparkM=M;this._spark('hs','hsa',H.solar,M);this._spark('hl','hla',H.load,M);this._spark('hg','hga',H.grid,M);this._spark('hb2','hb2a',H.battery,M);}
+_chMk(pos){const c=this._c,L=this._lang;let o='';const box=(k,lbl)=>'<div class="cbx" id="cx'+k+'"><div class="chd"><span class="chl">'+lbl+'</span><span class="chv" id="cv'+k+'"></span><span class="chl gh" aria-hidden="true">'+lbl+'</span></div><svg class="csv" id="cs'+k+'" role="img" aria-label="'+lbl+'"><g id="cg'+k+'"></g><line id="cc'+k+'" y1="2" y2="59" stroke="var(--t3)" stroke-width="1" opacity="0" /><g id="cd'+k+'"></g></svg></div>';if((c.energy_chart||'bottom')===pos)o+=box('E',L.today||'TODAY');if((c.battery_chart||'off')===pos)o+=box('B',L.battery);return o;}
+_cGeo(svg){const W=Math.max(120,Math.round(svg.clientWidth||svg.getBoundingClientRect().width||300)),H=70,T0=6,B0=H-11,L0=22,n=HIST_POINTS;return {W,H,T0,B0,L0,n,X:i=>L0+(i+0.5)/n*(W-L0)};}
+_drawSparks(){this._drawChartE();this._drawChartB();this._chHead();}
+_drawChartE(){const svg=this._$('csE'),g=this._$('cgE');if(!svg||!g)return;const G=this._cGeo(svg);const {W,H,T0,B0,L0,n,X}=G;svg.setAttribute('viewBox','0 0 '+W+' '+H);const Hh=this._hist||{},S=Hh.solar||[],Ld=Hh.load||[],Gr=Hh.grid||[],F=this._fc||[];let mx=1000;for(const a of [S,Ld,Gr,F])for(const v of a)if(v>mx)mx=v;const step=mx>6000?2000:1000;mx=Math.ceil(mx/step)*step;const Y=v=>B0-v/mx*(B0-T0);G.Y=Y;G.mx=mx;this._cgE=G;
+let o='';let gp='';for(let v=step;v<=mx;v+=step){const y=Y(v).toFixed(1);gp+='M'+L0+' '+y+'H'+W;o+='<text x="17" y="'+(+y+2.5).toFixed(1)+'" text-anchor="end">'+(v/1000)+'k</text>';}
+for(const h of [3,6,9,12,15,18,21])gp+='M'+(L0+h/24*(W-L0)).toFixed(1)+' '+T0+'V'+B0;o='<path class="cgr" d="'+gp+'"/><path class="cbl" d="M'+L0+' '+B0+'H'+W+'"/><text x="17" y="'+(B0+2.5)+'" text-anchor="end">0</text>'+o;
+[0,6,12,18,24].forEach((h,k)=>{o+='<text x="'+(L0+h/24*(W-L0)).toFixed(1)+'" y="'+(H-1)+'" text-anchor="'+(k===0?'start':k===4?'end':'middle')+'">'+String(h).padStart(2,'0')+'h</text>';});
+const line=a=>{let d='',pen=false;for(let k=0;k<n;k++){const v=a[k];if(v===null||v===undefined){pen=false;continue;}d+=(pen?'L':'M')+X(k).toFixed(1)+' '+Y(v).toFixed(1);pen=true;}return d;};
+let last=-1;for(let k=0;k<n;k++)if(S[k]!==null&&S[k]!==undefined)last=k;
+if(last>0){o+='<path d="'+line(S)+'L'+X(last).toFixed(1)+' '+B0+'L'+X(0).toFixed(1)+' '+B0+'Z" fill="var(--green)" opacity="0.14"/>';}
+if(F.length)o+='<path d="'+line(F)+'" fill="none" stroke="#FFCA28" stroke-width="1.2" stroke-dasharray="4 3" opacity="0.85"/>';
+o+='<path d="'+line(Gr)+'" fill="none" stroke="var(--red)" stroke-width="1.3" stroke-linejoin="round"/><path d="'+line(Ld)+'" fill="none" stroke="var(--load)" stroke-width="1.5" stroke-linejoin="round"/><path d="'+line(S)+'" fill="none" stroke="var(--green)" stroke-width="1.6" stroke-linejoin="round"/>';
+const nk=Math.floor((Date.now()-(this._histT0||this._mid()))/HIST_SLOT);if(nk>=0&&nk<n){const nx=(L0+(Date.now()-(this._histT0||this._mid()))/86400000*(W-L0)).toFixed(1);o+='<line x1="'+nx+'" x2="'+nx+'" y1="2" y2="'+B0+'" stroke="var(--t1)" stroke-width="1" stroke-dasharray="3 3" opacity="0.45"/>';}
+let pk=-1;for(let k=0;k<n;k++)if(S[k]!==null&&S[k]!==undefined&&(pk<0||S[k]>S[pk]))pk=k;if(pk>=0&&S[pk]>=50){const px=X(pk),py=Y(S[pk]);const tx=Math.min(W-12,Math.max(L0+12,px));o+='<circle cx="'+px.toFixed(1)+'" cy="'+py.toFixed(1)+'" r="2.6" fill="none" stroke="var(--green)" stroke-width="1.4"/><text x="'+tx.toFixed(1)+'" y="'+Math.max(7,py-4.5).toFixed(1)+'" text-anchor="middle" style="fill:var(--green);font-weight:700;font-size:8.5px">'+(S[pk]/1000).toFixed(2)+'</text>';}
+g.innerHTML=o;}
+_drawChartB(){const svg=this._$('csB'),g=this._$('cgB');if(!svg||!g)return;const G=this._cGeo(svg);const {W,H,T0,B0,L0,n,X}=G;svg.setAttribute('viewBox','0 0 '+W+' '+H);const Hh=this._hist||{},C=Hh.soc||[],B=Hh.bat||[];const Y=v=>B0-Math.max(0,Math.min(100,v))/100*(B0-T0);G.Y=Y;this._cgB=G;
+let gp='';for(const v of [25,50,75,100])gp+='M'+L0+' '+Y(v).toFixed(1)+'H'+W;for(const h of [3,6,9,12,15,18,21])gp+='M'+(L0+h/24*(W-L0)).toFixed(1)+' '+T0+'V'+B0;
+let o='<path class="cgr" d="'+gp+'"/><path class="cbl" d="M'+L0+' '+B0+'H'+W+'"/>';[[100,'100'],[50,'50'],[0,'0']].forEach(a=>{o+='<text x="17" y="'+(Y(a[0])+2.5).toFixed(1)+'" text-anchor="end">'+a[1]+'</text>';});
+[0,6,12,18,24].forEach((h,k)=>{o+='<text x="'+(L0+h/24*(W-L0)).toFixed(1)+'" y="'+(H-1)+'" text-anchor="'+(k===0?'start':k===4?'end':'middle')+'">'+String(h).padStart(2,'0')+'h</text>';});
+const st=k=>{const b=B[k];return b===null||b===undefined?'I':b<-20?'C':b>20?'D':'I';};const ln={C:'',D:'',I:''},ar={C:'',D:'',I:''};
+for(let k=0;k<n-1;k++){const a=C[k],b=C[k+1];if(a===null||a===undefined||b===null||b===undefined)continue;const s=st(k+1),x0=X(k).toFixed(1),x1=X(k+1).toFixed(1),y0=Y(a).toFixed(1),y1=Y(b).toFixed(1);ln[s]+='M'+x0+' '+y0+'L'+x1+' '+y1;ar[s]+='M'+x0+' '+y0+'L'+x1+' '+y1+'L'+x1+' '+B0+'L'+x0+' '+B0+'Z';}
+const col={C:'var(--green)',D:'var(--orange)',I:'#9aa0a6'};for(const s of ['I','D','C']){if(ar[s])o+='<path d="'+ar[s]+'" fill="'+col[s]+'" opacity="'+(s==='I'?0.1:0.16)+'"/>';}for(const s of ['I','D','C']){if(ln[s])o+='<path d="'+ln[s]+'" fill="none" stroke="'+col[s]+'" stroke-width="1.8" stroke-linecap="round"/>';}
+const nx=(L0+(Date.now()-(this._histT0||this._mid()))/86400000*(W-L0));if(nx>=L0&&nx<=W)o+='<line x1="'+nx.toFixed(1)+'" x2="'+nx.toFixed(1)+'" y1="2" y2="'+B0+'" stroke="var(--t1)" stroke-width="1" stroke-dasharray="3 3" opacity="0.45"/>';
+g.innerHTML=o;}
+_chHead(){const L=this._lang,fmt=v=>this._fmt(v),c=this._c;const eE=this._$('cvE'),eB=this._$('cvB');const k=this._chK,Hh=this._hist||{};const at=(a)=>k!==null&&k!==undefined&&a&&a[k]!==null&&a[k]!==undefined?a[k]:null;
+if(eE){let s,l,g;if(k!==null&&k!==undefined){s=at(Hh.solar);l=at(Hh.load);g=at(Hh.grid);}else{const lv=this._live||{};s=lv.s;l=lv.l;g=lv.g;}const sp=(cl,t)=>'<span style="color:'+cl+'">'+t+'</span>';const html=sp('var(--green)','☀ '+(s===null||s===undefined?L.unavailable:fmt(s)))+sp('var(--load)','⌂ '+(l===null||l===undefined?L.unavailable:fmt(l)))+sp('var(--red)','⚡ '+(g===null||g===undefined?L.unavailable:fmt(Math.max(0,g))));if(eE._h!==html){eE._h=html;eE.innerHTML=html;}}
+if(eB){let soc,b;if(k!==null&&k!==undefined){soc=at(Hh.soc);b=at(Hh.bat);}else{const lv=this._live||{};soc=lv.soc;b=lv.b;}const stt=b===null||b===undefined?'I':b<-20?'C':b>20?'D':'I';const cl=stt==='C'?'var(--green)':stt==='D'?'var(--orange)':'#9aa0a6';const html='<span style="color:'+cl+'">'+(soc===null||soc===undefined?L.unavailable:Math.round(soc)+'%')+'</span><span style="color:var(--t2,var(--t1));opacity:0.8">'+(stt==='C'?'▾ '+fmt(-b):stt==='D'?'▴ '+fmt(b):'')+'</span>';if(eB._h!==html){eB._h=html;eB.innerHTML=html;}}}
+_setupCharts(){this._chK=null;for(const k of ['E','B']){const svg=this._$('cs'+k);if(!svg)continue;const show=cx=>{const G=k==='E'?this._cgE:this._cgB;if(!G)return;const r=svg.getBoundingClientRect();const x=(cx-r.left)/r.width*G.W;let i=Math.floor((x-G.L0)/(G.W-G.L0)*G.n);i=Math.max(0,Math.min(G.n-1,i));const nk=Math.floor((Date.now()-(this._histT0||this._mid()))/HIST_SLOT);i=Math.min(i,Math.max(0,nk));this._chK=i;const X=G.X(i).toFixed(1);for(const q of ['E','B']){const ln=this._$('cc'+q),G2=q==='E'?this._cgE:this._cgB,d=this._$('cd'+q);if(!ln||!G2)continue;const X2=G2.X(i).toFixed(1);ln.setAttribute('x1',X2);ln.setAttribute('x2',X2);ln.setAttribute('opacity','0.7');const Hh=this._hist||{};let dots='';const dot=(v,cl)=>{if(v!==null&&v!==undefined)dots+='<circle cx="'+X2+'" cy="'+G2.Y(v).toFixed(1)+'" r="2.6" fill="'+cl+'"/>';};if(q==='E'){dot(Hh.solar&&Hh.solar[i],'var(--green)');dot(Hh.load&&Hh.load[i],'var(--load)');}else{const b=Hh.bat&&Hh.bat[i];dot(Hh.soc&&Hh.soc[i],b<-20?'var(--green)':b>20?'var(--orange)':'#9aa0a6');}d.innerHTML=dots;}this._chHead();};const hide=()=>{this._chK=null;for(const q of ['E','B']){const ln=this._$('cc'+q),d=this._$('cd'+q);if(ln)ln.setAttribute('opacity','0');if(d)d.innerHTML='';}this._chHead();};svg.addEventListener('mousemove',e=>show(e.clientX));svg.addEventListener('mouseleave',hide);let tx=0,ty=0;svg.addEventListener('touchstart',e=>{const t=e.touches[0];tx=t.clientX;ty=t.clientY;show(t.clientX);},{passive:true});svg.addEventListener('touchmove',e=>{const t=e.touches[0];if(Math.abs(t.clientY-ty)>Math.abs(t.clientX-tx)+6)return hide();show(t.clientX);},{passive:true});svg.addEventListener('touchend',hide);svg.addEventListener('touchcancel',hide);}}
+_drawSparksOld(){const H=this._hist;let mx=0;if(this._c.sparkline_shared_scale){for(const k of ['solar','load','grid','battery']){const a=H[k];if(a&&a.length){const m=Math.max(...a);if(m>mx)mx=m;}}mx=mx||1;}const M=mx||undefined;this._sparkM=M;this._spark('hs','hsa',H.solar,M);this._spark('hl','hla',H.load,M);this._spark('hg','hga',H.grid,M);this._spark('hb2','hb2a',H.battery,M);}
 
 _update(){if(!this._h||!this.shadowRoot.getElementById('vs'))return;
 const c=this._c,L=this._lang;
@@ -1060,7 +1110,7 @@ this._st(this._$('dg'),L.import_+' '+this._fmtE(dI)+(this._fmtC(c.import_cost)?'
 this._st(this._$('dl'),L.daily+' '+this._fmtE(dL));
 this._st(this._$('db'),L.charge+' '+this._fmtE(dC)+' '+L.discharge+' '+this._fmtE(dD));
 
-const solF=sol??0,batF=bat??0,gridF=grid??0,loadF=load??0;
+const solF=sol??0,batF=bat??0,gridF=grid??0,loadF=load??0;this._live={s:sol,l:load,g:grid,b:bat,soc:soc};if(this._chK===null||this._chK===undefined)this._chHead();
 const maxP=Math.max(solF,Math.abs(batF),Math.abs(gridF),loadF);
 const syncSpd=maxP>10?this._spd(maxP):3;
 if(c.flow_speed==='synced'&&(this._syncSpd<=0||Math.abs(syncSpd-this._syncSpd)/this._syncSpd>0.1)){this._syncSpd=syncSpd;const spd=syncSpd.toFixed(1)+'s';['fs','fg','fb','fh','fh2','fh3','fe','fex1','fex2','fex3'].forEach(id=>{const el=this._$(id);if(el)el.style.setProperty('--spd',spd);const cg=this._$('c'+id);if(cg)cg.style.setProperty('--spd',spd);});this._resync=true;}

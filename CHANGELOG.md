@@ -1,3 +1,12 @@
+## v1.3.58
+
+- The four 24h sparklines are replaced by two charts for today (00:00–24:00):
+  - Energy chart: solar (with soft area), house and grid import on one chart, kW grid lines with a scale, a marker on today's solar peak and a dashed "now" line. If a solar forecast is configured in the Energy dashboard (Forecast.Solar, Solcast…), the forecast is drawn as a dashed line for the whole day
+  - Battery chart: state of charge (0–100%), coloured by what the battery is doing — green charging, amber discharging, grey idle
+- Each chart can be placed above or below the power flow, or turned off: new options `energy_chart` and `battery_chart` (`top` / `bottom` / `off`), and `solar_forecast` (on by default); all in the visual editor
+- Touch or hover a chart to read the values at that time in its header; otherwise the header shows the live values
+- Battery icon and its voltage / temperature moved up slightly so the power value sits at the same distance from the icon as on the house node
+
 ## v1.3.57
 
 - Grid energy is now traced to where it goes: the inverter → house line only turns red for the part of the load the grid actually covers, and the inverter → battery line turns red when the battery is charging from the grid (split green/red when solar and grid charge it together)
