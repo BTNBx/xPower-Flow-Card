@@ -1,3 +1,8 @@
+## v1.3.57
+
+- Grid energy is now traced to where it goes: the inverter → house line only turns red for the part of the load the grid actually covers, and the inverter → battery line turns red when the battery is charging from the grid (split green/red when solar and grid charge it together)
+- Self-sufficiency and the energy-source frame no longer count grid power used to charge the battery as house consumption
+
 ## v1.3.56
 
 - New house icon: white walls, teal roof and door, cross-paned windows

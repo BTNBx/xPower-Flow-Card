@@ -1,14 +1,14 @@
 // xPower Flow Card — Modern power flow card for solar hybrid inverters
 // Copyright (C) 2025 BTNBx — MIT License
-const V='1.3.56';
+const V='1.3.57';
 
 /* ═══════════════════════════════════════
    CHANGELOG — full history in CHANGELOG.md
    ═══════════════════════════════════════
-## v1.3.56
+## v1.3.57
 
-- New house icon: white walls, teal roof and door, cross-paned windows
-- House windows follow day and night (sun entity): glass with a reflection by day, warm light at night
+- Grid energy is now traced to where it goes: the inverter → house line only turns red for the part of the load the grid actually covers, and the inverter → battery line turns red when the battery is charging from the grid (split green/red when solar and grid charge it together)
+- Self-sufficiency and the energy-source frame no longer count grid power used to charge the battery as house consumption
 */
 
 /* ═══════════════════════════════════════
@@ -1066,8 +1066,11 @@ const syncSpd=maxP>10?this._spd(maxP):3;
 if(c.flow_speed==='synced'&&(this._syncSpd<=0||Math.abs(syncSpd-this._syncSpd)/this._syncSpd>0.1)){this._syncSpd=syncSpd;const spd=syncSpd.toFixed(1)+'s';['fs','fg','fb','fh','fh2','fh3','fe','fex1','fex2','fex3'].forEach(id=>{const el=this._$(id);if(el)el.style.setProperty('--spd',spd);const cg=this._$('c'+id);if(cg)cg.style.setProperty('--spd',spd);});this._resync=true;}
 this._sf(this._$('fs'),'s',solF,'fd','var(--green)','0.8');
 this._sf(this._$('fg'),'g',gridF,gridF>0?'fr':'fL',gridF>0?'var(--red)':'var(--green)','0.7');
-this._sf(this._$('fb'),'b',batF,batF<0?'fd':'fu',batF<0?'var(--green)':'var(--solar)','0.75');
-const _gImp=gridF>0?gridF:0,_bDis=batF>0?batF:0,_sToH=Math.max(0,loadF-_gImp-_bDis),_feed=_gImp+_bDis+_sToH;
+const _S=solF>0?solF:0,_Gi=gridF>0?gridF:0,_Bd=batF>0?batF:0,_Bc=batF<0?-batF:0,_Ld=loadF>0?loadF:0;
+const _sL=Math.min(_S,_Ld),_bDis=Math.min(_Bd,_Ld-_sL),_gImp=Math.max(0,Math.min(_Gi,_Ld-_sL-_bDis)),_sToH=Math.max(0,_Ld-_bDis-_gImp),_feed=_gImp+_bDis+_sToH;
+const _gB=Math.max(0,Math.min(_Gi-_gImp,_Bc)),_sB=Math.max(0,_Bc-_gB);
+this._sf(this._$('fb'),'b',batF,batF<0?'fd':'fu',batF<0?(_gB>_sB?'var(--red)':'var(--green)'):'var(--solar)','0.75');
+{const cb=this._chv&&this._$('cfb');if(cb){const cs=cb.children;if(batF<-10&&_gB>0&&_sB>0){const nc=Math.min(10,cs.length),fG=_gB/_Bc;for(let i=0;i<cs.length;i++){const u=((cs.length-1-i)%nc+0.5)/nc;this._sa(cs[i],'stroke',u<1-fG?'var(--green)':'var(--red)');}}else{for(let i=0;i<cs.length;i++)this._sa(cs[i],'stroke','');}}}
 {const _sc=[[_sToH,'#66BB6A'],[_bDis,'#FFA726'],[_gImp,'#EF5350']];let _ac=0;for(let _i=0;_i<3;_i++){const _f=_feed>0?_sc[_i][0]/_feed*100:0;const _p0=this._$('hs'+(_i*2)),_p1=this._$('hs'+(_i*2+1));if(_p0){this._sa(_p0,'offset',_ac.toFixed(1)+'%');this._sa(_p0,'stop-color',_sc[_i][1]);}_ac+=_f;if(_p1){this._sa(_p1,'offset',_ac.toFixed(1)+'%');this._sa(_p1,'stop-color',_sc[_i][1]);}}}
 {const _mx=[['fh','h',_sToH,'var(--green)'],['fh2','h2',_bDis,'var(--orange)'],['fh3','h3',_gImp,'var(--red)']],FL=this._hl,FP=this._hp;let _c=0;for(const [_id,_k,_w,_col] of _mx){const el=this._$(_id);if(!el)continue;const _l=_feed>0?_w/_feed*FL:0;if(_l<0.5){this._sa(el,'opacity','0');continue;}this._sf(el,_k,loadF,'fr',_col,'0.75');el.style.strokeDasharray='0 '+(FP-_c-_l).toFixed(2)+' '+_l.toFixed(2)+' '+_c.toFixed(2);_c+=_l;}const cg=this._chv&&this._$('cfh');if(cg){if(loadF<10||_feed<=0)this._sa(cg,'opacity','0');else{this._sa(cg,'opacity','0.9');const mx=[[_sToH,'var(--green)'],[_bDis,'var(--orange)'],[_gImp,'var(--red)']].filter(m=>m[0]>0),cs=cg.children,nc=Math.min(10,cs.length);for(let i=0;i<cs.length;i++){const u=((cs.length-1-i)%nc+0.5)/nc;let a=0,col=mx[mx.length-1][1];for(const m of mx){a+=m[0]/_feed;if(u<a+1e-9){col=m[1];break;}}this._sa(cs[i],'stroke',col);}const sp=c.flow_speed==='synced'&&this._syncSpd>0?this._syncSpd:Math.min(6,Math.max(0.5,2500/loadF));const o0=this._cfhSp;if(!o0||Math.abs(sp-o0)/o0>0.15){this._cfhSp=sp;cg.style.setProperty('--spd',sp.toFixed(2)+'s');}}}}
 
@@ -1154,7 +1157,7 @@ if(!rt){if(brG)this._ss(brG,'display','none');}else if(brG&&brEl&&br2){const pad
   const key=dur+rt.lbl+at+(rt.sun?'s':'');if(key!==this._brk){const L1=brEl.getComputedTextLength(),L2=br2.getComputedTextLength();if(L1>0&&L2>0){this._brk=key;const W=9+3.5+L1+7+1+7+12.9+3+L2+4,x0=250-W/2;let x=x0;const tr='translate('+x.toFixed(2)+',463.5)';this._sa(ck,'transform',tr);this._sa(sg,'transform',tr);x+=9+3.5;this._sa(brEl,'x',x.toFixed(2));x+=L1+7;const dv=this._$('brdv');this._sa(dv,'x1',x.toFixed(2));this._sa(dv,'x2',x.toFixed(2));x+=1+7;this._sa(bi,'transform','translate('+x.toFixed(2)+',463.5)');x+=12.9+3;this._sa(br2,'x',x.toFixed(2));}}}
 
 // Self-sufficiency frame — segments anchored to their source: solar top (0), battery bottom (50), grid left (75); smaller segments weigh more (1/f²)
-const gridImp=gridF>0?gridF:0;
+const gridImp=_gImp;
 const au=loadF>0?Math.max(0,Math.min(100,((loadF-gridImp)/loadF)*100)):0;
 this._tween('va',au,v=>Math.round(v)+'%');
 const _batDis=batF>0?batF:0;const _solH=Math.max(0,loadF-gridImp-_batDis);const _tot=gridImp+_batDis+_solH;const _seg=(k,st,ln)=>{const el=this._$('au-'+k),l=Math.max(0,ln);if(el){this._sa(el,'stroke-dasharray',l.toFixed(2)+' '+(100-l).toFixed(2));this._sa(el,'stroke-dashoffset',(-st).toFixed(2));}};if(_tot>0){const fS=_solH/_tot*100,fB=_batDis/_tot*100,fG=gridImp/_tot*100;const nb=fB+fG;let t=0;if(nb>0){const cen=(50*fB+75*fG)/nb;t=((cen+nb/2)%100+100)%100;}_seg('s',t,fS);_seg('b',t+fS,fB);_seg('g',t+fS+fB,fG);}else{_seg('s',0,0);_seg('b',0,0);_seg('g',0,0);}
