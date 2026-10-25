@@ -1,3 +1,8 @@
+## v1.3.63
+
+- Charts are a little taller and keep a strip of headroom at the top, so the solar peak badge no longer touches the header or the top grid line; the header sits closer to the chart
+- The house consumption gets a very light fading area under its line, like solar and grid, without hiding what is behind it
+
 ## v1.3.62
 
 - Energy chart redrawn in a smoother style: curved lines (no more steps), soft fading areas under solar and grid import, the house line on top with a light shadow, no vertical grid lines, and the solar peak in a small labelled badge (e.g. "2.95 kW")

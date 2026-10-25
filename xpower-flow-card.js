@@ -1,16 +1,14 @@
 // xPower Flow Card — Modern power flow card for solar hybrid inverters
 // Copyright (C) 2025 BTNBx — MIT License
-const V='1.3.62';
+const V='1.3.63';
 
 /* ═══════════════════════════════════════
    CHANGELOG — full history in CHANGELOG.md
    ═══════════════════════════════════════
-## v1.3.62
+## v1.3.63
 
-- Energy chart redrawn in a smoother style: curved lines (no more steps), soft fading areas under solar and grid import, the house line on top with a light shadow, no vertical grid lines, and the solar peak in a small labelled badge (e.g. "2.95 kW")
-- Thinner lines on both charts
-- The energy chart header now shows today's totals in kWh (solar, house, grid import) and the solar forecast for the whole day; touch or hover the chart to see the values at that time, forecast included
-- The red grid line is only drawn where the grid is actually used, not along the bottom all day
+- Charts are a little taller and keep a strip of headroom at the top, so the solar peak badge no longer touches the header or the top grid line; the header sits closer to the chart
+- The house consumption gets a very light fading area under its line, like solar and grid, without hiding what is behind it
 */
 
 /* ═══════════════════════════════════════
@@ -943,7 +941,7 @@ svg{width:100%;height:auto;display:block}
 .wt{fill:var(--t3);font-size:11px;font-weight:500;text-anchor:start;dominant-baseline:middle;font-family:-apple-system,sans-serif}
 .wb{fill:none;stroke:var(--t3);stroke-width:0.5;rx:4;ry:4;opacity:0.4}
 .sr{display:flex;gap:6px;margin-top:8mm}.xch{display:flex;flex-direction:column;gap:6px}.xch:empty{display:none}#chT{margin:2px 0 12.5px}#chB{margin-top:6px}:host(.compact) .xch{display:none}
-:host(.d-essential) :is(#tp,#bt,#bv,#gv,#pv,.mpr,#priceicons,#ds,#dg,#dl,#db,#de,#brg,#wicons,#sunRing),:host(.d-normal) :is(#tp,#bt,#bv,#gv,#pv,.mpr,#priceicons){display:none !important}.cbx{background:var(--xpf-sparkline-bg,rgba(255,255,255,0.02));border:1px solid rgba(127,127,127,0.12);border-radius:var(--xpf-sparkline-radius,12px);padding:8px 10px 6px;display:flex;flex-direction:column;gap:3px}.chd{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:baseline;gap:6px;height:16px;overflow:hidden}.chl{font-size:9px;font-weight:700;letter-spacing:0.1em;color:var(--t3);text-transform:uppercase}.chl.gh{visibility:hidden}.chv{display:flex;justify-content:center;gap:8px;font-size:10px;font-weight:600;white-space:nowrap;overflow:hidden}.csv{display:block;width:100%;height:70px;cursor:crosshair;touch-action:pan-y}.csv text{font-size:7.5px;fill:var(--t3)}.cgr{stroke:var(--t3);stroke-opacity:0.18;stroke-width:1;stroke-dasharray:2 3;fill:none}.cbl{stroke:var(--t3);stroke-opacity:0.35;stroke-width:1;fill:none}
+:host(.d-essential) :is(#tp,#bt,#bv,#gv,#pv,.mpr,#priceicons,#ds,#dg,#dl,#db,#de,#brg,#wicons,#sunRing),:host(.d-normal) :is(#tp,#bt,#bv,#gv,#pv,.mpr,#priceicons){display:none !important}.cbx{background:var(--xpf-sparkline-bg,rgba(255,255,255,0.02));border:1px solid rgba(127,127,127,0.12);border-radius:var(--xpf-sparkline-radius,12px);padding:6px 10px 6px;display:flex;flex-direction:column;gap:1px}.chd{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:baseline;gap:6px;height:16px;overflow:hidden}.chl{font-size:9px;font-weight:700;letter-spacing:0.1em;color:var(--t3);text-transform:uppercase}.chl.gh{visibility:hidden}.chv{display:flex;justify-content:center;gap:8px;font-size:10px;font-weight:600;white-space:nowrap;overflow:hidden}.csv{display:block;width:100%;height:70px;cursor:crosshair;touch-action:pan-y}.csv text{font-size:7.5px;fill:var(--t3)}.cgr{stroke:var(--t3);stroke-opacity:0.18;stroke-width:1;stroke-dasharray:2 3;fill:none}.cbl{stroke:var(--t3);stroke-opacity:0.35;stroke-width:1;fill:none}
 :host(.compact) .sr{display:none}
 :host(.compact) ha-card{padding:6px 8px 6px}
 .sb{flex:1;background:var(--xpf-sparkline-bg,rgba(255,255,255,0.02));border:1px solid rgba(255,255,255,0.04);border-radius:var(--xpf-sparkline-radius,12px);padding:10px 10px 8px;display:flex;flex-direction:column;gap:2px;overflow:hidden}
@@ -1036,18 +1034,18 @@ _sf(el,id,p,d,c,o){if(!el)return;const cg=this._chv&&el.id!=='fh'?this._$('c'+el
 _tween(id,target,fmt){const el=this._$(id);if(!el)return;if(target===null||(this._rm&&this._c.animations!=='always')){delete this._twq[id];this._st(el,fmt(target));this._twv[id]=target;return;}const from=this._twv[id];if(from===undefined||from===null||Math.abs(target-from)<1){delete this._twq[id];this._st(el,fmt(target));this._twv[id]=target;return;}this._twq[id]={el,from,to:target,fmt,t0:performance.now()};if(!this._twRaf)this._twRaf=requestAnimationFrame(t=>this._twStep(t));}
 _twStep(t){this._twRaf=null;const q=this._twq;let live=false;for(const id in q){const w=q[id];let k=Math.min(1,(t-w.t0)/600);k=1-Math.pow(1-k,3);this._st(w.el,w.fmt(w.from+(w.to-w.from)*k));if(k<1)live=true;else{this._twv[id]=w.to;delete q[id];}}if(live)this._twRaf=requestAnimationFrame(t2=>this._twStep(t2));}
 _chMk(pos){const c=this._c,L=this._lang;let o='';const box=(k,lbl)=>'<div class="cbx" id="cx'+k+'"><div class="chd"><span class="chl">'+lbl+'</span><span class="chv" id="cv'+k+'"></span><span class="chl gh" aria-hidden="true">'+lbl+'</span></div><svg class="csv" id="cs'+k+'" role="img" aria-label="'+lbl+'"><g id="cg'+k+'"></g><line id="cc'+k+'" y1="2" y2="59" stroke="var(--t3)" stroke-width="1" opacity="0" /><g id="cd'+k+'"></g></svg></div>';if((c.energy_chart||'bottom')===pos)o+=box('E',L.today||'TODAY');if((c.battery_chart||'off')===pos)o+=box('B',L.battery);return o;}
-_cGeo(svg){const W=Math.max(120,Math.round(svg.clientWidth||svg.getBoundingClientRect().width||300)),H=Math.max(70,Math.min(140,Math.round(W*0.12))),T0=6,B0=H-11,L0=22,n=HIST_POINTS;if(svg.style.height!==H+'px')svg.style.height=H+'px';const cl=svg.querySelector('line[id^="cc"]');if(cl)cl.setAttribute('y2',B0);return {W,H,T0,B0,L0,n,X:i=>L0+(i+0.5)/n*(W-L0)};}
+_cGeo(svg){const W=Math.max(120,Math.round(svg.clientWidth||svg.getBoundingClientRect().width||300)),H=Math.max(84,Math.min(170,Math.round(W*0.15))),T0=16,B0=H-11,L0=22,n=HIST_POINTS;if(svg.style.height!==H+'px')svg.style.height=H+'px';const cl=svg.querySelector('line[id^="cc"]');if(cl)cl.setAttribute('y2',B0);return {W,H,T0,B0,L0,n,X:i=>L0+(i+0.5)/n*(W-L0)};}
 _drawSparks(){this._drawChartE();this._drawChartB();this._chHead();}
 _drawChartE(){const svg=this._$('csE'),g=this._$('cgE');if(!svg||!g)return;const G=this._cGeo(svg);const {W,H,T0,B0,L0,n,X}=G;svg.setAttribute('viewBox','0 0 '+W+' '+H);const Hh=this._hist||{},S=Hh.solar||[],Ld=Hh.load||[],Gr=Hh.grid||[],F=this._fc||[];let mx=1000;for(const a of [S,Ld,Gr,F])for(const v of a)if(v>mx)mx=v;const step=mx>6000?2000:1000;mx=Math.ceil(mx/step)*step;const Y=v=>B0-v/mx*(B0-T0);G.Y=Y;G.mx=mx;this._cgE=G;
-const gr=(id,c)=>'<linearGradient id="'+id+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:'+c+';stop-opacity:0.32"/><stop offset="1" style="stop-color:'+c+';stop-opacity:0"/></linearGradient>';
-let o='<defs>'+gr('egS','var(--green)')+gr('egG','var(--red)')+'<filter id="egSh" x="-5%" y="-30%" width="110%" height="160%"><feDropShadow dx="0" dy="0" stdDeviation="1.4" flood-color="#000" flood-opacity="0.45"/></filter></defs>';
+const gr=(id,c,op)=>'<linearGradient id="'+id+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:'+c+';stop-opacity:'+(op||0.32)+'"/><stop offset="1" style="stop-color:'+c+';stop-opacity:0"/></linearGradient>';
+let o='<defs>'+gr('egS','var(--green)')+gr('egG','var(--red)')+gr('egL','var(--t1)',0.1)+'<filter id="egSh" x="-5%" y="-30%" width="110%" height="160%"><feDropShadow dx="0" dy="0" stdDeviation="1.4" flood-color="#000" flood-opacity="0.45"/></filter></defs>';
 let gp='';for(let v=step;v<=mx;v+=step){const y=Y(v).toFixed(1);gp+='M'+L0+' '+y+'H'+W;o+='<text x="17" y="'+(+y+2.5).toFixed(1)+'" text-anchor="end">'+(v/1000)+(v===mx?' kW':'')+'</text>';}
 o+='<path class="cgr" d="'+gp+'"/><path class="cbl" d="M'+L0+' '+B0+'H'+W+'"/><text x="17" y="'+(B0+2.5)+'" text-anchor="end">0</text>';
 [0,6,12,18,24].forEach((h,k)=>{o+='<text x="'+(L0+h/24*(W-L0)).toFixed(1)+'" y="'+(H-1)+'" text-anchor="'+(k===0?'start':k===4?'end':'middle')+'">'+String(h).padStart(2,'0')+'h</text>';});
 const line=(a,st)=>{let d='';for(const r of xpfRuns(a,X,Y))d+=xpfSmooth(r);return d?'<path d="'+d+'" fill="none" '+st+' stroke-linejoin="round" stroke-linecap="round"/>':'';};
 const area=(a,fid)=>{let d='';for(const r of xpfRuns(a,X,Y)){if(r.length<2)continue;d+=xpfSmooth(r)+'L'+r[r.length-1][0].toFixed(1)+' '+B0+'L'+r[0][0].toFixed(1)+' '+B0+'Z';}return d?'<path d="'+d+'" fill="url(#'+fid+')"/>':'';};
 if(F.length)o+=line(F,'stroke="#FFCA28" stroke-width="1" stroke-dasharray="3 3" opacity="0.8"');
-o+=area(Gr,'egG')+line(Gr.map((v,k)=>v>1||Gr[k-1]>1||Gr[k+1]>1?v:null),'stroke="var(--red)" stroke-width="1"');
+o+=area(Ld,'egL')+area(Gr,'egG')+line(Gr.map((v,k)=>v>1||Gr[k-1]>1||Gr[k+1]>1?v:null),'stroke="var(--red)" stroke-width="1"');
 o+=area(S,'egS')+line(S,'stroke="var(--green)" stroke-width="1.2"');
 o+=line(Ld,'stroke="var(--t1)" stroke-width="1.2" filter="url(#egSh)"');
 const now=Date.now(),t0=this._histT0||this._mid(),nk=Math.floor((now-t0)/HIST_SLOT);if(nk>=0&&nk<n){const nx=(L0+(now-t0)/86400000*(W-L0)).toFixed(1);o+='<line x1="'+nx+'" x2="'+nx+'" y1="2" y2="'+B0+'" stroke="var(--t1)" stroke-width="0.8" stroke-dasharray="2 3" opacity="0.4"/>';}
