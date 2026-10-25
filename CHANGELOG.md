@@ -1,3 +1,9 @@
+## v1.3.55
+
+- Battery runtime uses the average battery power of the last 15 minutes, so the time no longer jumps with every load change
+- Runtime longer than 48 hours is shown as "> 48h"
+- While charging in daylight, if the battery would not be full before sunset the line shows the sunset time and the expected charge at sunset (e.g. "☀ 18:47 · ~78%")
+
 ## v1.3.54
 
 - New grid icon: red hexagon with a lightning bolt
