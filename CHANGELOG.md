@@ -1,3 +1,9 @@
+## v1.3.60
+
+- The energy-source frame now splits the house load exactly like the inverter → house line: when the battery discharges more than the house needs (e.g. battery to grid), only the part that reaches the house counts as battery
+- Energy split moved into one shared function with automated tests (`npm test`), run on every push
+- Removed unused legacy sparkline and tooltip code
+
 ## v1.3.59
 
 - Charts scale their height with the card width (70 px on phones up to 140 px on wide screens) so they no longer look squashed on desktop
