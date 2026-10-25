@@ -169,6 +169,8 @@ weather_humidity: sensor.my_outdoor_humidity
 | `battery_chart` | `off` | Today's battery state-of-charge chart: `top`, `bottom` or `off` |
 | `solar_forecast` | `true` | Draw the solar forecast from the Energy dashboard on the energy chart |
 | `battery_capacity` | `5120` | Battery capacity in Wh |
+| `detail` | | Detail level: `essential` (power, battery %, flows and self-sufficiency only), `normal` (adds daily energy, battery runtime, weather, sun ring, energy chart and frame) or `technical` (adds MPPT list, voltages, frequency, temperatures, price and the battery chart). Unset shows everything configured, as before. Options you set yourself (e.g. `energy_chart`) always win |
+| `flow_density` | `power` | Chevron count follows power (`power`) or every pulse always shown (`full`) |
 | `solar2` | | Second MPPT solar power sensor (optional) |
 | `pv_voltage2` | | Second MPPT PV voltage sensor (optional) |
 | `weather_temp` | | Temperature sensor for weather display |
