@@ -1,3 +1,8 @@
+## v1.3.56
+
+- New house icon: white walls, teal roof and door, cross-paned windows
+- House windows follow day and night (sun entity): glass with a reflection by day, warm light at night
+
 ## v1.3.55
 
 - Battery runtime uses the average battery power of the last 15 minutes, so the time no longer jumps with every load change
