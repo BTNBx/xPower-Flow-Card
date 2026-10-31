@@ -186,3 +186,24 @@ test('battery runtime still averages within the 15 min window', () => {
   assert.notEqual(a.$('br'), fresh.$('br'), 'recent readings should still be averaged in');
   a.close(); fresh.close();
 });
+
+// ── Chart legend ─────────────────────────────────────
+
+test('clicking a chart legend item hides and shows its line', () => {
+  const c = mount({ ...FULL, energy_chart: 'bottom', solar_forecast: false }, ok());
+  const N = 96, ser = v => Array.from({ length: N }, (_, k) => (k < 60 ? v : null));
+  c.el._hist = { solar: ser(2000), load: ser(800), grid: ser(100), bat: null, soc: null };
+  c.el._drawSparks();
+  const svg = () => c.el.shadowRoot.getElementById('cgE').innerHTML;
+  const item = id => c.el.shadowRoot.querySelector('#cvE [data-s="' + id + '"]');
+  assert.match(svg(), /stroke="var\(--load\)"/);
+  item('l').click();
+  assert.doesNotMatch(svg(), /stroke="var\(--load\)"/, 'house line hidden');
+  assert.match(svg(), /stroke="var\(--green\)"/, 'solar line still there');
+  assert.ok(item('l').classList.contains('off'));
+  assert.equal(item('l').getAttribute('aria-pressed'), 'false');
+  item('l').click();
+  assert.match(svg(), /stroke="var\(--load\)"/, 'house line back');
+  assert.ok(!item('l').classList.contains('off'));
+  c.close();
+});
