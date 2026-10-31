@@ -1,3 +1,8 @@
+## v1.3.65
+
+- Solar is no longer used to fill gaps between sensors: power sent from solar to the house and to the battery can't exceed the measured solar production, so a late or missing reading no longer shows phantom solar flows or 100% self-sufficiency at night (#30)
+- Self-sufficiency is now the share of the house load actually covered by solar and battery
+
 ## v1.3.64
 
 - `reserve_entity` and `flow_length` set in YAML are no longer ignored: the battery reserve now follows the configured entity (tap the battery icon to open it) and comet flows use the configured length (#29)

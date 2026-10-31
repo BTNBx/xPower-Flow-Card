@@ -66,12 +66,41 @@ test('invariants over a grid of inputs', () => {
   for (const s of [0, 300, 2500]) for (const b of P) for (const g of P) for (const l of [0, 150, 1200, 4000]) {
     const f = xpfFlows(s, b, g, l);
     for (const k of ['sToH', 'bDis', 'gImp', 'gB', 'sB']) assert.ok(f[k] >= 0, `${k}<0 for ${[s, b, g, l]}`);
-    near(f.feed, Math.max(0, l));
+    assert.ok(f.feed <= Math.max(0, l) + 1e-9);
     near(f.sToH + f.bDis + f.gImp, f.feed);
+    assert.ok(f.sToH + f.sB <= s + 1e-9, `solar over-allocated for ${[s, b, g, l]}`);
     assert.ok(f.bDis <= Math.max(0, b) + 1e-9);
-    assert.ok(f.gImp <= Math.max(0, g) + 1e-9);
-    near(f.gB + f.sB, Math.max(0, -b));
+    assert.ok(f.gImp + f.gB <= Math.max(0, g) + 1e-9);
+    assert.ok(f.gB + f.sB <= Math.max(0, -b) + 1e-9);
     assert.ok(f.autarky >= 0 && f.autarky <= 100);
+  }
+});
+
+test('no phantom solar feeding the home (#30)', () => {
+  const f = xpfFlows(0, 0, 0, 500);
+  near(f.sToH, 0); near(f.feed, 0); near(f.autarky, 0);
+});
+
+test('no phantom solar charging the battery (#30)', () => {
+  const f = xpfFlows(0, -1500, 0, 0);
+  near(f.sB, 0); near(f.gB, 0);
+});
+
+test('partial imbalance stays unallocated', () => {
+  const f = xpfFlows(300, 0, 0, 500);
+  near(f.sToH, 300); near(f.feed, 300); near(f.autarky, 60);
+  const g = xpfFlows(500, -1500, 200, 0);
+  near(g.gB, 200); near(g.sB, 500);
+});
+
+test('balanced readings: everything is allocated', () => {
+  const P = [-3000, -400, 0, 7, 400, 3000];
+  for (const s of [0, 300, 2500]) for (const b of P) for (const g of P) {
+    const l = s + b + g;
+    if (l < 0) continue;
+    const f = xpfFlows(s, b, g, l);
+    near(f.feed, l);
+    near(f.gB + f.sB, Math.max(0, -b));
   }
 });
 
