@@ -1,14 +1,13 @@
 // xPower Flow Card — Modern power flow card for solar hybrid inverters
 // Copyright (C) 2025 BTNBx — MIT License
-const V='1.3.63';
+const V='1.3.64';
 
 /* ═══════════════════════════════════════
    CHANGELOG — full history in CHANGELOG.md
    ═══════════════════════════════════════
-## v1.3.63
+## v1.3.64
 
-- Charts are a little taller and keep a strip of headroom at the top, so the solar peak badge no longer touches the header or the top grid line; the header sits closer to the chart
-- The house consumption gets a very light fading area under its line, like solar and grid, without hiding what is behind it
+- `reserve_entity` and `flow_length` set in YAML are no longer ignored: the battery reserve now follows the configured entity (tap the battery icon to open it) and comet flows use the configured length (#29)
 */
 
 /* ═══════════════════════════════════════
@@ -231,6 +230,7 @@ const DEFAULTS={
   ...PRESETS.deye.e,
   solar2:'',solar3:'',pv_voltage2:'',pv_voltage3:'',sun_entity:'sun.sun',
   battery_charge:'',battery_discharge:'',
+  reserve_entity:'',
   grid_voltage_l2:'',grid_voltage_l3:'',
   bat_polarity:'negative',grid_polarity:'positive',
   shutdown_soc:20,battery_capacity:5120,grid_threshold:0,font_size:24,mppt_scale:1,language:'',
@@ -248,7 +248,7 @@ const DEFAULTS={
   flow_speed:'proportional',
   flow_density:'power',
   detail:'',
-  flow_style:'chevron',flow_size:0.7,
+  flow_style:'chevron',flow_size:0.7,flow_length:60,
   card_style:'xpower',
   energy_frame:true,
   arrow_style:'arrow',

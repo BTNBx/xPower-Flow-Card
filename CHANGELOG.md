@@ -1,3 +1,7 @@
+## v1.3.64
+
+- `reserve_entity` and `flow_length` set in YAML are no longer ignored: the battery reserve now follows the configured entity (tap the battery icon to open it) and comet flows use the configured length (#29)
+
 ## v1.3.63
 
 - Charts are a little taller and keep a strip of headroom at the top, so the solar peak badge no longer touches the header or the top grid line; the header sits closer to the chart
