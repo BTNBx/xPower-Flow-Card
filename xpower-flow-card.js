@@ -1,13 +1,14 @@
 // xPower Flow Card — Modern power flow card for solar hybrid inverters
 // Copyright (C) 2025 BTNBx — MIT License
-const V='1.3.64';
+const V='1.3.65';
 
 /* ═══════════════════════════════════════
    CHANGELOG — full history in CHANGELOG.md
    ═══════════════════════════════════════
-## v1.3.64
+## v1.3.65
 
-- `reserve_entity` and `flow_length` set in YAML are no longer ignored: the battery reserve now follows the configured entity (tap the battery icon to open it) and comet flows use the configured length (#29)
+- Solar is no longer used to fill gaps between sensors: power sent from solar to the house and to the battery can't exceed the measured solar production, so a late or missing reading no longer shows phantom solar flows or 100% self-sufficiency at night (#30)
+- Self-sufficiency is now the share of the house load actually covered by solar and battery
 */
 
 /* ═══════════════════════════════════════
@@ -327,11 +328,12 @@ const ANIM_MAX_SPD=3.5;
 
 // Energy decomposition — pure, no DOM; unit-tested in test/flows.test.mjs
 // Inputs in W. Sign: bat + = discharge / − = charge; grid + = import / − = export.
-// Home is fed solar first, then battery, then grid; battery charge comes from grid first, then solar.
+// Home is fed solar first, then battery, then grid; battery charge comes from grid surplus first, then solar surplus.
+// Each source is capped at its measured power: an imbalance (lagging/missing sensor) stays unallocated, never phantom solar.
 const xpfFlows=(sol,bat,grid,load)=>{const S=sol>0?sol:0,Gi=grid>0?grid:0,Bd=bat>0?bat:0,Bc=bat<0?-bat:0,Ld=load>0?load:0;
-const sL=Math.min(S,Ld),bDis=Math.min(Bd,Ld-sL),gImp=Math.max(0,Math.min(Gi,Ld-sL-bDis)),sToH=Math.max(0,Ld-bDis-gImp),feed=gImp+bDis+sToH;
-const gB=Math.max(0,Math.min(Gi-gImp,Bc)),sB=Math.max(0,Bc-gB);
-return {sToH,bDis,gImp,gB,sB,feed,autarky:Ld>0?Math.max(0,Math.min(100,(Ld-gImp)/Ld*100)):0};};
+const sToH=Math.min(S,Ld),bDis=Math.min(Bd,Ld-sToH),gImp=Math.min(Gi,Ld-sToH-bDis),feed=sToH+bDis+gImp;
+const gB=Math.min(Gi-gImp,Bc),sB=Math.min(S-sToH,Bc-gB);
+return {sToH,bDis,gImp,gB,sB,feed,autarky:Ld>0?Math.max(0,Math.min(100,(sToH+bDis)/Ld*100)):0};};
 
 // Pulse density by power: tier 0 <100 W, 1 <500 W, 2 <1500 W, 3 above; ±10% hysteresis around each boundary
 const XPF_TIERS=[100,500,1500],XPF_DENS=[0.25,0.5,0.75,1];
@@ -1130,7 +1132,7 @@ this._sf(this._$('fs'),'s',solF,'fd','var(--green)','0.8');
 this._sf(this._$('fg'),'g',gridF,gridF>0?'fr':'fL',gridF>0?'var(--red)':'var(--green)','0.7');
 const FX=xpfFlows(solF,batF,gridF,loadF),{sToH:_sToH,bDis:_bDis,gImp:_gImp,gB:_gB,sB:_sB,feed:_feed}=FX,_Bc=batF<0?-batF:0;
 this._sf(this._$('fb'),'b',batF,batF<0?'fd':'fu',batF<0?(_gB>_sB?'var(--red)':'var(--green)'):'var(--solar)','0.75');
-{const cb=this._chv&&this._$('cfb');if(cb){const cs=cb.children;if(batF<-10&&_gB>0&&_sB>0){const nc=Math.min(10,cs.length),fG=_gB/_Bc;for(let i=0;i<cs.length;i++){const u=((cs.length-1-i)%nc+0.5)/nc;this._sa(cs[i],'stroke',u<1-fG?'var(--green)':'var(--red)');}}else{for(let i=0;i<cs.length;i++)this._sa(cs[i],'stroke','');}}}
+{const cb=this._chv&&this._$('cfb');if(cb){const cs=cb.children;if(batF<-10&&_gB>0&&_sB>0){const nc=Math.min(10,cs.length),fG=_gB/(_gB+_sB);for(let i=0;i<cs.length;i++){const u=((cs.length-1-i)%nc+0.5)/nc;this._sa(cs[i],'stroke',u<1-fG?'var(--green)':'var(--red)');}}else{for(let i=0;i<cs.length;i++)this._sa(cs[i],'stroke','');}}}
 {const _sc=[[_sToH,'#66BB6A'],[_bDis,'#FFA726'],[_gImp,'#EF5350']];let _ac=0;for(let _i=0;_i<3;_i++){const _f=_feed>0?_sc[_i][0]/_feed*100:0;const _p0=this._$('hs'+(_i*2)),_p1=this._$('hs'+(_i*2+1));if(_p0){this._sa(_p0,'offset',_ac.toFixed(1)+'%');this._sa(_p0,'stop-color',_sc[_i][1]);}_ac+=_f;if(_p1){this._sa(_p1,'offset',_ac.toFixed(1)+'%');this._sa(_p1,'stop-color',_sc[_i][1]);}}}
 {const _mx=[['fh','h',_sToH,'var(--green)'],['fh2','h2',_bDis,'var(--orange)'],['fh3','h3',_gImp,'var(--red)']],FL=this._hl,FP=this._hp;let _c=0;for(const [_id,_k,_w,_col] of _mx){const el=this._$(_id);if(!el)continue;const _l=_feed>0?_w/_feed*FL:0;if(_l<0.5){this._sa(el,'opacity','0');continue;}this._sf(el,_k,loadF,'fr',_col,'0.75');el.style.strokeDasharray='0 '+(FP-_c-_l).toFixed(2)+' '+_l.toFixed(2)+' '+_c.toFixed(2);_c+=_l;}const cg=this._chv&&this._$('cfh');if(cg){if(loadF<10||_feed<=0)this._sa(cg,'opacity','0');else{this._sa(cg,'opacity','0.9');this._cvN(cg,loadF);const mx=[[_sToH,'var(--green)'],[_bDis,'var(--orange)'],[_gImp,'var(--red)']].filter(m=>m[0]>0),cs=cg.children,nc=Math.min(10,cs.length);for(let i=0;i<cs.length;i++){const u=((cs.length-1-i)%nc+0.5)/nc;let a=0,col=mx[mx.length-1][1];for(const m of mx){a+=m[0]/_feed;if(u<a+1e-9){col=m[1];break;}}this._sa(cs[i],'stroke',col);}const sp=c.flow_speed==='synced'&&this._syncSpd>0?this._syncSpd:Math.min(6,Math.max(0.5,2500/loadF));const o0=this._cfhSp;if(!o0||Math.abs(sp-o0)/o0>0.15){this._cfhSp=sp;cg.style.setProperty('--spd',sp.toFixed(2)+'s');}}}}
 
