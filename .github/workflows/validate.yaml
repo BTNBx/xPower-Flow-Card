@@ -19,7 +19,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
       - name: Syntax check
         run: node --check xpower-flow-card.js
       - name: Unit tests
