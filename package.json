@@ -29,6 +29,7 @@
         "test": "node --test test/*.test.mjs"
     },
     "devDependencies": {
-        "esbuild": "^0.25.12"
+        "esbuild": "^0.25.12",
+        "jsdom": "^30.1.3"
     }
 }
