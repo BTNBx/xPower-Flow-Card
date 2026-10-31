@@ -1,14 +1,13 @@
 // xPower Flow Card — Modern power flow card for solar hybrid inverters
 // Copyright (C) 2025 BTNBx — MIT License
-const V='1.3.65';
+const V='1.3.66';
 
 /* ═══════════════════════════════════════
    CHANGELOG — full history in CHANGELOG.md
    ═══════════════════════════════════════
-## v1.3.65
+## v1.3.66
 
-- Solar is no longer used to fill gaps between sensors: power sent from solar to the house and to the battery can't exceed the measured solar production, so a late or missing reading no longer shows phantom solar flows or 100% self-sufficiency at night (#30)
-- Self-sufficiency is now the share of the house load actually covered by solar and battery
+- Battery charge/discharge time no longer uses an old reading after the card was idle (hidden tab, off screen) for more than 15 minutes; the average starts again from the current power (#31)
 */
 
 /* ═══════════════════════════════════════
@@ -1201,7 +1200,7 @@ if(this._resync){this._resync=false;const els=['fs','fg','fb','fh','fh2','fh3','
 
 const batCap=c.battery_capacity??5120;const shuSoc=this._rsv();
 const brEl=this._$('br'),br2=this._$('br2'),brG=this._$('brg');let rt=null;
-const _now=Date.now();if(!this._bph)this._bph=[];if(Number.isFinite(batF)){this._bph.push([_now,batF]);if(this._bph.length>3000)this._bph.splice(0,this._bph.length-3000);}
+const _now=Date.now();if(!this._bph)this._bph=[];if(Number.isFinite(batF)){const _lp=this._bph[this._bph.length-1];if(_lp&&_now-_lp[0]>15*60000)this._bph=[];this._bph.push([_now,batF]);if(this._bph.length>3000)this._bph.splice(0,this._bph.length-3000);}
 const _cut=_now-15*60000;while(this._bph.length>1&&this._bph[1][0]<=_cut)this._bph.shift();
 let bA=batF;if(this._bph.length>1){let sm=0,wt=0;for(let i=0;i<this._bph.length;i++){const t0=Math.max(this._bph[i][0],_cut),t1=i+1<this._bph.length?this._bph[i+1][0]:_now;const d=Math.max(0,t1-t0);sm+=this._bph[i][1]*d;wt+=d;}if(wt>0)bA=sm/wt;}
 const rD=(batF>0&&bA>RUNTIME_MIN_W)?bA:batF,rC=(batF<0&&bA<-RUNTIME_MIN_W)?-bA:-batF;

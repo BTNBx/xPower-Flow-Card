@@ -1,3 +1,7 @@
+## v1.3.66
+
+- Battery charge/discharge time no longer uses an old reading after the card was idle (hidden tab, off screen) for more than 15 minutes; the average starts again from the current power (#31)
+
 ## v1.3.65
 
 - Solar is no longer used to fill gaps between sensors: power sent from solar to the house and to the battery can't exceed the measured solar production, so a late or missing reading no longer shows phantom solar flows or 100% self-sufficiency at night (#30)
