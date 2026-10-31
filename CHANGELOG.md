@@ -1,3 +1,7 @@
+## v1.3.68
+
+- The house consumption in the energy chart (line, area, header and hover) now uses the same blue as the house in the card
+
 ## v1.3.67
 
 - Daily energy values (solar, house, import/export, charge/discharge) show `--` when the sensor is unavailable, unknown or not set, instead of a misleading `0.0 kWh` (#32)
