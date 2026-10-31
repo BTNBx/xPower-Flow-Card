@@ -1,13 +1,13 @@
 // xPower Flow Card — Modern power flow card for solar hybrid inverters
 // Copyright (C) 2025 BTNBx — MIT License
-const V='1.3.66';
+const V='1.3.67';
 
 /* ═══════════════════════════════════════
    CHANGELOG — full history in CHANGELOG.md
    ═══════════════════════════════════════
-## v1.3.66
+## v1.3.67
 
-- Battery charge/discharge time no longer uses an old reading after the card was idle (hidden tab, off screen) for more than 15 minutes; the average starts again from the current power (#31)
+- Daily energy values (solar, house, import/export, charge/discharge) show `--` when the sensor is unavailable, unknown or not set, instead of a misleading `0.0 kWh` (#32)
 */
 
 /* ═══════════════════════════════════════
@@ -1111,7 +1111,7 @@ if(gvTxt!==null&&freq!==null)this._st(this._$('gv'),gvTxt+' \u00B7 '+freq.toFixe
 if(bv!==null)this._st(this._$('bv'),bv.toFixed(1)+'V');else this._st(this._$('bv'),'');
 const btS=this._temp(c.battery_temperature);this._st(this._$('bt'),btS===null?'':btS);
 
-const dS=this._gv(c.daily_solar)??0,dI=this._gv(c.daily_import)??0,dE=this._gv(c.daily_export)??0,dL=this._gv(c.daily_load)??0,dC=this._gv(c.daily_charge)??0,dD=this._gv(c.daily_discharge)??0;
+const dS=this._gv(c.daily_solar),dI=this._gv(c.daily_import),dE=this._gv(c.daily_export),dL=this._gv(c.daily_load),dC=this._gv(c.daily_charge),dD=this._gv(c.daily_discharge),dSum=(a,b)=>a===null&&b===null?null:(a??0)+(b??0);
 // Solar node: with 2+ MPPT, compact list left of the sun (x 112–192), daily total right (x 338)
 const _mp=[[c.solar,sol1,pvv],[c.solar2,sol2,pvv2],[c.solar3,sol3,pvv3]].map((m,i)=>({e:m[0],p:m[1],v:m[2],n:'PV'+(i+1)})).filter(m=>m.e);
 const _list=_mp.length>=2;
@@ -1268,8 +1268,8 @@ this._ss(this._$('vb'),'opacity',Math.abs(batF)>10?'1':'0.25');
 
 this._st(this._$('hv'),this._fmt(sol)+' / '+this._fmtE(dS));
 this._st(this._$('hx'),this._fmt(load)+' / '+this._fmtE(dL));
-this._st(this._$('hz'),this._fmt(grid!==null?Math.abs(grid):null)+' / '+this._fmtE(dI+dE));
-this._st(this._$('hy'),this._fmt(bat!==null?Math.abs(bat):null)+' / '+this._fmtE(dC+dD));
+this._st(this._$('hz'),this._fmt(grid!==null?Math.abs(grid):null)+' / '+this._fmtE(dSum(dI,dE)));
+this._st(this._$('hy'),this._fmt(bat!==null?Math.abs(bat):null)+' / '+this._fmtE(dSum(dC,dD)));
 }
 
 getGridOptions(){return this._c.compact?{columns:12,rows:8,min_columns:6,min_rows:4}:{columns:12,rows:10,min_columns:6,min_rows:6};}

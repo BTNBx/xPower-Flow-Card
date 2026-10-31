@@ -1,3 +1,7 @@
+## v1.3.67
+
+- Daily energy values (solar, house, import/export, charge/discharge) show `--` when the sensor is unavailable, unknown or not set, instead of a misleading `0.0 kWh` (#32)
+
 ## v1.3.66
 
 - Battery charge/discharge time no longer uses an old reading after the card was idle (hidden tab, off screen) for more than 15 minutes; the average starts again from the current power (#31)
