@@ -1,3 +1,7 @@
+## v1.3.69
+
+- Tap or click a legend item at the top of the energy chart (solar, house, grid, forecast) to hide or show that line; the chart rescales to what is shown and the choice is remembered in the browser
+
 ## v1.3.68
 
 - The house consumption in the energy chart (line, area, header and hover) now uses the same blue as the house in the card
