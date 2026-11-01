@@ -1,6 +1,6 @@
 // xPower Flow Card — Modern power flow card for solar hybrid inverters
 // Copyright (C) 2025 BTNBx — MIT License
-const V='1.3.69';
+const V='1.3.70';
 
 /* ═══════════════════════════════════════
    CHANGELOG — full history in CHANGELOG.md
@@ -15,7 +15,7 @@ const V='1.3.69';
    ═══════════════════════════════════════ */
 const LANG={
   pt:{solar:'SOLAR',grid:'REDE',load:'CASA',battery:'BATERIA',ev:'CARRO',inverter:'Inversor',appliance:'Eletrodom\u00e9sticos',garage:'Garagem',heatpump:'Bomba de Calor',extra:'Extra',
-      autarky:'Autossufici\u00EAncia',energy_src:'Origem da energia',runtime_to:'at\u00E9',
+      autarky:'Autossufici\u00EAncia',energy_src:'Origem da energia',runtime_to:'at\u00E9',reserve:'reserva',
       charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
       daily:'\u25B8',today:'HOJE',fcst:'prev.',solar24:'SOLAR (24h)',load24:'CASA (24h)',grid24:'REDE (24h)',bat24:'BATERIA (24h)',
       unavailable:'--',autodetect:'Auto-detetar',invalid:'entidade n\u00E3o existe',
@@ -26,7 +26,7 @@ const LANG={
       editor_bat_pol:'Bateria: negativo =',editor_grid_pol:'Rede: positivo =',
       charging:'carga',discharging:'descarga',importing:'importar',exporting:'exportar'},
   en:{solar:'SOLAR',grid:'GRID',load:'HOME',battery:'BATTERY',ev:'EV',inverter:'Inverter',appliance:'Appliances',garage:'Garage',heatpump:'Heat Pump',extra:'Extra',
-      autarky:'Self-sufficiency',energy_src:'Energy source',runtime_to:'to',
+      autarky:'Self-sufficiency',energy_src:'Energy source',runtime_to:'to',reserve:'reserve',
       charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
       daily:'\u25B8',today:'TODAY',fcst:'fcst',solar24:'SOLAR (24h)',load24:'HOME (24h)',grid24:'GRID (24h)',bat24:'BATTERY (24h)',
       unavailable:'--',autodetect:'Auto-detect',invalid:'entity not found',
@@ -37,7 +37,7 @@ const LANG={
       editor_bat_pol:'Battery: negative =',editor_grid_pol:'Grid: positive =',
       charging:'charging',discharging:'discharging',importing:'import',exporting:'export'},
   sv:{solar:'SOL',grid:'N\u00c4T',load:'HEM',battery:'BATTERI',ev:'ELBIL',inverter:'V\u00e4xelriktare',appliance:'Vitvaror',garage:'Garage',heatpump:'V\u00e4rmepump',extra:'\u00d6vrigt',
-      autarky:'Sj\u00e4lvf\u00f6rs\u00f6rjning',energy_src:'Energik\u00e4lla',runtime_to:'till',
+      autarky:'Sj\u00e4lvf\u00f6rs\u00f6rjning',energy_src:'Energik\u00e4lla',runtime_to:'till',reserve:'reserv',
       charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
       daily:'\u25B8',today:'IDAG',fcst:'prog.',solar24:'SOL (24h)',load24:'HEM (24h)',grid24:'N\u00c4T (24h)',bat24:'BATTERI (24h)',
       unavailable:'--',autodetect:'Auto-detektera',invalid:'entitet hittades inte',
@@ -48,7 +48,7 @@ const LANG={
       editor_bat_pol:'Batteri: negativ =',editor_grid_pol:'N\u00e4t: positiv =',
       charging:'laddning',discharging:'urladdning',importing:'import',exporting:'export'},
   de:{solar:'SOLAR',grid:'NETZ',load:'HAUS',battery:'BATTERIE',ev:'E-AUTO',inverter:'Wechselrichter',appliance:'Ger\u00e4te',garage:'Garage',heatpump:'W\u00e4rmepumpe',extra:'Sonstiges',
-      autarky:'Autarkie',energy_src:'Energiequelle',runtime_to:'bis',
+      autarky:'Autarkie',energy_src:'Energiequelle',runtime_to:'bis',reserve:'Reserve',
       charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
       daily:'\u25B8',today:'HEUTE',fcst:'Prog.',solar24:'SOLAR (24h)',load24:'HAUS (24h)',grid24:'NETZ (24h)',bat24:'BATTERIE (24h)',
       unavailable:'--',autodetect:'Auto-Erkennung',invalid:'Entit\u00E4t existiert nicht',
@@ -59,7 +59,7 @@ const LANG={
       editor_bat_pol:'Batterie: negativ =',editor_grid_pol:'Netz: positiv =',
       charging:'Laden',discharging:'Entladen',importing:'Bezug',exporting:'Einspeisung'},
   fr:{solar:'SOLAIRE',grid:'R\u00C9SEAU',load:'MAISON',battery:'BATTERIE',ev:'VOITURE',inverter:'Onduleur',appliance:'\u00c9lectrom\u00e9nager',garage:'Garage',heatpump:'Pompe \u00e0 chaleur',extra:'Autre',
-      autarky:'Autosuffisance',energy_src:'Source d\u2019\u00e9nergie',runtime_to:'jusqu\u0027\u00E0',
+      autarky:'Autosuffisance',energy_src:'Source d\u2019\u00e9nergie',runtime_to:'jusqu\u0027\u00E0',reserve:'r\u00e9serve',
       charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
       daily:'\u25B8',today:'AUJOURD\u0027HUI',fcst:'pr\u00e9v.',solar24:'SOLAIRE (24h)',load24:'MAISON (24h)',grid24:'R\u00C9SEAU (24h)',bat24:'BATTERIE (24h)',
       unavailable:'--',autodetect:'D\u00E9tection auto',invalid:'entit\u00E9 introuvable',
@@ -70,7 +70,7 @@ const LANG={
       editor_bat_pol:'Batterie: n\u00E9gatif =',editor_grid_pol:'R\u00E9seau: positif =',
       charging:'charge',discharging:'d\u00E9charge',importing:'importation',exporting:'exportation'},
   es:{solar:'SOLAR',grid:'RED',load:'HOGAR',battery:'BATER\u00CDAS',ev:'COCHE',inverter:'Inversor',appliance:'Electrodom\u00e9sticos',garage:'Garaje',heatpump:'Bomba de Calor',extra:'Extra',
-      autarky:'Autosuficiencia',energy_src:'Origen de la energ\u00eda',runtime_to:'hasta',
+      autarky:'Autosuficiencia',energy_src:'Origen de la energ\u00eda',runtime_to:'hasta',reserve:'reserva',
       charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
       daily:'\u25B8',today:'HOY',fcst:'prev.',solar24:'SOLAR (24h)',load24:'HOGAR (24h)',grid24:'RED (24h)',bat24:'BATERÍA (24h)',
       unavailable:'--',autodetect:'Autodetectar',invalid:'entidad no existe',
@@ -81,7 +81,7 @@ const LANG={
       editor_bat_pol:'Bater\u00EDa: negativo =',editor_grid_pol:'Red: positivo =',
       charging:'carga',discharging:'descarga',importing:'importaci\u00F3n',exporting:'exportaci\u00F3n'},
   it:{solar:'SOLARE',grid:'RETE',load:'CASA',battery:'BATTERIA',ev:'AUTO',inverter:'Inverter',appliance:'Elettrodomestici',garage:'Garage',heatpump:'Pompa di Calore',extra:'Extra',
-      autarky:'Autosufficienza',energy_src:'Origine dell\u2019energia',runtime_to:'fino a',
+      autarky:'Autosufficienza',energy_src:'Origine dell\u2019energia',runtime_to:'fino a',reserve:'riserva',
       charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
       daily:'\u25B8',today:'OGGI',fcst:'prev.',solar24:'SOLARE (24h)',load24:'CASA (24h)',grid24:'RETE (24h)',bat24:'BATTERIA (24h)',
       unavailable:'--',autodetect:'Rilevamento auto',invalid:'entit\u00E0 inesistente',
@@ -92,7 +92,7 @@ const LANG={
       editor_bat_pol:'Batteria: negativo =',editor_grid_pol:'Rete: positivo =',
       charging:'carica',discharging:'scarica',importing:'importazione',exporting:'esportazione'},
   nl:{solar:'ZONNE',grid:'NET',load:'HUIS',battery:'BATTERIJ',ev:'EV',inverter:'Omvormer',appliance:'Apparaten',garage:'Garage',heatpump:'Warmtepomp',extra:'Overig',
-      autarky:'Zelfvoorziening',energy_src:'Energiebron',runtime_to:'tot',
+      autarky:'Zelfvoorziening',energy_src:'Energiebron',runtime_to:'tot',reserve:'reserve',
       charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
       daily:'\u25B8',today:'VANDAAG',fcst:'verw.',solar24:'ZONNE (24h)',load24:'HUIS (24h)',grid24:'NET (24h)',bat24:'BATTERIJ (24h)',
       unavailable:'--',autodetect:'Auto-detectie',invalid:'entiteit bestaat niet',
@@ -103,7 +103,7 @@ const LANG={
       editor_bat_pol:'Batterij: negatief =',editor_grid_pol:'Net: positief =',
       charging:'laden',discharging:'ontladen',importing:'import',exporting:'export'},
   pl:{solar:'SOLAR',grid:'SIE\u0106',load:'DOM',battery:'BATERIA',ev:'EV',inverter:'Falownik',appliance:'AGD',garage:'Gara\u017c',heatpump:'Pompa Ciep\u0142a',extra:'Inne',
-      autarky:'Samowystarczalno\u015B\u0107',energy_src:'\u0179r\u00f3d\u0142o energii',runtime_to:'do',
+      autarky:'Samowystarczalno\u015B\u0107',energy_src:'\u0179r\u00f3d\u0142o energii',runtime_to:'do',reserve:'rezerwa',
       charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
       daily:'\u25B8',today:'DZI\u015a',fcst:'prog.',solar24:'SOLAR (24h)',load24:'DOM (24h)',grid24:'SIE\u0106 (24h)',bat24:'BATERIA (24h)',
       unavailable:'--',autodetect:'Autowykrywanie',invalid:'encja nie istnieje',
@@ -942,7 +942,8 @@ svg{width:100%;height:auto;display:block}
 .wt{fill:var(--t3);font-size:11px;font-weight:500;text-anchor:start;dominant-baseline:middle;font-family:-apple-system,sans-serif}
 .wb{fill:none;stroke:var(--t3);stroke-width:0.5;rx:4;ry:4;opacity:0.4}
 .sr{display:flex;gap:6px;margin-top:8mm}.xch{display:flex;flex-direction:column;gap:6px}.xch:empty{display:none}#chT{margin:2px 0 12.5px}#chB{margin-top:6px}:host(.compact) .xch{display:none}
-:host(.d-essential) :is(#tp,#bt,#bv,#gv,#pv,.mpr,#priceicons,#ds,#dg,#dl,#db,#de,#brg,#wicons,#sunRing),:host(.d-normal) :is(#tp,#bt,#bv,#gv,#pv,.mpr,#priceicons){display:none !important}.cbx{background:var(--xpf-sparkline-bg,rgba(255,255,255,0.02));border:1px solid rgba(127,127,127,0.12);border-radius:var(--xpf-sparkline-radius,12px);padding:6px 10px 6px;display:flex;flex-direction:column;gap:1px}.chd{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:baseline;gap:6px;height:16px;overflow:hidden}.chl{font-size:9px;font-weight:700;letter-spacing:0.1em;color:var(--t3);text-transform:uppercase}.chl.gh{visibility:hidden}.chv{display:flex;justify-content:center;gap:8px;font-size:10px;font-weight:600;white-space:nowrap;overflow:hidden}.chs{cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;transition:opacity .2s}.chs.off{opacity:.35;text-decoration:line-through}.chs:focus-visible{outline:1px solid currentColor;outline-offset:1px;border-radius:2px}.csv{display:block;width:100%;height:70px;cursor:crosshair;touch-action:pan-y}.csv text{font-size:7.5px;fill:var(--t3)}.cgr{stroke:var(--t3);stroke-opacity:0.18;stroke-width:1;stroke-dasharray:2 3;fill:none}.cbl{stroke:var(--t3);stroke-opacity:0.35;stroke-width:1;fill:none}
+:host(.d-essential) :is(#tp,#bt,#bv,#gv,#pv,.mpr,#priceicons,#ds,#dg,#dl,#db,#de,#brg,#wicons,#sunRing),:host(.d-normal) :is(#tp,#bt,#bv,#gv,#pv,.mpr,#priceicons){display:none !important}.cbx{background:var(--xpf-sparkline-bg,rgba(255,255,255,0.02));border:1px solid rgba(127,127,127,0.12);border-radius:var(--xpf-sparkline-radius,12px);padding:6px 10px 6px;display:flex;flex-direction:column;gap:1px}.chd{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:baseline;gap:6px;height:16px;overflow:hidden}.chl{font-size:9px;font-weight:700;letter-spacing:0.1em;color:var(--t3);text-transform:uppercase}.chl.gh{visibility:hidden}.chv{display:flex;justify-content:center;gap:8px;font-size:10px;font-weight:600;white-space:nowrap;overflow:hidden}.chk{font-size:9px;font-weight:600;color:var(--t3);white-space:nowrap;text-align:right}
+.chs{cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;transition:opacity .2s}.chs.off{opacity:.35;text-decoration:line-through}.chs:focus-visible{outline:1px solid currentColor;outline-offset:1px;border-radius:2px}.csv{display:block;width:100%;height:70px;cursor:crosshair;touch-action:pan-y}.csv text{font-size:7.5px;fill:var(--t3)}.cgr{stroke:var(--t3);stroke-opacity:0.18;stroke-width:1;stroke-dasharray:2 3;fill:none}.cbl{stroke:var(--t3);stroke-opacity:0.35;stroke-width:1;fill:none}
 :host(.compact) .sr{display:none}
 :host(.compact) ha-card{padding:6px 8px 6px}
 .sb{flex:1;background:var(--xpf-sparkline-bg,rgba(255,255,255,0.02));border:1px solid rgba(255,255,255,0.04);border-radius:var(--xpf-sparkline-radius,12px);padding:10px 10px 8px;display:flex;flex-direction:column;gap:2px;overflow:hidden}
@@ -1034,7 +1035,7 @@ _cvN(cg,p){if(!cg)return;const t=this._c.flow_density==='full'?3:xpfTier(p,cg.__
 _sf(el,id,p,d,c,o){if(!el)return;const cg=this._chv&&el.id!=='fh'?this._$('c'+el.id):null;if(Math.abs(p)<10){this._sa(el,'opacity','0');if(cg)this._sa(cg,'opacity','0');return;}if(cg){this._sa(cg,'stroke',c);this._sa(cg,'opacity','0.9');this._cvN(cg,p);cg.classList.toggle('rv',d==='fL'||d==='fu');}this._sa(el,'stroke',c);this._sa(el,'opacity',o);if(this._fs[id]!==d){this._fs[id]=d;el.setAttribute('class','fa '+d);this._resync=true;}if(this._c.flow_speed!=='synced'){const fp=this._fsp||(this._fsp={});const sp=Math.min(6,Math.max(0.5,2500/Math.abs(p)));const o0=fp[id];if(!o0||Math.abs(sp-o0)/o0>0.15){fp[id]=sp;el.style.setProperty('--spd',sp.toFixed(2)+'s');if(cg)cg.style.setProperty('--spd',sp.toFixed(2)+'s');}}}
 _tween(id,target,fmt){const el=this._$(id);if(!el)return;if(target===null||(this._rm&&this._c.animations!=='always')){delete this._twq[id];this._st(el,fmt(target));this._twv[id]=target;return;}const from=this._twv[id];if(from===undefined||from===null||Math.abs(target-from)<1){delete this._twq[id];this._st(el,fmt(target));this._twv[id]=target;return;}this._twq[id]={el,from,to:target,fmt,t0:performance.now()};if(!this._twRaf)this._twRaf=requestAnimationFrame(t=>this._twStep(t));}
 _twStep(t){this._twRaf=null;const q=this._twq;let live=false;for(const id in q){const w=q[id];let k=Math.min(1,(t-w.t0)/600);k=1-Math.pow(1-k,3);this._st(w.el,w.fmt(w.from+(w.to-w.from)*k));if(k<1)live=true;else{this._twv[id]=w.to;delete q[id];}}if(live)this._twRaf=requestAnimationFrame(t2=>this._twStep(t2));}
-_chMk(pos){const c=this._c,L=this._lang;let o='';const box=(k,lbl)=>'<div class="cbx" id="cx'+k+'"><div class="chd"><span class="chl">'+lbl+'</span><span class="chv" id="cv'+k+'"></span><span class="chl gh" aria-hidden="true">'+lbl+'</span></div><svg class="csv" id="cs'+k+'" role="img" aria-label="'+lbl+'"><g id="cg'+k+'"></g><line id="cc'+k+'" y1="2" y2="59" stroke="var(--t3)" stroke-width="1" opacity="0" /><g id="cd'+k+'"></g></svg></div>';if((c.energy_chart||'bottom')===pos)o+=box('E',L.today||'TODAY');if((c.battery_chart||'off')===pos)o+=box('B',L.battery);return o;}
+_chMk(pos){const c=this._c,L=this._lang;let o='';const box=(k,lbl,rt)=>'<div class="cbx" id="cx'+k+'"><div class="chd"><span class="chl">'+lbl+'</span><span class="chv" id="cv'+k+'"></span>'+(rt||'<span class="chl gh" aria-hidden="true">'+lbl+'</span>')+'</div><svg class="csv" id="cs'+k+'" role="img" aria-label="'+lbl+'"><g id="cg'+k+'"></g><line id="cc'+k+'" y1="2" y2="59" stroke="var(--t3)" stroke-width="1" opacity="0" /><g id="cd'+k+'"></g></svg></div>';if((c.energy_chart||'bottom')===pos)o+=box('E',L.today||'TODAY');if((c.battery_chart||'off')===pos)o+=box('B',L.battery,'<span class="chk" id="ckB"></span>');return o;}
 _cGeo(svg){const W=Math.max(120,Math.round(svg.clientWidth||svg.getBoundingClientRect().width||300)),H=Math.max(84,Math.min(170,Math.round(W*0.15))),T0=16,B0=H-11,L0=22,n=HIST_POINTS;if(svg.style.height!==H+'px')svg.style.height=H+'px';const cl=svg.querySelector('line[id^="cc"]');if(cl)cl.setAttribute('y2',B0);return {W,H,T0,B0,L0,n,X:i=>L0+(i+0.5)/n*(W-L0)};}
 _drawSparks(){this._drawChartE();this._drawChartB();this._chHead();}
 _drawChartE(){const svg=this._$('csE'),g=this._$('cgE');if(!svg||!g)return;const G=this._cGeo(svg);const {W,H,T0,B0,L0,n,X}=G;svg.setAttribute('viewBox','0 0 '+W+' '+H);const Hh=this._hist||{},off=this._chOffSet(),S=off.has('s')?[]:Hh.solar||[],Ld=off.has('l')?[]:Hh.load||[],Gr=off.has('g')?[]:Hh.grid||[],F=off.has('f')?[]:this._fc||[];let mx=1000;for(const a of [S,Ld,Gr,F])for(const v of a)if(v>mx)mx=v;const step=mx>6000?2000:1000;mx=Math.ceil(mx/step)*step;const Y=v=>B0-v/mx*(B0-T0);G.Y=Y;G.mx=mx;this._cgE=G;
@@ -1052,17 +1053,21 @@ o+=line(Ld,'stroke="var(--load)" stroke-width="1.2" filter="url(#egSh)"');
 const now=Date.now(),t0=this._histT0||this._mid(),nk=Math.floor((now-t0)/HIST_SLOT);if(nk>=0&&nk<n){const nx=(L0+(now-t0)/86400000*(W-L0)).toFixed(1);o+='<line x1="'+nx+'" x2="'+nx+'" y1="2" y2="'+B0+'" stroke="var(--t1)" stroke-width="0.8" stroke-dasharray="2 3" opacity="0.4"/>';}
 let pk=-1;for(let k=0;k<n;k++)if(S[k]!==null&&S[k]!==undefined&&(pk<0||S[k]>S[pk]))pk=k;if(pk>=0&&S[pk]>=50){const px=X(pk),py=Y(S[pk]),t=(S[pk]/1000).toFixed(2)+' kW',bw=t.length*4.3+8,bx=Math.min(W-bw/2-1,Math.max(L0+bw/2,px)),by=Math.max(1,py-15);o+='<circle cx="'+px.toFixed(1)+'" cy="'+py.toFixed(1)+'" r="2.4" style="fill:var(--green)" stroke="rgba(0,0,0,0.35)" stroke-width="1"/><rect x="'+(bx-bw/2).toFixed(1)+'" y="'+by.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="11" rx="3" style="fill:var(--green)"/><text x="'+bx.toFixed(1)+'" y="'+(by+8).toFixed(1)+'" text-anchor="middle" style="fill:#10240f;font-weight:700;font-size:7.5px">'+t+'</text>';}
 g.innerHTML=o;}
-_drawChartB(){const svg=this._$('csB'),g=this._$('cgB');if(!svg||!g)return;const G=this._cGeo(svg);const {W,H,T0,B0,L0,n,X}=G;svg.setAttribute('viewBox','0 0 '+W+' '+H);const Hh=this._hist||{},C=Hh.soc||[],B=Hh.bat||[];const Y=v=>B0-Math.max(0,Math.min(100,v))/100*(B0-T0);G.Y=Y;this._cgB=G;
+_drawChartB(){const svg=this._$('csB'),g=this._$('cgB');if(!svg||!g)return;const G=this._cGeo(svg);const {W,H,T0,B0,L0,n,X}=G;svg.setAttribute('viewBox','0 0 '+W+' '+H);const Hh=this._hist||{},C=Hh.soc||[],B=Hh.bat||[],L=this._lang;const Y=v=>B0-Math.max(0,Math.min(100,v))/100*(B0-T0);G.Y=Y;this._cgB=G;
+const st=k=>{const b=B[k];return b===null||b===undefined?'I':b<-20?'C':b>20?'D':'I';};const col={C:'var(--green)',D:'var(--orange)',I:'#9aa0a6'};
+let stops='',sa='',pv=null;const sp=(of,q)=>{stops+='<stop offset="'+of+'" style="stop-color:'+col[q]+'"/>';sa+='<stop offset="'+of+'" style="stop-color:'+col[q]+';stop-opacity:'+(q==='I'?0.45:1)+'"/>';};for(let k=0;k<n;k++){if(C[k]===null||C[k]===undefined)continue;const s=st(k);if(s!==pv){const of=(Math.max(0,Math.min(1,(X(k-0.5)-L0)/(W-L0)))*100).toFixed(2)+'%';if(pv)sp(of,pv);sp(of,s);pv=s;}}if(pv)sp('100%',pv);
+let o='<defs><linearGradient id="bgSt" gradientUnits="userSpaceOnUse" x1="'+L0+'" y1="0" x2="'+W+'" y2="0">'+stops+'</linearGradient><linearGradient id="bgSa" gradientUnits="userSpaceOnUse" x1="'+L0+'" y1="0" x2="'+W+'" y2="0">'+sa+'</linearGradient><linearGradient id="bgFd" gradientUnits="userSpaceOnUse" x1="0" y1="'+T0+'" x2="0" y2="'+B0+'"><stop offset="0" stop-color="#fff" stop-opacity="0.34"/><stop offset="1" stop-color="#fff" stop-opacity="0.02"/></linearGradient><mask id="bgMk" maskUnits="userSpaceOnUse" x="0" y="0" width="'+W+'" height="'+H+'"><rect width="'+W+'" height="'+H+'" fill="url(#bgFd)"/></mask></defs>';
 let gp='';for(const v of [25,50,75,100])gp+='M'+L0+' '+Y(v).toFixed(1)+'H'+W;
-let o='<path class="cgr" d="'+gp+'"/><path class="cbl" d="M'+L0+' '+B0+'H'+W+'"/>';[[100,'100'],[50,'50'],[0,'0']].forEach(a=>{o+='<text x="17" y="'+(Y(a[0])+2.5).toFixed(1)+'" text-anchor="end">'+a[1]+'</text>';});
+o+='<path class="cgr" d="'+gp+'"/><path class="cbl" d="M'+L0+' '+B0+'H'+W+'"/>';[[100,'100'],[50,'50'],[0,'0']].forEach(a=>{o+='<text x="17" y="'+(Y(a[0])+2.5).toFixed(1)+'" text-anchor="end">'+a[1]+'</text>';});
 [0,6,12,18,24].forEach((h,k)=>{o+='<text x="'+(L0+h/24*(W-L0)).toFixed(1)+'" y="'+(H-1)+'" text-anchor="'+(k===0?'start':k===4?'end':'middle')+'">'+String(h).padStart(2,'0')+'h</text>';});
-const st=k=>{const b=B[k];return b===null||b===undefined?'I':b<-20?'C':b>20?'D':'I';};const ln={C:'',D:'',I:''},ar={C:'',D:'',I:''};
-for(let k=0;k<n-1;k++){const a=C[k],b=C[k+1];if(a===null||a===undefined||b===null||b===undefined)continue;const s=st(k+1),x0=X(k).toFixed(1),x1=X(k+1).toFixed(1),y0=Y(a).toFixed(1),y1=Y(b).toFixed(1);ln[s]+='M'+x0+' '+y0+'L'+x1+' '+y1;ar[s]+='M'+x0+' '+y0+'L'+x1+' '+y1+'L'+x1+' '+B0+'L'+x0+' '+B0+'Z';}
-const col={C:'var(--green)',D:'var(--orange)',I:'#9aa0a6'};for(const s of ['I','D','C']){if(ar[s])o+='<path d="'+ar[s]+'" fill="'+col[s]+'" opacity="'+(s==='I'?0.1:0.16)+'"/>';}for(const s of ['I','D','C']){if(ln[s])o+='<path d="'+ln[s]+'" fill="none" stroke="'+col[s]+'" stroke-width="1.2" stroke-linecap="round"/>';}
-const nx=(L0+(Date.now()-(this._histT0||this._mid()))/86400000*(W-L0));if(nx>=L0&&nx<=W)o+='<line x1="'+nx.toFixed(1)+'" x2="'+nx.toFixed(1)+'" y1="2" y2="'+B0+'" stroke="var(--t1)" stroke-width="1" stroke-dasharray="3 3" opacity="0.45"/>';
+const rv=this._rsv();if(rv>0&&rv<100){const yr=Y(rv).toFixed(1);o+='<rect x="'+L0+'" y="'+yr+'" width="'+(W-L0)+'" height="'+(B0-yr).toFixed(1)+'" style="fill:var(--orange)" opacity="0.07"/><path d="M'+L0+' '+yr+'H'+W+'" fill="none" style="stroke:var(--orange)" stroke-opacity="0.7" stroke-width="0.8" stroke-dasharray="3 3"/><text x="'+(W-1)+'" y="'+(yr-2.5).toFixed(1)+'" text-anchor="end" style="fill:var(--orange)" opacity="0.85">'+((L.reserve?L.reserve+' ':'')+Math.round(rv))+'%</text>';}
+if(pv){let ln='',ar='';for(const r of xpfRuns(C,X,Y)){const d=xpfSmooth(r);ln+=d;if(r.length>1)ar+=d+'L'+r[r.length-1][0].toFixed(1)+' '+B0+'L'+r[0][0].toFixed(1)+' '+B0+'Z';}if(ar)o+='<path d="'+ar+'" fill="url(#bgSa)" mask="url(#bgMk)"/>';o+='<path d="'+ln+'" fill="none" stroke="url(#bgSt)" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>';}
+const t0=this._histT0||this._mid(),nx=(L0+(Date.now()-t0)/86400000*(W-L0));if(nx>=L0&&nx<=W)o+='<line x1="'+nx.toFixed(1)+'" x2="'+nx.toFixed(1)+'" y1="2" y2="'+B0+'" stroke="var(--t1)" stroke-width="0.8" stroke-dasharray="2 3" opacity="0.4"/>';
+let kl=Math.min(n-1,Math.floor((Date.now()-t0)/HIST_SLOT));while(kl>=0&&(C[kl]===null||C[kl]===undefined))kl--;if(kl>=0){const cx=X(kl).toFixed(1),cy=Y(C[kl]).toFixed(1),cc=col[st(kl)];o+='<circle cx="'+cx+'" cy="'+cy+'" r="5" style="fill:'+cc+'" opacity="0.25"/><circle cx="'+cx+'" cy="'+cy+'" r="2.5" style="fill:'+cc+'" stroke="rgba(0,0,0,0.35)" stroke-width="1"/>';}
 g.innerHTML=o;}
 _chHead(){const L=this._lang,fmt=v=>this._fmt(v),c=this._c;const eE=this._$('cvE'),eB=this._$('cvB');const k=this._chK,Hh=this._hist||{};const at=(a)=>k!==null&&k!==undefined&&a&&a[k]!==null&&a[k]!==undefined?a[k]:null;
 if(eE){const off=this._chOffSet(),sp=(cl,t,id)=>'<span data-s="'+id+'" role="button" tabindex="0" aria-pressed="'+!off.has(id)+'" class="chs'+(off.has(id)?' off':'')+'" style="color:'+cl+'">'+t+'</span>',kw=v=>v===null||v===undefined?L.unavailable:v.toFixed(1)+' kWh',fw=v=>v===null||v===undefined?L.unavailable:fmt(Math.max(0,v));let html;if(k!==null&&k!==undefined){const f=this._fc;html=sp('var(--green)','☀ '+fw(at(Hh.solar)),'s')+sp('var(--load)','⌂ '+fw(at(Hh.load)),'l')+sp('var(--red)','⚡ '+fw(at(Hh.grid)),'g')+(f?sp('#FFCA28',L.fcst+' '+fw(f[k]),'f'):'');}else{const dv=e=>e?this._gv(e):null;let dS=dv(c.daily_solar),dL=dv(c.daily_load),dI=dv(c.daily_import);if(dS===null)dS=Hh.solar?xpfKWh(Hh.solar):null;if(dL===null)dL=Hh.load?xpfKWh(Hh.load):null;if(dI===null)dI=Hh.grid?xpfKWh(Hh.grid):null;html=sp('var(--green)','☀ '+kw(dS),'s')+sp('var(--load)','⌂ '+kw(dL),'l')+sp('var(--red)','⚡ '+kw(dI),'g')+(this._fc?sp('#FFCA28',L.fcst+' '+kw(xpfKWh(this._fc)),'f'):'');}if(eE._h!==html){eE._h=html;eE.innerHTML=html;}}
+{const ck=this._$('ckB');if(ck){const dv=e=>e?this._gv(e):null,Bh=Hh.bat;let a=dv(c.daily_charge),d=dv(c.daily_discharge);if(a===null&&Bh)a=Bh.reduce((t,v)=>t+(v<0?-v:0),0)/4000;if(d===null&&Bh)d=Bh.reduce((t,v)=>t+(v>0?v:0),0)/4000;const f=v=>v===null||isNaN(v)?L.unavailable:v.toFixed(1);const html=a===null&&d===null?'':'<span style="color:var(--green)">+'+f(a)+'</span> / <span style="color:var(--orange)">\u2212'+f(d)+'</span> kWh';if(ck._h!==html){ck._h=html;ck.innerHTML=html;}}}
 if(eB){let soc,b;if(k!==null&&k!==undefined){soc=at(Hh.soc);b=at(Hh.bat);}else{const lv=this._live||{};soc=lv.soc;b=lv.b;}const stt=b===null||b===undefined?'I':b<-20?'C':b>20?'D':'I';const cl=stt==='C'?'var(--green)':stt==='D'?'var(--orange)':'#9aa0a6';const html='<span style="color:'+cl+'">'+(soc===null||soc===undefined?L.unavailable:Math.round(soc)+'%')+'</span><span style="color:var(--t2,var(--t1));opacity:0.8">'+(stt==='C'?'▾ '+fmt(-b):stt==='D'?'▴ '+fmt(b):'')+'</span>';if(eB._h!==html){eB._h=html;eB.innerHTML=html;}}}
 _chOffSet(){if(!this._chOff){let a=[];try{a=JSON.parse(localStorage.getItem('xpf-chart-off')||'[]');}catch(e){}this._chOff=new Set(Array.isArray(a)?a:[]);}return this._chOff;}
 _chToggle(id){const off=this._chOffSet();if(off.has(id))off.delete(id);else off.add(id);try{localStorage.setItem('xpf-chart-off',JSON.stringify([...off]));}catch(e){}this._drawChartE();this._chHead();}
