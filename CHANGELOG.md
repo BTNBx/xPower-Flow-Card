@@ -1,3 +1,8 @@
+## v1.3.70
+
+- Battery chart redesigned: smooth state-of-charge line coloured by what the battery was doing (green charging, amber discharging, grey idle) with a soft fading area, the backup reserve shown as a dashed amber line with a light band below it, and a dot marking the current level
+- The battery chart header now shows today's charged and discharged energy (from `daily_charge` / `daily_discharge`, or worked out from the battery history when they are not set)
+
 ## v1.3.69
 
 - Tap or click a legend item at the top of the energy chart (solar, house, grid, forecast) to hide or show that line; the chart rescales to what is shown and the choice is remembered in the browser
