@@ -5,9 +5,10 @@ const V='1.3.71';
 /* ═══════════════════════════════════════
    CHANGELOG — full history in CHANGELOG.md
    ═══════════════════════════════════════
-## v1.3.69
+## v1.3.71
 
-- Tap or click a legend item at the top of the energy chart (solar, house, grid, forecast) to hide or show that line; the chart rescales to what is shown and the choice is remembered in the browser
+- Battery chart restyled to a clean level view: a single green state-of-charge line with a soft fading area, no grid or reserve band, a badge with the current percentage at the end of the line and a marker with the time the battery was first full today
+- The header keeps the current level, power and today's charged / discharged energy
 */
 
 /* ═══════════════════════════════════════
