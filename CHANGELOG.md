@@ -1,3 +1,8 @@
+## v1.3.71
+
+- Battery chart restyled to a clean level view: a single green state-of-charge line with a soft fading area, no grid or reserve band, a badge with the current percentage at the end of the line and a marker with the time the battery was first full today
+- The header keeps the current level, power and today's charged / discharged energy
+
 ## v1.3.70
 
 - Battery chart redesigned: smooth state-of-charge line coloured by what the battery was doing (green charging, amber discharging, grey idle) with a soft fading area, the backup reserve shown as a dashed amber line with a light band below it, and a dot marking the current level
