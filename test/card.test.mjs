@@ -34,7 +34,7 @@ function boot() {
   w.console.info = () => {};
   const errors = [];
   w.console.error = (...a) => errors.push(a.join(' '));
-  w.eval(src + '\n;window.__x={DEFAULTS,ENTITY_FIELDS,PRESETS};');
+  w.eval(src + '\n;window.__x={DEFAULTS,ENTITY_FIELDS,PRESETS,LANG,EDL,FLBL};');
   const flush = () => {
     for (let i = 0; i < 50 && q.length; i++) {
       const cur = q; q = [];
@@ -342,5 +342,53 @@ test('polarity hints in the editor match the presets', () => {
   for (const k of Object.keys(e.PRESETS)) {
     const brand = e.PRESETS[k].label.split(' ')[0], pol = e.PRESETS[k].bat_polarity, other = pol === 'negative' ? 'positive' : 'negative';
     assert.ok(!hint[other].includes(brand), `${brand} is listed under "${other}" but its preset is "${pol}"`);
+  }
+});
+
+test('editor: option values from YAML cannot inject markup', () => {
+  for (const k of ['shutdown_soc', 'battery_capacity', 'grid_threshold', 'font_size', 'mppt_scale', 'flow_size', 'inverter_name', 'extra1_name', 'solar']) {
+    const e = editor({ type: TYPE, preset: 'deye', [k]: '1"><b id="pwn">x</b><i a="' });
+    assert.equal(e.ed.querySelector('#pwn'), null, `markup from ${k} reached the editor`);
+  }
+});
+
+// ── Energy units ─────────────────────────────────────
+
+test('daily energy sensors in Wh / MWh are shown in kWh', () => {
+  const c = mount({ ...FULL, energy_chart: 'bottom', battery_chart: 'bottom' }, ok({
+    'sensor.d_sol': st(10500, 'Wh'), 'sensor.d_load': st(0.0081, 'MWh'), 'sensor.d_imp': st(1.2, 'kWh'), 'sensor.d_exp': st(3400, 'Wh'),
+    'sensor.d_chg': st(4000, 'Wh'), 'sensor.d_dis': { state: '2', attributes: {} },
+  }));
+  assert.match(c.$('ds'), /10\.5 kWh/);
+  assert.match(c.$('dl'), /8\.1 kWh/);
+  assert.match(c.$('dg'), /1\.2 kWh.*3\.4 kWh/);
+  assert.match(c.$('db'), /4\.0 kWh.*2\.0 kWh/);
+  assert.match(c.$('cvE'), /10\.5 kWh.*8\.1 kWh.*1\.2 kWh/, 'energy chart header');
+  assert.match(c.$('ckB'), /\+4\.0.*2\.0 kWh/, 'battery chart header');
+  noJunk(c.text(), 'energy units');
+  c.close();
+});
+
+// ── Translations ─────────────────────────────────────
+
+test('every language has the same card texts', () => {
+  const { LANG } = boot();
+  const en = Object.keys(LANG.en).sort();
+  for (const l of Object.keys(LANG)) assert.deepEqual(Object.keys(LANG[l]).sort(), en, `LANG.${l}`);
+});
+
+test('every entity field of the editor has a label in every language', () => {
+  const { LANG, EDL, FLBL, ENTITY_FIELDS } = boot();
+  const keys = Array.from(ENTITY_FIELDS, f => f.key);
+  assert.deepEqual(keys.filter(k => !FLBL[k]), [], 'fields without a translatable label');
+  for (const l of Object.keys(LANG)) {
+    if (l === 'en') continue; // English labels are the field defaults
+    assert.ok(EDL[l], `no editor labels for "${l}"`);
+    const e = editor({ type: TYPE, preset: 'deye', language: l });
+    for (const k of keys) {
+      const txt = e.field(k).parentElement.querySelector('label').textContent;
+      assert.doesNotMatch(txt, /undefined|NaN|^\s*$/, `${l}: label of ${k}`);
+      assert.equal(txt, FLBL[k](EDL[l]), `${l}: label of ${k} is not the translated one`);
+    }
   }
 });
