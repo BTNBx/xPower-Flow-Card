@@ -1,14 +1,19 @@
 // xPower Flow Card — Modern power flow card for solar hybrid inverters
 // Copyright (C) 2025 BTNBx — MIT License
-const V='1.3.71';
+const V='1.3.72';
 
 /* ═══════════════════════════════════════
    CHANGELOG — full history in CHANGELOG.md
    ═══════════════════════════════════════
-## v1.3.71
+## v1.3.72
 
-- Battery chart restyled to a clean level view: a single green state-of-charge line with a soft fading area, no grid or reserve band, a badge with the current percentage at the end of the line and a marker with the time the battery was first full today
-- The header keeps the current level, power and today's charged / discharged energy
+- The visual editor now writes only the options you changed to the YAML instead of every option (everything else keeps coming from the brand preset, so preset updates reach the card); a config saved by an older version is shortened on the next edit without changing the card, and new cards start from `preset: deye` only
+- Choosing a detail level in the editor now updates the chart and frame selects right away, and a later edit no longer undoes it
+- Editing a field no longer redraws the whole editor form (focus is kept)
+- `font_size` is read as a number only
+- Loading the card twice (e.g. the HACS resource plus a manual `/local` copy) no longer throws "name has already been used"
+- Solis is listed under `negative` = charging in the editor and the README, matching its preset
+- Removed leftovers of the old 24 h sparklines (styles, labels and the unused `sparkline_shared_scale` option) and two unused helpers
 */
 
 /* ═══════════════════════════════════════
@@ -18,7 +23,7 @@ const LANG={
   pt:{solar:'SOLAR',grid:'REDE',load:'CASA',battery:'BATERIA',ev:'CARRO',inverter:'Inversor',appliance:'Eletrodom\u00e9sticos',garage:'Garagem',heatpump:'Bomba de Calor',extra:'Extra',
       autarky:'Autossufici\u00EAncia',energy_src:'Origem da energia',runtime_to:'at\u00E9',full:'cheia',
       charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
-      daily:'\u25B8',today:'HOJE',fcst:'prev.',solar24:'SOLAR (24h)',load24:'CASA (24h)',grid24:'REDE (24h)',bat24:'BATERIA (24h)',
+      daily:'\u25B8',today:'HOJE',fcst:'prev.',
       unavailable:'--',autodetect:'Auto-detetar',invalid:'entidade n\u00E3o existe',
       editor_title:'xPower Flow Card',editor_lang:'Idioma',editor_entities:'Entidades',
       editor_options:'Op\u00E7\u00F5es',editor_soc:'SOC M\u00EDnimo (%)',
@@ -29,7 +34,7 @@ const LANG={
   en:{solar:'SOLAR',grid:'GRID',load:'HOME',battery:'BATTERY',ev:'EV',inverter:'Inverter',appliance:'Appliances',garage:'Garage',heatpump:'Heat Pump',extra:'Extra',
       autarky:'Self-sufficiency',energy_src:'Energy source',runtime_to:'to',full:'full',
       charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
-      daily:'\u25B8',today:'TODAY',fcst:'fcst',solar24:'SOLAR (24h)',load24:'HOME (24h)',grid24:'GRID (24h)',bat24:'BATTERY (24h)',
+      daily:'\u25B8',today:'TODAY',fcst:'fcst',
       unavailable:'--',autodetect:'Auto-detect',invalid:'entity not found',
       editor_title:'xPower Flow Card',editor_lang:'Language',editor_entities:'Entities',
       editor_options:'Options',editor_soc:'Shutdown SOC (%)',
@@ -40,7 +45,7 @@ const LANG={
   sv:{solar:'SOL',grid:'N\u00c4T',load:'HEM',battery:'BATTERI',ev:'ELBIL',inverter:'V\u00e4xelriktare',appliance:'Vitvaror',garage:'Garage',heatpump:'V\u00e4rmepump',extra:'\u00d6vrigt',
       autarky:'Sj\u00e4lvf\u00f6rs\u00f6rjning',energy_src:'Energik\u00e4lla',runtime_to:'till',full:'full',
       charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
-      daily:'\u25B8',today:'IDAG',fcst:'prog.',solar24:'SOL (24h)',load24:'HEM (24h)',grid24:'N\u00c4T (24h)',bat24:'BATTERI (24h)',
+      daily:'\u25B8',today:'IDAG',fcst:'prog.',
       unavailable:'--',autodetect:'Auto-detektera',invalid:'entitet hittades inte',
       editor_title:'xPower Flow Card',editor_lang:'Spr\u00e5k',editor_entities:'Entiteter',
       editor_options:'Alternativ',editor_soc:'Avstängnings-SOC (%)',
@@ -51,7 +56,7 @@ const LANG={
   de:{solar:'SOLAR',grid:'NETZ',load:'HAUS',battery:'BATTERIE',ev:'E-AUTO',inverter:'Wechselrichter',appliance:'Ger\u00e4te',garage:'Garage',heatpump:'W\u00e4rmepumpe',extra:'Sonstiges',
       autarky:'Autarkie',energy_src:'Energiequelle',runtime_to:'bis',full:'voll',
       charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
-      daily:'\u25B8',today:'HEUTE',fcst:'Prog.',solar24:'SOLAR (24h)',load24:'HAUS (24h)',grid24:'NETZ (24h)',bat24:'BATTERIE (24h)',
+      daily:'\u25B8',today:'HEUTE',fcst:'Prog.',
       unavailable:'--',autodetect:'Auto-Erkennung',invalid:'Entit\u00E4t existiert nicht',
       editor_title:'xPower Flow Card',editor_lang:'Sprache',editor_entities:'Entit\u00E4ten',
       editor_options:'Optionen',editor_soc:'Abschalt-SOC (%)',
@@ -62,7 +67,7 @@ const LANG={
   fr:{solar:'SOLAIRE',grid:'R\u00C9SEAU',load:'MAISON',battery:'BATTERIE',ev:'VOITURE',inverter:'Onduleur',appliance:'\u00c9lectrom\u00e9nager',garage:'Garage',heatpump:'Pompe \u00e0 chaleur',extra:'Autre',
       autarky:'Autosuffisance',energy_src:'Source d\u2019\u00e9nergie',runtime_to:'jusqu\u0027\u00E0',full:'pleine',
       charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
-      daily:'\u25B8',today:'AUJOURD\u0027HUI',fcst:'pr\u00e9v.',solar24:'SOLAIRE (24h)',load24:'MAISON (24h)',grid24:'R\u00C9SEAU (24h)',bat24:'BATTERIE (24h)',
+      daily:'\u25B8',today:'AUJOURD\u0027HUI',fcst:'pr\u00e9v.',
       unavailable:'--',autodetect:'D\u00E9tection auto',invalid:'entit\u00E9 introuvable',
       editor_title:'xPower Flow Card',editor_lang:'Langue',editor_entities:'Entit\u00E9s',
       editor_options:'Options',editor_soc:'SOC Minimum (%)',
@@ -73,7 +78,7 @@ const LANG={
   es:{solar:'SOLAR',grid:'RED',load:'HOGAR',battery:'BATER\u00CDAS',ev:'COCHE',inverter:'Inversor',appliance:'Electrodom\u00e9sticos',garage:'Garaje',heatpump:'Bomba de Calor',extra:'Extra',
       autarky:'Autosuficiencia',energy_src:'Origen de la energ\u00eda',runtime_to:'hasta',full:'llena',
       charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
-      daily:'\u25B8',today:'HOY',fcst:'prev.',solar24:'SOLAR (24h)',load24:'HOGAR (24h)',grid24:'RED (24h)',bat24:'BATERÍA (24h)',
+      daily:'\u25B8',today:'HOY',fcst:'prev.',
       unavailable:'--',autodetect:'Autodetectar',invalid:'entidad no existe',
       editor_title:'xPower Flow Card',editor_lang:'Idioma',editor_entities:'Entidades',
       editor_options:'Opciones',editor_soc:'SOC M\u00EDnimo (%)',
@@ -84,7 +89,7 @@ const LANG={
   it:{solar:'SOLARE',grid:'RETE',load:'CASA',battery:'BATTERIA',ev:'AUTO',inverter:'Inverter',appliance:'Elettrodomestici',garage:'Garage',heatpump:'Pompa di Calore',extra:'Extra',
       autarky:'Autosufficienza',energy_src:'Origine dell\u2019energia',runtime_to:'fino a',full:'piena',
       charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
-      daily:'\u25B8',today:'OGGI',fcst:'prev.',solar24:'SOLARE (24h)',load24:'CASA (24h)',grid24:'RETE (24h)',bat24:'BATTERIA (24h)',
+      daily:'\u25B8',today:'OGGI',fcst:'prev.',
       unavailable:'--',autodetect:'Rilevamento auto',invalid:'entit\u00E0 inesistente',
       editor_title:'xPower Flow Card',editor_lang:'Lingua',editor_entities:'Entit\u00E0',
       editor_options:'Opzioni',editor_soc:'SOC Minimo (%)',
@@ -95,7 +100,7 @@ const LANG={
   nl:{solar:'ZONNE',grid:'NET',load:'HUIS',battery:'BATTERIJ',ev:'EV',inverter:'Omvormer',appliance:'Apparaten',garage:'Garage',heatpump:'Warmtepomp',extra:'Overig',
       autarky:'Zelfvoorziening',energy_src:'Energiebron',runtime_to:'tot',full:'vol',
       charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
-      daily:'\u25B8',today:'VANDAAG',fcst:'verw.',solar24:'ZONNE (24h)',load24:'HUIS (24h)',grid24:'NET (24h)',bat24:'BATTERIJ (24h)',
+      daily:'\u25B8',today:'VANDAAG',fcst:'verw.',
       unavailable:'--',autodetect:'Auto-detectie',invalid:'entiteit bestaat niet',
       editor_title:'xPower Flow Card',editor_lang:'Taal',editor_entities:'Entiteiten',
       editor_options:'Opties',editor_soc:'Uitschakel-SOC (%)',
@@ -106,7 +111,7 @@ const LANG={
   pl:{solar:'SOLAR',grid:'SIE\u0106',load:'DOM',battery:'BATERIA',ev:'EV',inverter:'Falownik',appliance:'AGD',garage:'Gara\u017c',heatpump:'Pompa Ciep\u0142a',extra:'Inne',
       autarky:'Samowystarczalno\u015B\u0107',energy_src:'\u0179r\u00f3d\u0142o energii',runtime_to:'do',full:'pe\u0142na',
       charge:'\u25BE',discharge:'\u25B4',import_:'\u25BE',export_:'\u25B4',
-      daily:'\u25B8',today:'DZI\u015a',fcst:'prog.',solar24:'SOLAR (24h)',load24:'DOM (24h)',grid24:'SIE\u0106 (24h)',bat24:'BATERIA (24h)',
+      daily:'\u25B8',today:'DZI\u015a',fcst:'prog.',
       unavailable:'--',autodetect:'Autowykrywanie',invalid:'encja nie istnieje',
       editor_title:'xPower Flow Card',editor_lang:'J\u0119zyk',editor_entities:'Encje',
       editor_options:'Opcje',editor_soc:'Min. SOC (%)',
@@ -243,7 +248,7 @@ const DEFAULTS={
   extra2_power:'',extra2_name:'',extra2_icon:'heatpump',
   extra3_power:'',extra3_name:'',extra3_icon:'garage',
   import_cost:'',export_cost:'',
-  compact:false,sparkline_shared_scale:false,energy_chart:'bottom',battery_chart:'off',solar_forecast:true,
+  compact:false,energy_chart:'bottom',battery_chart:'off',solar_forecast:true,
   theme:'auto',
   animations:'auto',
   flow_speed:'proportional',
@@ -351,6 +356,9 @@ const xpfShow=(n,frac)=>{const k=Math.max(1,Math.min(n,Math.round(n*frac)));retu
 // Unset = as before (everything configured is shown). What each level hides is in the card CSS (:host(.d-…)).
 const XPF_DETAIL={essential:{energy_chart:'off',battery_chart:'off',energy_frame:false},normal:{energy_chart:'bottom',battery_chart:'off',energy_frame:true},technical:{energy_chart:'bottom',battery_chart:'bottom',energy_frame:true}};
 const _xdet=(raw,cfg)=>{const P=XPF_DETAIL[raw.detail];if(!P)return;for(const k in P){if(raw[k]!==undefined)continue;if(k==='energy_frame'&&raw.autarky_frame!==undefined)continue;cfg[k]=P[k];}};
+// Config the editor writes back to YAML: only what differs from what the card would use anyway (brand preset + detail level
+// defaults), so the YAML stays short and later preset changes still reach the card. `preset` and keys the card doesn't own are kept.
+const _xmin=cfg=>{const B=_pdef(cfg.preset),P=XPF_DETAIL[cfg.detail];if(P)Object.assign(B,P);const o=cfg.type!==undefined?{type:cfg.type}:{};for(const k in cfg){if(k!=='preset'&&Object.prototype.hasOwnProperty.call(DEFAULTS,k)&&cfg[k]===B[k])continue;o[k]=cfg[k];}return o;};
 
 class XPowerFlowCardEditor extends HTMLElement{
   constructor(){super();this._config={};this._hass=null;this._onchange=this._fire.bind(this);}
@@ -361,7 +369,7 @@ class XPowerFlowCardEditor extends HTMLElement{
 
   _fire(e){
     if(!e.target.matches('input,select'))return;
-    const cfg={...this._config};const oldLang=this._config.language;
+    const cfg={...this._config};const oldLang=this._config.language;let detCh=false;
     cfg.language=this.querySelector('#ed-lang').value;
     cfg.inverter_name=this.querySelector('#ed-inv').value;
     cfg.extra1_name=this.querySelector('#ed-ex1name').value;
@@ -397,7 +405,7 @@ class XPowerFlowCardEditor extends HTMLElement{
     cfg.shutdown_soc=isNaN(socVal)?20:socVal;
     const capVal=parseInt(this.querySelector('#ed-cap').value,10);
     cfg.battery_capacity=isNaN(capVal)?5120:capVal;
-    {const dl=this.querySelector('#ed-detail');if(dl){const nd=dl.value;if(nd!==(this._config.detail||'')&&XPF_DETAIL[nd])Object.assign(cfg,XPF_DETAIL[nd]);if(nd)cfg.detail=nd;else delete cfg.detail;}}
+    {const dl=this.querySelector('#ed-detail');if(dl){const nd=dl.value;detCh=nd!==(this._config.detail||'');if(detCh&&XPF_DETAIL[nd])Object.assign(cfg,XPF_DETAIL[nd]);cfg.detail=nd;}}
     const newPreset=this.querySelector('#ed-preset').value;
     if(newPreset!==cfg.preset&&PRESETS[newPreset]){
       const p=PRESETS[newPreset];
@@ -407,15 +415,16 @@ class XPowerFlowCardEditor extends HTMLElement{
       cfg.inverter_name=p.inverter_name;
       cfg.preset=newPreset;
       this._config=cfg;
-      this.dispatchEvent(new CustomEvent('config-changed',{detail:{config:cfg},bubbles:true,composed:true}));
+      this.dispatchEvent(new CustomEvent('config-changed',{detail:{config:_xmin(cfg)},bubbles:true,composed:true}));
       this._render();
       return;
     }
     cfg.preset=newPreset;
     ENTITY_FIELDS.forEach(f=>{const v=this.querySelector('#ed-'+f.key);if(v){cfg[f.key]=v.value;const bad=v.value&&this._hass&&!this._hass.states[v.value];v.style.borderColor=bad?'#EF5350':'';}});
     this._config=cfg;
-    this.dispatchEvent(new CustomEvent('config-changed',{detail:{config:cfg},bubbles:true,composed:true}));
-    if(cfg.language!==oldLang)this._render();
+    this.dispatchEvent(new CustomEvent('config-changed',{detail:{config:_xmin(cfg)},bubbles:true,composed:true}));
+    // A new detail level changes the chart/frame selects above: redraw so they show it (they would otherwise undo it on the next edit)
+    if(cfg.language!==oldLang||detCh)this._render();
   }
 
   async _autoDetect(){
@@ -444,7 +453,7 @@ class XPowerFlowCardEditor extends HTMLElement{
     if(!cfg.load)cfg.load=pick(/load_power|house_consumption|essential_power|ac_consumption/);
     if(!cfg.soc){const socs=Object.keys(st).filter(id=>id.startsWith('sensor.')&&st[id].attributes?.device_class==='battery');cfg.soc=socs.find(id=>/battery|soc/.test(id))||'';}
     this._config=cfg;
-    this.dispatchEvent(new CustomEvent('config-changed',{detail:{config:cfg},bubbles:true,composed:true}));
+    this.dispatchEvent(new CustomEvent('config-changed',{detail:{config:_xmin(cfg)},bubbles:true,composed:true}));
     this._render();
   }
 
@@ -536,8 +545,8 @@ class XPowerFlowCardEditor extends HTMLElement{
         <div class="field">
           <label>${L.editor_bat_pol}</label>
           <select id="ed-bpol" style="${selStyle}">
-            <option value="negative" ${c.bat_polarity==='negative'?'selected':''}>${L.charging} (Deye, Sunsynk, Growatt)</option>
-            <option value="positive" ${c.bat_polarity==='positive'?'selected':''}>${L.charging} (Huawei, Fronius, SolarEdge, Victron, Solis)</option>
+            <option value="negative" ${c.bat_polarity==='negative'?'selected':''}>${L.charging} (Deye, Sunsynk, Growatt, Solis)</option>
+            <option value="positive" ${c.bat_polarity==='positive'?'selected':''}>${L.charging} (Huawei, Fronius, SolarEdge, Victron)</option>
           </select>
         </div>
         <div class="field">
@@ -719,13 +728,14 @@ class XPowerFlowCardEditor extends HTMLElement{
     const ab=this.querySelector('#ed-auto');if(ab)ab.addEventListener('click',()=>this._autoDetect());
   }
 }
-customElements.define('xpower-flow-card-editor',XPowerFlowCardEditor);
+// Guarded: the file can be loaded twice (e.g. HACS resource + a manual /local copy) and a second define() throws
+if(!customElements.get('xpower-flow-card-editor'))customElements.define('xpower-flow-card-editor',XPowerFlowCardEditor);
 
 class XPowerFlowCard extends HTMLElement{
 constructor(){super();this.attachShadow({mode:'open'});this._c={};this._h=null;this._prev={solar:0,bat:0,grid:0,load:0};this._hist={solar:[],load:[],grid:[],battery:[]};this._fs={};this._histTimer=null;this._histLastLoad=0;this._histLoading=false;this._syncSpd=0;this._resync=false;this._rafId=null;this._twv={};this._twq={};this._twRaf=null;this._entList=[];this._srKey='';this._rm=!!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);this._mq=window.matchMedia?window.matchMedia('(prefers-color-scheme: light)'):null;this._onMq=()=>this._applyTheme();this._mwc=new Map();this._io=null;this._ro=null;this._ringKey='';this._auT=null;this._srT=null;this._vis=true;this._srTk=null;this._srLit=-1;this._onVis=()=>{if(!document.hidden&&this._h){this._histLastLoad=0;this._schedule();}};}
 
 static getConfigElement(){return document.createElement('xpower-flow-card-editor');}
-static getStubConfig(){return{...DEFAULTS};}
+static getStubConfig(){return{preset:DEFAULTS.preset};}
 
 setConfig(c){
   this._c={};
@@ -835,10 +845,8 @@ const sr=this._$('srx'),ss=this._$('ssx');
 this._st(sr,tf(rise));this._st(ss,tf(set));}
 _fmtE(v){if(v===null)return this._lang.unavailable;return v.toFixed(1)+' kWh';}
 _fmtC(e){if(!e||!this._h||!this._h.states[e])return '';const s=this._h.states[e];const v=parseFloat(s.state);if(isNaN(v))return '';const u=s.attributes?.unit_of_measurement||'€';return u+v.toFixed(2);}
-_arrow(c,p){if(c===null)return '';const d=Math.abs(c)-Math.abs(p);return d>5?'\u25B4 ':d<-5?'\u25BE ':'\u25B8 ';}
 _mw(s){let w=this._mwc.get(s);if(w!==undefined)return w;const m=this._$('meas');if(!m)return 0;m.textContent=s;w=m.getComputedTextLength()||0;if(w){if(this._mwc.size>2000)this._mwc.clear();this._mwc.set(s,w);}return w;}
 _arw(id,cur,prev,col){const g=this._$(id);if(!g)return;if(cur===null){this._ss(g,'display','none');this._twv['_'+id]=null;return;}this._ss(g,'display','');const vx=+g.dataset.vx,vy=+g.dataset.vy;const w=this._mw(this._fmt(cur));this._sa(g,'transform','translate('+(vx-w/2-11).toFixed(1)+','+vy+')');const inner=g.firstElementChild,p1=inner.children[0],p2=inner.children[1];this._sa(inner,'opacity',Math.abs(cur)<10?'0.28':'1');const pv=prev==null?cur:prev,d=Math.abs(cur)-Math.abs(pv),dir=d>5?'up':d<-5?'down':'flat';const style=this._c.arrow_style==='arrow'?'arrow':'chevron';const G=XPF_ARROW[style][dir];this._sa(p1,'d',G[0]);this._sa(p1,'stroke',col);if(G[1]){this._ss(p2,'display','');this._sa(p2,'d',G[1]);this._sa(p2,'stroke',col);}else{this._ss(p2,'display','none');}const last=this._twv['_'+id];const changed=last===undefined||last===null||Math.abs(cur-last)>=1;this._twv['_'+id]=cur;if(changed&&dir!=='flat'&&!(this._rm&&this._c.animations!=='always')){const kf=XPF_NUDGE[style][dir];if(kf){try{inner.animate(kf,{duration:480,easing:'cubic-bezier(.3,0,.2,1)'});}catch(e){}}}}
-_eta(totalMin,label){const pad=v=>String(v).padStart(2,'0');const h=Math.floor(totalMin/60),m=totalMin%60;const t=new Date(Date.now()+totalMin*60000);return h+'h '+pad(m)+'m \u25B8 '+label+' @'+pad(t.getHours())+':'+pad(t.getMinutes());}
 
 _norm(raw,type){
   if(raw===null)return null;
@@ -874,14 +882,12 @@ H.soc=ser(c.soc,true);this._hist=H;
 if(c.solar_forecast!==false&&c.energy_chart!=='off'&&(!this._fcT||now-this._fcT>30*60000||this._fcD!==this._mid())){this._fcT=now;this._fcD=this._mid();try{const fr=await this._h.callWS({type:'energy/solar_forecast'});const fc=new Array(HIST_POINTS).fill(0);let any=false;if(fr)for(const eid in fr){const wh=fr[eid]&&fr[eid].wh_hours;if(!wh)continue;for(const ts in wh){const t=Date.parse(ts),k=Math.floor(t/HIST_SLOT)-i0;const W=+wh[ts];if(isNaN(t)||isNaN(W))continue;for(let q=0;q<4;q++){const kk=k+q;if(kk>=0&&kk<HIST_POINTS){fc[kk]+=W;any=true;}}}}if(any){const sm=fc.slice();for(let k=1;k<HIST_POINTS-1;k++)sm[k]=(fc[k-1]+fc[k]*2+fc[k+1])/4;this._fc=sm;}else this._fc=null;}catch(e){this._fc=null;}}
 this._drawSparks();}catch(e){console.warn('xPower history:',e);}finally{this._histLoading=false;}}
 
-_render(){this._cfhSp=0;const CHV=this._c.flow_style!=='comet'&&!!(window.CSS&&CSS.supports&&CSS.supports('offset-path',"path('M0,0 L1,1')")),FZ=Math.min(2.5,Math.max(0.5,Number(this._c.flow_size)||0.7)),CSP=Math.max(6,13*FZ),CA=(3*FZ).toFixed(2),CB=(4*FZ).toFixed(2),CC=(2*FZ).toFixed(2);this._chv=CHV;const CV=(id,d)=>{if(!CHV)return '';const p=d.match(/-?[\d.]+/g).map(Number);let len=0;for(let i=2;i<p.length;i+=2)len+=Math.hypot(p[i]-p[i-2],p[i+1]-p[i-1]);const n=Math.max(2,Math.round(len/CSP));let o='<g id="c'+id+'" class="cvg" opacity="0">';for(let i=0;i<n;i++)o+='<path class="cv" d="M-'+CA+',-'+CB+' L'+CC+',0 L-'+CA+','+CB+'" style="offset-path:path(\''+d+'\');offset-distance:'+((i+0.5)/n*100).toFixed(1)+'%;animation-delay:calc(var(--spd,3s) * -'+(i/n).toFixed(3)+')"/>';return o+'</g>';};const FL=Math.min(80,Math.max(10,Number(this._c.flow_length)||60)),FP=100+FL,HL=FL,HP=FP;this._fl=FL;this._fp=FP;this._hl=HL;this._hp=HP;this._elc={};this._fsp={};this._fs={};this._wxKey='';this._hmN=undefined;this._syncSpd=0;this._ringKey='';this._mwc=new Map();this._srTk=null;this._srLit=-1;this._srKey='';const L=this._lang;const INV=String(this._c.inverter_name||'').replace(/[<>&]/g,m=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[m]));const s=this.shadowRoot;s.innerHTML=`<style>
-:host{--solar:var(--xpf-solar,#FFB300);--battery:var(--xpf-battery,#7C4DFF);--grid:var(--xpf-grid,#42A5F5);--load:var(--xpf-load,#26C6DA);--green:var(--xpf-green,#66BB6A);--red:var(--xpf-red,#EF5350);--orange:var(--xpf-orange,#FFA726);--t1:var(--xpf-text,rgba(255,255,255,0.92));--t3:var(--xpf-text-secondary,rgba(255,255,255,0.45));--xpf-r:var(--xpf-radius,20px);--xpf-vm-size:var(--xpf-font-size,${this._c.font_size||24}px);--mps:var(--xpf-mppt-scale,${Math.min(1.6,Math.max(0.8,Number(this._c.mppt_scale)||1))});--flow-w:var(--xpf-flow-width,3);--fw:var(--xpf-frame-width,1px);--fo:var(--xpf-frame-opacity,0.7);--batf:#fff;--batn:#111;--batt:rgba(255,255,255,0.22);--batb:#c3c7cc;--batbg:rgba(255,255,255,0.08)}
+_render(){this._cfhSp=0;const CHV=this._c.flow_style!=='comet'&&!!(window.CSS&&CSS.supports&&CSS.supports('offset-path',"path('M0,0 L1,1')")),FZ=Math.min(2.5,Math.max(0.5,Number(this._c.flow_size)||0.7)),CSP=Math.max(6,13*FZ),CA=(3*FZ).toFixed(2),CB=(4*FZ).toFixed(2),CC=(2*FZ).toFixed(2);this._chv=CHV;const CV=(id,d)=>{if(!CHV)return '';const p=d.match(/-?[\d.]+/g).map(Number);let len=0;for(let i=2;i<p.length;i+=2)len+=Math.hypot(p[i]-p[i-2],p[i+1]-p[i-1]);const n=Math.max(2,Math.round(len/CSP));let o='<g id="c'+id+'" class="cvg" opacity="0">';for(let i=0;i<n;i++)o+='<path class="cv" d="M-'+CA+',-'+CB+' L'+CC+',0 L-'+CA+','+CB+'" style="offset-path:path(\''+d+'\');offset-distance:'+((i+0.5)/n*100).toFixed(1)+'%;animation-delay:calc(var(--spd,3s) * -'+(i/n).toFixed(3)+')"/>';return o+'</g>';};const FL=Math.min(80,Math.max(10,Number(this._c.flow_length)||60)),FP=100+FL,HL=FL,HP=FP;this._fl=FL;this._fp=FP;this._hl=HL;this._hp=HP;this._elc={};this._fsp={};this._fs={};this._wxKey='';this._hmN=undefined;this._syncSpd=0;this._ringKey='';this._mwc=new Map();this._srTk=null;this._srLit=-1;this._srKey='';const L=this._lang;const FSZ=(n=>n>0&&n<=200?n:24)(parseFloat(this._c.font_size));const INV=String(this._c.inverter_name||'').replace(/[<>&]/g,m=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[m]));const s=this.shadowRoot;s.innerHTML=`<style>
+:host{--solar:var(--xpf-solar,#FFB300);--battery:var(--xpf-battery,#7C4DFF);--grid:var(--xpf-grid,#42A5F5);--load:var(--xpf-load,#26C6DA);--green:var(--xpf-green,#66BB6A);--red:var(--xpf-red,#EF5350);--orange:var(--xpf-orange,#FFA726);--t1:var(--xpf-text,rgba(255,255,255,0.92));--t3:var(--xpf-text-secondary,rgba(255,255,255,0.45));--xpf-r:var(--xpf-radius,20px);--xpf-vm-size:var(--xpf-font-size,${FSZ}px);--mps:var(--xpf-mppt-scale,${Math.min(1.6,Math.max(0.8,Number(this._c.mppt_scale)||1))});--flow-w:var(--xpf-flow-width,3);--fw:var(--xpf-frame-width,1px);--fo:var(--xpf-frame-opacity,0.7);--batf:#fff;--batn:#111;--batt:rgba(255,255,255,0.22);--batb:#c3c7cc;--batbg:rgba(255,255,255,0.08)}
 :host(.light){--t1:var(--xpf-text,rgba(0,0,0,0.85));--t3:var(--xpf-text-secondary,rgba(0,0,0,0.45));--batf:rgba(0,0,0,0.85);--batn:#fff;--batt:rgba(0,0,0,0.12);--batb:#7c8189;--batbg:rgba(0,0,0,0.06)}
 :host(.light) ha-card{background:var(--xpf-bg,rgba(255,255,255,0.92))}
 :host(.light) .fl{stroke:rgba(0,0,0,0.06)}
 :host(.light) .ib{fill:rgba(0,0,0,0.03);stroke:rgba(0,0,0,0.08)}
-:host(.light) .sb{background:var(--xpf-sparkline-bg,rgba(0,0,0,0.02));border-color:rgba(0,0,0,0.06)}
-:host(.light) .sl{opacity:0.4}
 ha-card{background:var(--xpf-bg,rgba(12,14,24,0.92));border:1px solid transparent;border-radius:var(--xpf-r);box-shadow:var(--xpf-shadow,0 2px 40px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.04));padding:var(--xpf-padding,6px 8px 6px);position:relative;overflow:hidden;contain:layout paint style;font-family:-apple-system,sans-serif;--ha-card-background:transparent;--ha-card-border-width:0;--ha-card-border-radius:var(--xpf-r);--ha-card-box-shadow:none}
 :host(.hast){--xpf-hbg:var(--ha-card-background,var(--card-background-color,#1c1c1c));--xpf-hsh:var(--ha-card-box-shadow,none);--xpf-hbc:var(--ha-card-border-color,var(--divider-color,transparent));--xpf-hbw:var(--ha-card-border-width,1px);--xpf-hr:var(--ha-card-border-radius,12px)}
 :host(.hast) ha-card{background:var(--xpf-bg,var(--xpf-hbg));box-shadow:var(--xpf-shadow,var(--xpf-hsh));border:var(--xpf-hbw) solid var(--xpf-hbc);border-radius:var(--xpf-hr)}
@@ -942,25 +948,10 @@ svg{width:100%;height:auto;display:block}
 
 .wt{fill:var(--t3);font-size:11px;font-weight:500;text-anchor:start;dominant-baseline:middle;font-family:-apple-system,sans-serif}
 .wb{fill:none;stroke:var(--t3);stroke-width:0.5;rx:4;ry:4;opacity:0.4}
-.sr{display:flex;gap:6px;margin-top:8mm}.xch{display:flex;flex-direction:column;gap:6px}.xch:empty{display:none}#chT{margin:2px 0 12.5px}#chB{margin-top:6px}:host(.compact) .xch{display:none}
+.xch{display:flex;flex-direction:column;gap:6px}.xch:empty{display:none}#chT{margin:2px 0 12.5px}#chB{margin-top:6px}:host(.compact) .xch{display:none}
 :host(.d-essential) :is(#tp,#bt,#bv,#gv,#pv,.mpr,#priceicons,#ds,#dg,#dl,#db,#de,#brg,#wicons,#sunRing),:host(.d-normal) :is(#tp,#bt,#bv,#gv,#pv,.mpr,#priceicons){display:none !important}.cbx{background:var(--xpf-sparkline-bg,rgba(255,255,255,0.02));border:1px solid rgba(127,127,127,0.12);border-radius:var(--xpf-sparkline-radius,12px);padding:6px 10px 6px;display:flex;flex-direction:column;gap:1px}.chd{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:baseline;gap:6px;height:16px;overflow:hidden}.chl{font-size:9px;font-weight:700;letter-spacing:0.1em;color:var(--t3);text-transform:uppercase}.chl.gh{visibility:hidden}.chv{display:flex;justify-content:center;gap:8px;font-size:10px;font-weight:600;white-space:nowrap;overflow:hidden}.chk{font-size:9px;font-weight:600;color:var(--t3);white-space:nowrap;text-align:right}
 .chs{cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;transition:opacity .2s}.chs.off{opacity:.35;text-decoration:line-through}.chs:focus-visible{outline:1px solid currentColor;outline-offset:1px;border-radius:2px}.csv{display:block;width:100%;height:70px;cursor:crosshair;touch-action:pan-y}.csv text{font-size:7.5px;fill:var(--t3)}.cgr{stroke:var(--t3);stroke-opacity:0.18;stroke-width:1;stroke-dasharray:2 3;fill:none}.cbl{stroke:var(--t3);stroke-opacity:0.35;stroke-width:1;fill:none}
-:host(.compact) .sr{display:none}
 :host(.compact) ha-card{padding:6px 8px 6px}
-.sb{flex:1;background:var(--xpf-sparkline-bg,rgba(255,255,255,0.02));border:1px solid rgba(255,255,255,0.04);border-radius:var(--xpf-sparkline-radius,12px);padding:10px 10px 8px;display:flex;flex-direction:column;gap:2px;overflow:hidden}
-.sb-header{display:flex;justify-content:space-between;align-items:baseline}
-.sl{font-size:7px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;opacity:0.3}
-.sv{font-size:11px;font-weight:600;opacity:0.8}
-.ss .sv{color:var(--green)}.sc .sv{color:var(--load)}.sg .sv{color:var(--grid)}.sbt .sv{color:var(--battery)}
-.sb svg{width:100%;height:55px;display:block;margin-top:auto;touch-action:pan-y}
-.sb path{stroke-linecap:round;stroke-linejoin:round}
-.sb{position:relative;cursor:crosshair}
-.sb-tip{position:absolute;top:2px;right:4px;font-size:10px;font-weight:600;opacity:0;transition:opacity 0.15s;pointer-events:none;padding:2px 6px;border-radius:4px;background:rgba(0,0,0,0.7)}
-.sb-tip.show{opacity:1}
-.sb line.cursor{stroke:rgba(255,255,255,0.3);stroke-width:1;stroke-dasharray:2 2;display:none}
-.sb circle.cursor-dot{fill:rgba(255,255,255,0.8);display:none}
-.ss #hs{fill:none;stroke:rgba(102,187,106,0.7);stroke-width:1.2}.sc #hl{fill:none;stroke:rgba(38,198,218,0.7);stroke-width:1.2}.sg #hg{fill:none;stroke:rgba(66,165,245,0.7);stroke-width:1.2}.sbt #hb2{fill:none;stroke:rgba(124,77,255,0.7);stroke-width:1.2}
-.ss #hsa{fill:url(#sgd-s);stroke:none}.sc #hla{fill:url(#sgd-l);stroke:none}.sg #hga{fill:url(#sgd-g);stroke:none}.sbt #hb2a{fill:url(#sgd-b);stroke:none}
 </style>
 <ha-card id="xcard"><svg id="aur" role="img" aria-label="${L.energy_src}"><path id="aut" class="au-track"/><path id="au-s" stroke="var(--green)" pathLength="100" stroke-dasharray="0 100"/><path id="au-b" stroke="var(--orange)" pathLength="100" stroke-dasharray="0 100"/><path id="au-g" stroke="var(--red)" pathLength="100" stroke-dasharray="0 100"/><path id="aurhit"><title>${L.energy_src}</title></path></svg><div class="xch" id="chT">${this._chMk('top')}</div><svg id="main" viewBox="0 -8 526 478"><defs><linearGradient id="sunrg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#FF8F00"/><stop offset="1" stop-color="#FFD54F"/></linearGradient><clipPath id="bat-clip"><rect x="206" y="385" width="88" height="30" rx="6.5"/></clipPath><clipPath id="bkf"><rect id="bkfr" x="196" y="372" width="0" height="50"/></clipPath><clipPath id="bke"><rect id="bker" x="206" y="372" width="100" height="50"/></clipPath><pattern id="batrz" patternUnits="userSpaceOnUse" width="7" height="7" patternTransform="rotate(45)"><rect width="3.5" height="7" fill="#FFA726"/><rect x="3.5" width="3.5" height="7" fill="#6b4a1c"/></pattern><clipPath id="ev-clip"><rect x="420.5" y="450.5" width="24" height="12" rx="4"/></clipPath><radialGradient id="sundisc" cx="38%" cy="34%" r="72%"><stop offset="0" stop-color="#FFE082"/><stop offset="0.55" stop-color="#FFC107"/><stop offset="1" stop-color="#FF9800"/></radialGradient><radialGradient id="sunhl" cx="50%" cy="50%" r="50%"><stop offset="0.55" stop-color="#FFC107" stop-opacity="0.30"/><stop offset="1" stop-color="#FFC107" stop-opacity="0"/></radialGradient><radialGradient id="moonhl" cx="50%" cy="50%" r="50%"><stop offset="0.55" stop-color="#90CAF9" stop-opacity="0.22"/><stop offset="1" stop-color="#90CAF9" stop-opacity="0"/></radialGradient><radialGradient id="moondisc" cx="35%" cy="35%" r="75%"><stop offset="0" stop-color="#ECEFF1"/><stop offset="1" stop-color="#B0BEC5"/></radialGradient><mask id="moonmask" maskUnits="userSpaceOnUse" x="200" y="-12" width="100" height="100"><rect x="200" y="-12" width="100" height="100" fill="#fff"/><circle cx="259" cy="31" r="14" fill="#000"/></mask><linearGradient id="ivbody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#E9ECEF"/></linearGradient><linearGradient id="ivpill" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#34373B"/><stop offset="0.55" stop-color="#2B2E31"/><stop offset="0.56" stop-color="#3C4045"/><stop offset="1" stop-color="#2B2E31"/></linearGradient><linearGradient id="hsrc" gradientUnits="userSpaceOnUse" x1="287.4" y1="225" x2="395" y2="225"><stop id="hs0" offset="0%" stop-color="#66BB6A"/><stop id="hs1" offset="60%" stop-color="#66BB6A"/><stop id="hs2" offset="60%" stop-color="#FFA726"/><stop id="hs3" offset="60%" stop-color="#FFA726"/><stop id="hs4" offset="60%" stop-color="#EF5350"/><stop id="hs5" offset="100%" stop-color="#EF5350"/></linearGradient></defs><g transform="translate(25.5,10) scale(0.95)">
 <g id="wicons" style="display:none" transform="translate(-20,0)">
@@ -1117,7 +1108,7 @@ if(gvTxt!==null&&freq!==null)this._st(this._$('gv'),gvTxt+' \u00B7 '+freq.toFixe
 if(bv!==null)this._st(this._$('bv'),bv.toFixed(1)+'V');else this._st(this._$('bv'),'');
 const btS=this._temp(c.battery_temperature);this._st(this._$('bt'),btS===null?'':btS);
 
-const dS=this._gv(c.daily_solar),dI=this._gv(c.daily_import),dE=this._gv(c.daily_export),dL=this._gv(c.daily_load),dC=this._gv(c.daily_charge),dD=this._gv(c.daily_discharge),dSum=(a,b)=>a===null&&b===null?null:(a??0)+(b??0);
+const dS=this._gv(c.daily_solar),dI=this._gv(c.daily_import),dE=this._gv(c.daily_export),dL=this._gv(c.daily_load),dC=this._gv(c.daily_charge),dD=this._gv(c.daily_discharge);
 // Solar node: with 2+ MPPT, compact list left of the sun (x 112–192), daily total right (x 338)
 const _mp=[[c.solar,sol1,pvv],[c.solar2,sol2,pvv2],[c.solar3,sol3,pvv3]].map((m,i)=>({e:m[0],p:m[1],v:m[2],n:'PV'+(i+1)})).filter(m=>m.e);
 const _list=_mp.length>=2;
@@ -1272,17 +1263,13 @@ this._ss(this._$('vg'),'opacity',Math.abs(gridF)>10?'1':'0.25');
 this._ss(this._$('vl'),'opacity',loadF>10?'1':'0.25');
 this._ss(this._$('vb'),'opacity',Math.abs(batF)>10?'1':'0.25');
 
-this._st(this._$('hv'),this._fmt(sol)+' / '+this._fmtE(dS));
-this._st(this._$('hx'),this._fmt(load)+' / '+this._fmtE(dL));
-this._st(this._$('hz'),this._fmt(grid!==null?Math.abs(grid):null)+' / '+this._fmtE(dSum(dI,dE)));
-this._st(this._$('hy'),this._fmt(bat!==null?Math.abs(bat):null)+' / '+this._fmtE(dSum(dC,dD)));
 }
 
 getGridOptions(){return this._c.compact?{columns:12,rows:8,min_columns:6,min_rows:4}:{columns:12,rows:10,min_columns:6,min_rows:6};}
 getCardSize(){return this._c.compact?4:6;}
 }
 
-customElements.define('xpower-flow-card',XPowerFlowCard);
+if(!customElements.get('xpower-flow-card'))customElements.define('xpower-flow-card',XPowerFlowCard);
 window.customCards=window.customCards||[];
-window.customCards.push({type:'xpower-flow-card',name:'xPower Flow Card',description:'Universal power flow card for solar hybrid inverters — Deye, Sunsynk, Huawei, Fronius, Growatt, Victron, SolarEdge',preview:true,documentationURL:'https://github.com/BTNBx/xPower-Flow-Card'});
+if(!window.customCards.some(x=>x&&x.type==='xpower-flow-card'))window.customCards.push({type:'xpower-flow-card',name:'xPower Flow Card',description:'Universal power flow card for solar hybrid inverters — Deye, Sunsynk, Huawei, Fronius, Growatt, Victron, SolarEdge',preview:true,documentationURL:'https://github.com/BTNBx/xPower-Flow-Card'});
 console.info('%c XPOWER-FLOW %c v'+V+' ','background:#7C4DFF;color:white;font-weight:bold;border-radius:4px 0 0 4px;padding:2px 6px','background:#333;color:white;border-radius:0 4px 4px 0;padding:2px 6px');

@@ -1,3 +1,13 @@
+## v1.3.72
+
+- The visual editor now writes only the options you changed to the YAML instead of every option (everything else keeps coming from the brand preset, so preset updates reach the card); a config saved by an older version is shortened on the next edit without changing the card, and new cards start from `preset: deye` only
+- Choosing a detail level in the editor now updates the chart and frame selects right away, and a later edit no longer undoes it
+- Editing a field no longer redraws the whole editor form (focus is kept)
+- `font_size` is read as a number only
+- Loading the card twice (e.g. the HACS resource plus a manual `/local` copy) no longer throws "name has already been used"
+- Solis is listed under `negative` = charging in the editor and the README, matching its preset
+- Removed leftovers of the old 24 h sparklines (styles, labels and the unused `sparkline_shared_scale` option) and two unused helpers
+
 ## v1.3.71
 
 - Battery chart restyled to a clean level view: a single green state-of-charge line with a soft fading area, no grid or reserve band, a badge with the current percentage at the end of the line and a marker with the time the battery was first full today
