@@ -11,6 +11,8 @@ const ALIASES = new Set([
   'autarky_frame',
   'appliance_power', 'appliance_name', 'heatpump_power', 'heatpump_name', 'garage_power', 'garage_name',
 ]);
+// Read by the code but not card options: the dashboard's own `type` key (the editor keeps it first in the YAML)
+const NOT_OPTIONS = new Set(['type']);
 
 // Every window opened by a test is closed afterwards, even when an assertion fails (an open window keeps node alive)
 const OPEN = [];
@@ -32,7 +34,7 @@ function boot() {
   w.console.info = () => {};
   const errors = [];
   w.console.error = (...a) => errors.push(a.join(' '));
-  w.eval(src + '\n;window.__x={DEFAULTS,ENTITY_FIELDS};');
+  w.eval(src + '\n;window.__x={DEFAULTS,ENTITY_FIELDS,PRESETS,LANG,EDL,FLBL};');
   const flush = () => {
     for (let i = 0; i < 50 && q.length; i++) {
       const cur = q; q = [];
@@ -82,7 +84,7 @@ test('every option the card reads is in DEFAULTS (otherwise setConfig drops it, 
   const { DEFAULTS, w } = boot();
   const read = new Set();
   for (const m of src.matchAll(/\b(?:c|this\._c|this\._config|cfg)\.([a-z][a-z0-9_]*)/g)) read.add(m[1]);
-  const missing = [...read].filter(k => !(k in DEFAULTS) && !ALIASES.has(k)).sort();
+  const missing = [...read].filter(k => !(k in DEFAULTS) && !ALIASES.has(k) && !NOT_OPTIONS.has(k)).sort();
   assert.deepEqual(missing, [], 'add these to DEFAULTS (or to ALIASES in this test if they are legacy names)');
   w.close();
 });
@@ -206,4 +208,187 @@ test('clicking a chart legend item hides and shows its line', () => {
   assert.match(svg(), /stroke="var\(--load\)"/, 'house line back');
   assert.ok(!item('l').classList.contains('off'));
   c.close();
+});
+
+// ── Loading and config safety ────────────────────────
+
+test('loading the file twice does not throw or register the card twice', () => {
+  const { w, errors } = boot();
+  assert.doesNotThrow(() => w.eval(src));
+  assert.equal(w.customCards.filter(c => c.type === 'xpower-flow-card').length, 1);
+  assert.deepEqual(errors, []);
+});
+
+test('font_size is used as a number only (no markup from YAML)', () => {
+  const { w } = boot();
+  const css = cfg => { const el = w.document.createElement('xpower-flow-card'); el.setConfig({ preset: 'deye', ...cfg }); return el.shadowRoot; };
+  const bad = css({ font_size: '24px)}</style><b id="pwn">x</b><style>a{b:c(' });
+  assert.equal(bad.getElementById('pwn'), null, 'markup from font_size reached the card');
+  assert.match(bad.querySelector('style').textContent, /--xpf-font-size,24px\)/);
+  assert.match(css({ font_size: 30 }).querySelector('style').textContent, /--xpf-font-size,30px\)/);
+  assert.match(css({ font_size: 'abc' }).querySelector('style').textContent, /--xpf-font-size,24px\)/);
+});
+
+test('new cards start from a minimal config', () => {
+  const { w } = boot();
+  const stub = { ...w.customElements.get('xpower-flow-card').getStubConfig() };
+  assert.deepEqual(stub, { preset: 'deye' });
+  const c = mount(stub, ok());
+  noJunk(c.text(), 'stub config');
+  assert.deepEqual(c.errors, []);
+  c.close();
+});
+
+// ── Visual editor ────────────────────────────────────
+
+const TYPE = 'custom:xpower-flow-card';
+
+// Open the editor on a config. Every config-changed is fed back with setConfig, as the dashboard editor does.
+function editor(config) {
+  const B = boot();
+  const { w } = B;
+  const ed = w.document.createElement('xpower-flow-card-editor');
+  w.document.body.appendChild(ed);
+  ed.hass = { states: {}, language: 'en', locale: { language: 'en' }, callWS: async () => ({}) };
+  let out = null;
+  ed.addEventListener('config-changed', e => { out = e.detail.config; ed.setConfig(out); });
+  ed.setConfig(config);
+  const field = id => ed.querySelector('#ed-' + id);
+  // Change one field; returns the config written back to YAML (plain copy)
+  const change = (id, v) => { const el = field(id); el.value = v; el.dispatchEvent(new w.Event('change', { bubbles: true })); return { ...out }; };
+  // What the card ends up using for a given YAML config
+  const used = cfg => { const el = w.document.createElement('xpower-flow-card'); el.setConfig(cfg); return { ...el._c }; };
+  return { ed, field, change, used, full: () => ({ ...ed._config }), PRESETS: B.PRESETS, DEFAULTS: B.DEFAULTS };
+}
+
+test('editor writes only what differs from the preset', () => {
+  const e = editor({ type: TYPE, preset: 'huawei' });
+  assert.deepEqual(e.change('cap', '10000'), { type: TYPE, preset: 'huawei', battery_capacity: 10000 });
+  assert.deepEqual(e.change('solar', 'sensor.my_pv'), { type: TYPE, preset: 'huawei', solar: 'sensor.my_pv', battery_capacity: 10000 });
+});
+
+test('the short config gives exactly the same card as the full one', () => {
+  for (const preset of ['deye', 'sunsynk', 'huawei', 'fronius', 'growatt', 'victron', 'solaredge', 'solis', 'custom']) {
+    const e = editor({ type: TYPE, preset });
+    const out = e.change('cap', '7000');
+    assert.deepEqual(e.used(out), e.used(e.full()), `preset ${preset}`);
+  }
+});
+
+test('a config saved by an older editor (every option written) is trimmed without changing the card', () => {
+  const e0 = editor({ type: TYPE, preset: 'sunsynk' });
+  const old = { type: TYPE, ...e0.used({ preset: 'sunsynk' }), battery_capacity: 10240, grid_status: '' };
+  const e = editor(old);
+  const out = e.change('ssoc', '15');
+  assert.deepEqual(out, { type: TYPE, preset: 'sunsynk', grid_status: '', shutdown_soc: 15, battery_capacity: 10240 });
+  assert.deepEqual(e.used(out), e.used({ ...old, shutdown_soc: 15 }));
+});
+
+test('an entity cleared in the editor stays cleared', () => {
+  const e = editor({ type: TYPE, preset: 'deye' });
+  const out = e.change('grid_status', '');
+  assert.equal(out.grid_status, '');
+  assert.equal(e.used(out).grid_status, '');
+});
+
+test('switching brand writes the new preset, not a copy of its entities', () => {
+  const e = editor({ type: TYPE, preset: 'deye' });
+  const out = e.change('preset', 'huawei');
+  assert.deepEqual(out, { type: TYPE, preset: 'huawei' });
+  assert.equal(e.used(out).solar, e.PRESETS.huawei.e.solar);
+  assert.equal(e.used(out).bat_polarity, 'positive');
+  assert.equal(e.field('solar').value, e.PRESETS.huawei.e.solar, 'form shows the new brand');
+});
+
+test('detail level: preset applies, the form shows it, later edits keep it, own choices win', () => {
+  const e = editor({ type: TYPE, preset: 'deye' });
+  assert.deepEqual(e.change('detail', 'essential'), { type: TYPE, preset: 'deye', detail: 'essential' });
+  assert.equal(e.field('ech').value, 'off', 'chart select follows the detail level');
+  let out = e.change('cap', '10000');
+  assert.equal(out.energy_chart, undefined);
+  assert.equal(e.used(out).energy_chart, 'off', 'another edit must not undo the detail level');
+  assert.equal(e.used(out).energy_frame, false);
+  out = e.change('ech', 'bottom');
+  assert.equal(out.energy_chart, 'bottom');
+  assert.equal(e.used(out).energy_chart, 'bottom');
+  out = e.change('detail', '');
+  assert.equal(out.detail, undefined);
+  assert.deepEqual(e.used(out), e.used(e.full()));
+});
+
+test('options the card does not own are kept', () => {
+  const e = editor({ type: TYPE, preset: 'deye', view_layout: { column: 2 }, appliance_power: 'sensor.washer', autarky_frame: false });
+  const out = e.change('cap', '10000');
+  assert.equal(out.type, TYPE);
+  assert.deepEqual({ ...out.view_layout }, { column: 2 });
+  assert.equal(out.appliance_power, 'sensor.washer');
+  assert.equal(e.used(out).extra1_power, 'sensor.washer');
+  assert.equal(out.energy_frame, false, 'legacy autarky_frame carried over as energy_frame');
+  assert.equal(out.autarky_frame, undefined);
+});
+
+test('an edit does not rebuild the form (keeps focus)', () => {
+  const e = editor({ type: TYPE, preset: 'deye' });
+  const cap = e.field('cap'), inv = e.field('inv');
+  e.change('cap', '9000');
+  e.change('inv', 'My inverter');
+  assert.equal(e.field('cap'), cap);
+  assert.equal(e.field('inv'), inv);
+});
+
+test('polarity hints in the editor match the presets', () => {
+  const e = editor({ type: TYPE, preset: 'deye' });
+  const hint = { negative: e.ed.querySelector('#ed-bpol option[value="negative"]').textContent, positive: e.ed.querySelector('#ed-bpol option[value="positive"]').textContent };
+  for (const k of Object.keys(e.PRESETS)) {
+    const brand = e.PRESETS[k].label.split(' ')[0], pol = e.PRESETS[k].bat_polarity, other = pol === 'negative' ? 'positive' : 'negative';
+    assert.ok(!hint[other].includes(brand), `${brand} is listed under "${other}" but its preset is "${pol}"`);
+  }
+});
+
+test('editor: option values from YAML cannot inject markup', () => {
+  for (const k of ['shutdown_soc', 'battery_capacity', 'grid_threshold', 'font_size', 'mppt_scale', 'flow_size', 'inverter_name', 'extra1_name', 'solar']) {
+    const e = editor({ type: TYPE, preset: 'deye', [k]: '1"><b id="pwn">x</b><i a="' });
+    assert.equal(e.ed.querySelector('#pwn'), null, `markup from ${k} reached the editor`);
+  }
+});
+
+// ── Energy units ─────────────────────────────────────
+
+test('daily energy sensors in Wh / MWh are shown in kWh', () => {
+  const c = mount({ ...FULL, energy_chart: 'bottom', battery_chart: 'bottom' }, ok({
+    'sensor.d_sol': st(10500, 'Wh'), 'sensor.d_load': st(0.0081, 'MWh'), 'sensor.d_imp': st(1.2, 'kWh'), 'sensor.d_exp': st(3400, 'Wh'),
+    'sensor.d_chg': st(4000, 'Wh'), 'sensor.d_dis': { state: '2', attributes: {} },
+  }));
+  assert.match(c.$('ds'), /10\.5 kWh/);
+  assert.match(c.$('dl'), /8\.1 kWh/);
+  assert.match(c.$('dg'), /1\.2 kWh.*3\.4 kWh/);
+  assert.match(c.$('db'), /4\.0 kWh.*2\.0 kWh/);
+  assert.match(c.$('cvE'), /10\.5 kWh.*8\.1 kWh.*1\.2 kWh/, 'energy chart header');
+  assert.match(c.$('ckB'), /\+4\.0.*2\.0 kWh/, 'battery chart header');
+  noJunk(c.text(), 'energy units');
+  c.close();
+});
+
+// ── Translations ─────────────────────────────────────
+
+test('every language has the same card texts', () => {
+  const { LANG } = boot();
+  const en = Object.keys(LANG.en).sort();
+  for (const l of Object.keys(LANG)) assert.deepEqual(Object.keys(LANG[l]).sort(), en, `LANG.${l}`);
+});
+
+test('every entity field of the editor has a label in every language', () => {
+  const { LANG, EDL, FLBL, ENTITY_FIELDS } = boot();
+  const keys = Array.from(ENTITY_FIELDS, f => f.key);
+  assert.deepEqual(keys.filter(k => !FLBL[k]), [], 'fields without a translatable label');
+  for (const l of Object.keys(LANG)) {
+    if (l === 'en') continue; // English labels are the field defaults
+    assert.ok(EDL[l], `no editor labels for "${l}"`);
+    const e = editor({ type: TYPE, preset: 'deye', language: l });
+    for (const k of keys) {
+      const txt = e.field(k).parentElement.querySelector('label').textContent;
+      assert.doesNotMatch(txt, /undefined|NaN|^\s*$/, `${l}: label of ${k}`);
+      assert.equal(txt, FLBL[k](EDL[l]), `${l}: label of ${k} is not the translated one`);
+    }
+  }
 });

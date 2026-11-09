@@ -204,8 +204,8 @@ Shorthand aliases also work and map to the three slots: `appliance_power` → ex
 ### Polarity Guide
 
 **Battery power:**
-- `negative` = charging: Deye, Sunsynk, Growatt
-- `positive` = charging: Huawei, Fronius, SolarEdge, Victron, Solis
+- `negative` = charging: Deye, Sunsynk, Growatt, Solis
+- `positive` = charging: Huawei, Fronius, SolarEdge, Victron
 
 **Grid power:**
 - `positive` = importing: Deye, Sunsynk, Huawei, Fronius, Growatt, Victron, Solis
