@@ -1,3 +1,7 @@
+## v1.3.77
+
+- Fixed text in the diagram flickering between two heights in Chrome and Edge on Windows (#20): text is now drawn with geometric precision and the diagram is no longer forced onto its own compositing layer
+
 ## v1.3.76
 
 - Custom icons (#44): new options `grid_icon`, `load_icon` and `inverter_icon`, and `extra1_icon` … `extra6_icon` now also take a custom value. Use any Home Assistant icon (`mdi:transmission-tower`, `mdi:home`, …), drawn in the node's colour, or an image (`/local/icons/house.png`). Empty keeps the card's own icons

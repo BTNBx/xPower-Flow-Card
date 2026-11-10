@@ -1,13 +1,13 @@
 // xPower Flow Card — Modern power flow card for solar hybrid inverters
 // Copyright (C) 2025 BTNBx — MIT License
-const V='1.3.76';
+const V='1.3.77';
 
 /* ═══════════════════════════════════════
    CHANGELOG — full history in CHANGELOG.md
    ═══════════════════════════════════════
-## v1.3.76
+## v1.3.77
 
-- Custom icons (#44): new options `grid_icon`, `load_icon` and `inverter_icon`, and `extra1_icon` … `extra6_icon` now also take a custom value. Use any Home Assistant icon (`mdi:transmission-tower`, `mdi:home`, …), drawn in the node's colour, or an image (`/local/icons/house.png`). Empty keeps the card's own icons
+- Fixed text in the diagram flickering between two heights in Chrome and Edge on Windows (#20): text is now drawn with geometric precision and the diagram is no longer forced onto its own compositing layer
 */
 
 /* ═══════════════════════════════════════
@@ -1058,7 +1058,7 @@ svg{width:100%;height:auto;display:block}
 #au-s,#au-b,#au-g{transition:stroke-dasharray .6s cubic-bezier(.33,1,.68,1),stroke-dashoffset .6s cubic-bezier(.33,1,.68,1)}:host(.rm) #au-s,:host(.rm) #au-b,:host(.rm) #au-g{transition:none}
 .au-track{stroke:rgba(255,255,255,0.10)}
 :host(.light) .au-track{stroke:rgba(0,0,0,0.10)}
-#main{will-change:transform}.ct{cursor:pointer}.ct:hover{opacity:.85}
+#main text{text-rendering:geometricPrecision}.ct{cursor:pointer}.ct:hover{opacity:.85}
 
 
 .wt{fill:var(--t3);font-size:11px;font-weight:500;text-anchor:start;dominant-baseline:middle;font-family:-apple-system,sans-serif}
