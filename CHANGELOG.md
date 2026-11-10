@@ -1,3 +1,8 @@
+## v1.3.75
+
+- Up to 3 more extra consumers below the home (#28, #17): `extra4_power` … `extra6_power` with `_name` and `_icon`, branching down from the home the same way 1–3 branch up. One is drawn straight down, two left and right, three left / centre / right; when the EV node is set it keeps the centre and the extras use left and right
+- New `car` icon for the extra consumers (e.g. several EV chargers); extras 4–6 default to it
+
 ## v1.3.74
 
 - Separate AC/DC battery charger (#21): new options `charger_ac_power` and `charger_dc_power` (optional) add a charger node under the grid, with flows grid → charger → battery, AC power, and DC power with efficiency when the DC sensor is set

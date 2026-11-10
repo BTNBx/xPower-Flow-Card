@@ -1,14 +1,14 @@
 // xPower Flow Card — Modern power flow card for solar hybrid inverters
 // Copyright (C) 2025 BTNBx — MIT License
-const V='1.3.74';
+const V='1.3.75';
 
 /* ═══════════════════════════════════════
    CHANGELOG — full history in CHANGELOG.md
    ═══════════════════════════════════════
-## v1.3.74
+## v1.3.75
 
-- Separate AC/DC battery charger (#21): new options `charger_ac_power` and `charger_dc_power` (optional) add a charger node under the grid, with flows grid → charger → battery, AC power, and DC power with efficiency when the DC sensor is set
-- When the battery power sensor already includes the charger (shunt / BMS, the usual case on Victron), the charger's share is taken off the inverter ↔ battery line so it shows only the inverter; set `charger_in_battery: false` if the battery sensor measures the inverter only
+- Up to 3 more extra consumers below the home (#28, #17): `extra4_power` … `extra6_power` with `_name` and `_icon`, branching down from the home the same way 1–3 branch up. One is drawn straight down, two left and right, three left / centre / right; when the EV node is set it keeps the centre and the extras use left and right
+- New `car` icon for the extra consumers (e.g. several EV chargers); extras 4–6 default to it
 */
 
 /* ═══════════════════════════════════════
@@ -243,6 +243,9 @@ const DEFAULTS={
   extra1_power:'',extra1_name:'',extra1_icon:'appliance',
   extra2_power:'',extra2_name:'',extra2_icon:'heatpump',
   extra3_power:'',extra3_name:'',extra3_icon:'garage',
+  extra4_power:'',extra4_name:'',extra4_icon:'car',
+  extra5_power:'',extra5_name:'',extra5_icon:'car',
+  extra6_power:'',extra6_name:'',extra6_icon:'car',
   import_cost:'',export_cost:'',
   compact:false,energy_chart:'bottom',battery_chart:'off',solar_forecast:true,
   theme:'auto',
@@ -283,6 +286,9 @@ const ENTITY_FIELDS=[
   {key:'extra1_power',label:'Extra Consumer 1 Power (optional)'},
   {key:'extra2_power',label:'Extra Consumer 2 Power (optional)'},
   {key:'extra3_power',label:'Extra Consumer 3 Power (optional)'},
+  {key:'extra4_power',label:'Extra Consumer 4 Power (below home, optional)'},
+  {key:'extra5_power',label:'Extra Consumer 5 Power (below home, optional)'},
+  {key:'extra6_power',label:'Extra Consumer 6 Power (below home, optional)'},
   {key:'import_cost',label:'Daily Import Cost'},{key:'export_cost',label:'Daily Export Earnings'}
 ];
 const ENT_KEYS=ENTITY_FIELDS.map(f=>f.key);
@@ -316,7 +322,7 @@ w:WXW(254,44,1.3),
 wv:WXA(WCL('translate(0 -4)','M24 34h20a7 7 0 0 0 0-14a10 10 0 0 0-19-2.3a8 8 0 0 0-1 16.3z')+'<g fill="none" stroke="#64D2FF" stroke-width="2.6" stroke-linecap="round"><path class="wxa wxwi" d="M10 40h30a5 5 0 1 0-5-5"/><path class="wxa wxwi" style="animation-delay:.6s" d="M14 48h34a5 5 0 1 1-5 5"/></g>'),
 x:WXA('<g class="wxa wxpu"><path d="M32 12L55 52H9z" fill="#FF9F0A" stroke="#FF9F0A" stroke-width="5" stroke-linejoin="round"/><rect x="29.5" y="25" width="5" height="15" rx="2.5" fill="#1c1c1e"/><circle cx="32" cy="46" r="3" fill="#1c1c1e"/></g>')};
 const WXN=WST(275,15,4.5,0)+WST(284,29,3,1.2);
-const FLBL={solar:t=>t.ps+' (MPPT1)',solar2:t=>t.ps+' (MPPT2)',solar3:t=>t.ps+' (MPPT3)',battery:t=>t.pb,battery_charge:t=>t.pbc+' '+t.sp,battery_discharge:t=>t.pbd+' '+t.sp,soc:t=>t.sc,grid:t=>t.pg,load:t=>t.pl,grid_voltage:t=>t.vg+' (L1)',grid_voltage_l2:t=>t.vg+' L2 '+t.op,grid_voltage_l3:t=>t.vg+' L3 '+t.op,battery_voltage:t=>t.vb,reserve_entity:t=>(t&&t.rsv)||'Backup Reserve SOC (optional)',temperature:t=>t.ti,battery_temperature:t=>t.tb,frequency:t=>t.fq,grid_status:t=>t.gs,pv_voltage:t=>t.vp+' (MPPT1)',pv_voltage2:t=>t.vp+' (MPPT2)',pv_voltage3:t=>t.vp+' (MPPT3)',sun_entity:t=>(t&&t.sun)||'Sun Entity (solar ring)',daily_solar:t=>t.dso,daily_import:t=>t.dim,daily_export:t=>t.dex,daily_load:t=>t.dlo,daily_charge:t=>t.dch,daily_discharge:t=>t.ddi,weather_entity:t=>(t&&t.wx)||'Weather Entity (sun icon)',weather_temp:t=>t.wt,weather_humidity:t=>t.wh,charger_ac_power:t=>t.chg+' AC '+t.op,charger_dc_power:t=>t.chg+' DC '+t.op,ev_power:t=>t.evp+' '+t.op,ev_soc:t=>t.evs+' '+t.op,daily_ev:t=>t.evd+' '+t.op,import_cost:t=>t.cim,export_cost:t=>t.cex,price_sensor:t=>t.pr+' '+t.op,extra1_power:t=>t.exc+' 1 '+t.op,extra2_power:t=>t.exc+' 2 '+t.op,extra3_power:t=>t.exc+' 3 '+t.op};
+const FLBL={solar:t=>t.ps+' (MPPT1)',solar2:t=>t.ps+' (MPPT2)',solar3:t=>t.ps+' (MPPT3)',battery:t=>t.pb,battery_charge:t=>t.pbc+' '+t.sp,battery_discharge:t=>t.pbd+' '+t.sp,soc:t=>t.sc,grid:t=>t.pg,load:t=>t.pl,grid_voltage:t=>t.vg+' (L1)',grid_voltage_l2:t=>t.vg+' L2 '+t.op,grid_voltage_l3:t=>t.vg+' L3 '+t.op,battery_voltage:t=>t.vb,reserve_entity:t=>(t&&t.rsv)||'Backup Reserve SOC (optional)',temperature:t=>t.ti,battery_temperature:t=>t.tb,frequency:t=>t.fq,grid_status:t=>t.gs,pv_voltage:t=>t.vp+' (MPPT1)',pv_voltage2:t=>t.vp+' (MPPT2)',pv_voltage3:t=>t.vp+' (MPPT3)',sun_entity:t=>(t&&t.sun)||'Sun Entity (solar ring)',daily_solar:t=>t.dso,daily_import:t=>t.dim,daily_export:t=>t.dex,daily_load:t=>t.dlo,daily_charge:t=>t.dch,daily_discharge:t=>t.ddi,weather_entity:t=>(t&&t.wx)||'Weather Entity (sun icon)',weather_temp:t=>t.wt,weather_humidity:t=>t.wh,charger_ac_power:t=>t.chg+' AC '+t.op,charger_dc_power:t=>t.chg+' DC '+t.op,ev_power:t=>t.evp+' '+t.op,ev_soc:t=>t.evs+' '+t.op,daily_ev:t=>t.evd+' '+t.op,import_cost:t=>t.cim,export_cost:t=>t.cex,price_sensor:t=>t.pr+' '+t.op,extra1_power:t=>t.exc+' 1 '+t.op,extra2_power:t=>t.exc+' 2 '+t.op,extra3_power:t=>t.exc+' 3 '+t.op,extra4_power:t=>t.exc+' 4 \u2193 '+t.op,extra5_power:t=>t.exc+' 5 \u2193 '+t.op,extra6_power:t=>t.exc+' 6 \u2193 '+t.op};
 const EDL={"pt":{"chg":"Pot\u00eancia Carregador Bateria","rsv":"Reserva Backup SOC (opcional)","wx":"Entidade Meteo (\u00edcone sol)","ps":"Pot\u00eancia Solar","pb":"Pot\u00eancia Bateria","pbc":"Pot\u00eancia Carga Bat.","pbd":"Pot\u00eancia Descarga Bat.","sc":"SOC Bateria","pg":"Pot\u00eancia Rede","pl":"Pot\u00eancia Consumo","vg":"Tens\u00e3o Rede","vb":"Tens\u00e3o Bateria","vp":"Tens\u00e3o PV","sun":"Entidade Sol (anel solar)","ti":"Temp. Inversor","tb":"Temp. Bateria","fq":"Frequ\u00eancia Rede","gs":"Estado Rede","dso":"Solar Di\u00e1rio","dim":"Importa\u00e7\u00e3o Di\u00e1ria","dex":"Exporta\u00e7\u00e3o Di\u00e1ria","dlo":"Consumo Di\u00e1rio","dch":"Carga Di\u00e1ria","ddi":"Descarga Di\u00e1ria","wt":"Temp. Exterior","wh":"Humidade","evp":"Pot\u00eancia Carregador EV","evs":"SOC EV","evd":"Energia EV Di\u00e1ria","cim":"Custo Importa\u00e7\u00e3o Di\u00e1rio","cex":"Ganhos Exporta\u00e7\u00e3o Di\u00e1rios","op":"(opcional)","sp":"(separado, opcional)","pr":"Pre\u00e7o Eletricidade","exc":"Pot\u00eancia Consumo Extra"},"sv":{"chg":"Effekt batteriladdare","rsv":"Reserv-SOC f\u00f6r backup (valfritt)","wx":"V\u00e4derentitet (solikon)","ps":"Solcellseffekt","pb":"Batterieffekt","pbc":"Laddeffekt bat.","pbd":"Urladdningseffekt bat.","sc":"Batteri-SOC","pg":"N\u00e4teffekt","pl":"F\u00f6rbrukningseffekt","vg":"N\u00e4tsp\u00e4nning","vb":"Batterisp\u00e4nning","vp":"PV-sp\u00e4nning","sun":"Solentitet (solring)","ti":"V\u00e4xelriktartemp.","tb":"Batteritemp.","fq":"N\u00e4tfrekvens","gs":"N\u00e4tstatus","dso":"Daglig solproduktion","dim":"Daglig import","dex":"Daglig export","dlo":"Daglig f\u00f6rbrukning","dch":"Daglig laddning","ddi":"Daglig urladdning","wt":"Utetemp.","wh":"Luftfuktighet","evp":"Laddeffekt elbil","evs":"Elbil-SOC","evd":"Daglig elbilsenergi","cim":"Daglig importkostnad","cex":"Daglig exportint\u00e4kt","op":"(valfritt)","sp":"(separat, valfritt)","pr":"Elpris","exc":"Effekt extra f\u00f6rbrukare"},"de":{"chg":"Leistung Batterieladeger\u00e4t","rsv":"Backup-Reserve SOC (optional)","wx":"Wetter-Entit\u00e4t (Sonnensymbol)","ps":"Solarleistung","pb":"Batterieleistung","pbc":"Ladeleistung Bat.","pbd":"Entladeleistung Bat.","sc":"Batterie-SOC","pg":"Netzleistung","pl":"Verbrauchsleistung","vg":"Netzspannung","vb":"Batteriespannung","vp":"PV-Spannung","sun":"Sonnen-Entit\u00e4t (Ring)","ti":"WR-Temp.","tb":"Bat.-Temp.","fq":"Netzfrequenz","gs":"Netzstatus","dso":"Tagesertrag Solar","dim":"Tagesimport","dex":"Tagesexport","dlo":"Tagesverbrauch","dch":"Tagesladung","ddi":"Tagesentladung","wt":"Au\u00dfentemp.","wh":"Luftfeuchte","evp":"EV-Ladeleistung","evs":"EV-SOC","evd":"EV-Tagesenergie","cim":"T\u00e4gl. Importkosten","cex":"T\u00e4gl. Exporterl\u00f6s","op":"(optional)","sp":"(getrennt, optional)","pr":"Strompreis","exc":"Leistung Zusatzverbraucher"},"fr":{"chg":"Puissance chargeur batterie","rsv":"R\u00e9serve de secours SOC (optionnel)","wx":"Entit\u00e9 m\u00e9t\u00e9o (ic\u00f4ne soleil)","ps":"Puissance solaire","pb":"Puissance batterie","pbc":"Puissance charge bat.","pbd":"Puissance d\u00e9charge bat.","sc":"SOC batterie","pg":"Puissance r\u00e9seau","pl":"Puissance conso.","vg":"Tension r\u00e9seau","vb":"Tension batterie","vp":"Tension PV","sun":"Entit\u00e9 soleil (anneau)","ti":"Temp. onduleur","tb":"Temp. batterie","fq":"Fr\u00e9quence r\u00e9seau","gs":"\u00c9tat r\u00e9seau","dso":"Solaire journalier","dim":"Import journalier","dex":"Export journalier","dlo":"Conso. journali\u00e8re","dch":"Charge journali\u00e8re","ddi":"D\u00e9charge journali\u00e8re","wt":"Temp. ext.","wh":"Humidit\u00e9","evp":"Puissance chargeur VE","evs":"SOC VE","evd":"\u00c9nergie VE journali\u00e8re","cim":"Co\u00fbt import journalier","cex":"Gains export journaliers","op":"(optionnel)","sp":"(s\u00e9par\u00e9, optionnel)","pr":"Prix \u00e9lectricit\u00e9","exc":"Puissance conso. suppl\u00e9mentaire"},"es":{"chg":"Potencia cargador bater\u00eda","rsv":"Reserva de respaldo SOC (opcional)","wx":"Entidad tiempo (icono sol)","ps":"Potencia solar","pb":"Potencia bater\u00eda","pbc":"Potencia carga bat.","pbd":"Potencia descarga bat.","sc":"SOC bater\u00eda","pg":"Potencia red","pl":"Potencia consumo","vg":"Tensi\u00f3n red","vb":"Tensi\u00f3n bater\u00eda","vp":"Tensi\u00f3n PV","sun":"Entidad sol (anillo)","ti":"Temp. inversor","tb":"Temp. bater\u00eda","fq":"Frecuencia red","gs":"Estado red","dso":"Solar diario","dim":"Importaci\u00f3n diaria","dex":"Exportaci\u00f3n diaria","dlo":"Consumo diario","dch":"Carga diaria","ddi":"Descarga diaria","wt":"Temp. exterior","wh":"Humedad","evp":"Potencia cargador VE","evs":"SOC VE","evd":"Energ\u00eda VE diaria","cim":"Coste importaci\u00f3n diario","cex":"Ganancias exportaci\u00f3n diarias","op":"(opcional)","sp":"(separado, opcional)","pr":"Precio electricidad","exc":"Potencia consumo extra"},"it":{"chg":"Potenza caricabatterie","rsv":"Riserva backup SOC (opzionale)","wx":"Entit\u00e0 meteo (icona sole)","ps":"Potenza solare","pb":"Potenza batteria","pbc":"Potenza carica bat.","pbd":"Potenza scarica bat.","sc":"SOC batteria","pg":"Potenza rete","pl":"Potenza consumo","vg":"Tensione rete","vb":"Tensione batteria","vp":"Tensione PV","sun":"Entit\u00e0 sole (anello)","ti":"Temp. inverter","tb":"Temp. batteria","fq":"Frequenza rete","gs":"Stato rete","dso":"Solare giornaliero","dim":"Import giornaliero","dex":"Export giornaliero","dlo":"Consumo giornaliero","dch":"Carica giornaliera","ddi":"Scarica giornaliera","wt":"Temp. esterna","wh":"Umidit\u00e0","evp":"Potenza caricatore EV","evs":"SOC EV","evd":"Energia EV giornaliera","cim":"Costo import giornaliero","cex":"Guadagni export giornalieri","op":"(opzionale)","sp":"(separato, opzionale)","pr":"Prezzo elettricit\u00e0","exc":"Potenza consumo extra"},"nl":{"chg":"Vermogen batterijlader","rsv":"Back-upreserve SOC (optioneel)","wx":"Weer-entiteit (zonicoon)","ps":"Zonnevermogen","pb":"Batterijvermogen","pbc":"Laadvermogen bat.","pbd":"Ontlaadvermogen bat.","sc":"Batterij-SOC","pg":"Netvermogen","pl":"Verbruiksvermogen","vg":"Netspanning","vb":"Batterijspanning","vp":"PV-spanning","sun":"Zon-entiteit (ring)","ti":"Omvormer temp.","tb":"Batterij temp.","fq":"Netfrequentie","gs":"Netstatus","dso":"Dagelijks zonne","dim":"Dagelijkse import","dex":"Dagelijkse export","dlo":"Dagelijks verbruik","dch":"Dagelijkse lading","ddi":"Dagelijkse ontlading","wt":"Buitentemp.","wh":"Vochtigheid","evp":"EV-laadvermogen","evs":"EV-SOC","evd":"Dagelijkse EV-energie","cim":"Dagelijkse importkosten","cex":"Dagelijkse exportopbrengst","op":"(optioneel)","sp":"(gescheiden, optioneel)","pr":"Stroomprijs","exc":"Vermogen extra verbruiker"},"pl":{"chg":"Moc \u0142adowarki baterii","rsv":"Rezerwa awaryjna SOC (opcjonalnie)","wx":"Encja pogody (ikona s\u0142o\u0144ca)","ps":"Moc PV","pb":"Moc baterii","pbc":"Moc \u0142adowania bat.","pbd":"Moc roz\u0142adowania bat.","sc":"SOC baterii","pg":"Moc sieci","pl":"Moc obci\u0105\u017cenia","vg":"Napi\u0119cie sieci","vb":"Napi\u0119cie baterii","vp":"Napi\u0119cie PV","sun":"Encja s\u0142o\u0144ca (pier\u015bcie\u0144)","ti":"Temp. falownika","tb":"Temp. baterii","fq":"Cz\u0119stotliwo\u015b\u0107 sieci","gs":"Stan sieci","dso":"Dzienny solar","dim":"Dzienny import","dex":"Dzienny eksport","dlo":"Dzienne zu\u017cycie","dch":"Dzienne \u0142adowanie","ddi":"Dzienne roz\u0142adowanie","wt":"Temp. zewn.","wh":"Wilgotno\u015b\u0107","evp":"Moc \u0142adowarki EV","evs":"SOC EV","evd":"Dzienna energia EV","cim":"Dzienny koszt importu","cex":"Dzienny zysk z eksportu","op":"(opcjonalnie)","sp":"(osobno, opcjonalnie)","pr":"Cena energii","exc":"Moc dodatkowego odbiornika"}};
 
 const _lk=(l,h)=>{const k=l||String(h?.locale?.language||h?.language||'en').toLowerCase().slice(0,2);return LANG[k]?k:'en';};
@@ -377,6 +383,7 @@ class XPowerFlowCardEditor extends HTMLElement{
     cfg.extra2_icon=this.querySelector('#ed-ex2icon').value;
     cfg.extra3_name=this.querySelector('#ed-ex3name').value;
     cfg.extra3_icon=this.querySelector('#ed-ex3icon').value;
+    for(const k of [4,5,6]){cfg['extra'+k+'_name']=this.querySelector('#ed-ex'+k+'name').value;cfg['extra'+k+'_icon']=this.querySelector('#ed-ex'+k+'icon').value;}
     cfg.theme=this.querySelector('#ed-theme').value;
     cfg.compact=this.querySelector('#ed-compact').value==='true';
     cfg.energy_chart=this.querySelector('#ed-ech').value;
@@ -693,6 +700,7 @@ class XPowerFlowCardEditor extends HTMLElement{
             <option value="appliance" ${c.extra1_icon==='appliance'?'selected':''}>Appliances</option>
             <option value="heatpump" ${c.extra1_icon==='heatpump'?'selected':''}>Heat Pump</option>
             <option value="garage" ${c.extra1_icon==='garage'?'selected':''}>Garage/Shed</option>
+            <option value="car" ${c.extra1_icon==='car'?'selected':''}>Car / EV charger</option>
             <option value="generic" ${c.extra1_icon==='generic'?'selected':''}>Generic</option>
           </select>
         </div>
@@ -708,6 +716,7 @@ class XPowerFlowCardEditor extends HTMLElement{
             <option value="appliance" ${c.extra2_icon==='appliance'?'selected':''}>Appliances</option>
             <option value="heatpump" ${c.extra2_icon==='heatpump'?'selected':''}>Heat Pump</option>
             <option value="garage" ${c.extra2_icon==='garage'?'selected':''}>Garage/Shed</option>
+            <option value="car" ${c.extra2_icon==='car'?'selected':''}>Car / EV charger</option>
             <option value="generic" ${c.extra2_icon==='generic'?'selected':''}>Generic</option>
           </select>
         </div>
@@ -723,7 +732,56 @@ class XPowerFlowCardEditor extends HTMLElement{
             <option value="appliance" ${c.extra3_icon==='appliance'?'selected':''}>Appliances</option>
             <option value="heatpump" ${c.extra3_icon==='heatpump'?'selected':''}>Heat Pump</option>
             <option value="garage" ${c.extra3_icon==='garage'?'selected':''}>Garage/Shed</option>
+            <option value="car" ${c.extra3_icon==='car'?'selected':''}>Car / EV charger</option>
             <option value="generic" ${c.extra3_icon==='generic'?'selected':''}>Generic</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>Extra Consumer 4 (below): Name</label>
+          <input type="text" id="ed-ex4name" value="${this._esc(c.extra4_name)}" placeholder="Auto">
+        </div>
+        <div class="field">
+          <label>Extra Consumer 4 (below): Icon</label>
+          <select id="ed-ex4icon" style="${selStyle}">
+            <option value="appliance" ${c.extra4_icon==='appliance'?'selected':''}>Appliances</option>
+            <option value="heatpump" ${c.extra4_icon==='heatpump'?'selected':''}>Heat Pump</option>
+            <option value="garage" ${c.extra4_icon==='garage'?'selected':''}>Garage/Shed</option>
+            <option value="car" ${c.extra4_icon==='car'?'selected':''}>Car / EV charger</option>
+            <option value="generic" ${c.extra4_icon==='generic'?'selected':''}>Generic</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>Extra Consumer 5 (below): Name</label>
+          <input type="text" id="ed-ex5name" value="${this._esc(c.extra5_name)}" placeholder="Auto">
+        </div>
+        <div class="field">
+          <label>Extra Consumer 5 (below): Icon</label>
+          <select id="ed-ex5icon" style="${selStyle}">
+            <option value="appliance" ${c.extra5_icon==='appliance'?'selected':''}>Appliances</option>
+            <option value="heatpump" ${c.extra5_icon==='heatpump'?'selected':''}>Heat Pump</option>
+            <option value="garage" ${c.extra5_icon==='garage'?'selected':''}>Garage/Shed</option>
+            <option value="car" ${c.extra5_icon==='car'?'selected':''}>Car / EV charger</option>
+            <option value="generic" ${c.extra5_icon==='generic'?'selected':''}>Generic</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>Extra Consumer 6 (below): Name</label>
+          <input type="text" id="ed-ex6name" value="${this._esc(c.extra6_name)}" placeholder="Auto">
+        </div>
+        <div class="field">
+          <label>Extra Consumer 6 (below): Icon</label>
+          <select id="ed-ex6icon" style="${selStyle}">
+            <option value="appliance" ${c.extra6_icon==='appliance'?'selected':''}>Appliances</option>
+            <option value="heatpump" ${c.extra6_icon==='heatpump'?'selected':''}>Heat Pump</option>
+            <option value="garage" ${c.extra6_icon==='garage'?'selected':''}>Garage/Shed</option>
+            <option value="car" ${c.extra6_icon==='car'?'selected':''}>Car / EV charger</option>
+            <option value="generic" ${c.extra6_icon==='generic'?'selected':''}>Generic</option>
           </select>
         </div>
       </div>
@@ -746,6 +804,8 @@ class XPowerFlowCardEditor extends HTMLElement{
 // Guarded: the file can be loaded twice (e.g. HACS resource + a manual /local copy) and a second define() throws
 if(!customElements.get('xpower-flow-card-editor'))customElements.define('xpower-flow-card-editor',XPowerFlowCardEditor);
 
+// Icons of the extra consumer nodes (one shown per node, picked by data-t)
+const XICO=`<g data-t="appliance" style="display:none"><rect x="-9" y="-10" width="18" height="20" rx="2" fill="var(--load)" opacity="0.6"/><circle cx="0" cy="2" r="6" fill="none" stroke="var(--load)" stroke-width="1.4" opacity="0.9"/><circle cx="0" cy="2" r="3" fill="var(--load)" opacity="0.4"/><rect x="-6" y="-8" width="4" height="2" rx="0.5" fill="var(--load)" opacity="0.5"/><circle cx="-6.5" cy="-8" r="0.9" fill="var(--load)" opacity="0.8"/></g>\n<g data-t="heatpump" style="display:none"><rect x="-10" y="-7" width="20" height="14" rx="2" fill="var(--load)" opacity="0.6"/><circle cx="0" cy="0" r="5" fill="none" stroke="var(--load)" stroke-width="1.1" opacity="0.9"/><line x1="0" y1="-5" x2="0" y2="5" stroke="var(--load)" stroke-width="1" opacity="0.7"/><line x1="-5" y1="0" x2="5" y2="0" stroke="var(--load)" stroke-width="1" opacity="0.7"/></g>\n<g data-t="garage" style="display:none"><path d="M-11,-2 L0,-11 L11,-2 Z" fill="var(--load)" opacity="0.8"/><rect x="-9" y="-2" width="18" height="12" rx="1" fill="var(--load)" opacity="0.6"/><line x1="-9" y1="1" x2="9" y2="1" stroke="rgba(0,0,0,0.3)" stroke-width="0.8"/><line x1="-9" y1="4" x2="9" y2="4" stroke="rgba(0,0,0,0.3)" stroke-width="0.8"/><line x1="-9" y1="7" x2="9" y2="7" stroke="rgba(0,0,0,0.3)" stroke-width="0.8"/></g>\n<g data-t="generic" style="display:none"><path d="M1,-10 L-7,3 L-1,3 L-3,10 L8,-3 L2,-3 Z" fill="var(--load)" opacity="0.8"/></g>\n<g data-t="car" style="display:none"><path d="M-11,3.5 Q-11,0 -7.5,-0.8 L-4.5,-5.6 Q-3.6,-6.8 -1.8,-6.8 L3.8,-6.8 Q5.8,-6.8 7,-5 L9.2,-1 Q11,-0.2 11,2.6 L11,3.6 Q11,5 9.6,5 L-9.6,5 Q-11,5 -11,3.5 Z" fill="var(--load)" opacity="0.75"/><path d="M-3.4,-5.2 L-1,-5.2 L-1,-1.4 L-5.6,-1.4 Z M0.6,-5.2 L3.6,-5.2 Q4.6,-5.2 5.2,-4.3 L6.8,-1.4 L0.6,-1.4 Z" fill="rgba(0,0,0,0.35)"/><circle cx="-5.6" cy="5" r="2.7" fill="rgba(0,0,0,0.55)"/><circle cx="5.6" cy="5" r="2.7" fill="rgba(0,0,0,0.55)"/><circle cx="-5.6" cy="5" r="1.1" fill="rgba(255,255,255,0.35)"/><circle cx="5.6" cy="5" r="1.1" fill="rgba(255,255,255,0.35)"/></g>`;
 class XPowerFlowCard extends HTMLElement{
 constructor(){super();this.attachShadow({mode:'open'});this._c={};this._h=null;this._prev={solar:0,bat:0,grid:0,load:0};this._hist={solar:[],load:[],grid:[],battery:[]};this._fs={};this._histTimer=null;this._histLastLoad=0;this._histLoading=false;this._syncSpd=0;this._resync=false;this._rafId=null;this._twv={};this._twq={};this._twRaf=null;this._entList=[];this._srKey='';this._rm=!!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);this._mq=window.matchMedia?window.matchMedia('(prefers-color-scheme: light)'):null;this._onMq=()=>this._applyTheme();this._mwc=new Map();this._io=null;this._ro=null;this._ringKey='';this._auT=null;this._srT=null;this._vis=true;this._srTk=null;this._srLit=-1;this._onVis=()=>{if(!document.hidden&&this._h){this._histLastLoad=0;this._schedule();}};}
 
@@ -904,7 +964,10 @@ this._drawSparks();}catch(e){console.warn('xPower history:',e);}finally{this._hi
 
 // Without solar the top of the diagram is cropped: T = first visible row (inner coordinates), pills move down to it
 _lay(){const c=this._c;if(!this._ns)return {y:-8,h:478,w:'translate(-20,0)',p:'translate(-20,26)'};const d=c.detail,hW=d!=='essential'&&!!(c.weather_temp||c.weather_humidity||c.weather_entity),hP=d!=='essential'&&d!=='normal'&&!!c.price_sensor;let T=c.extra2_power?66:(c.extra1_power||c.extra3_power)?126:176;if(hW||hP)T=Math.min(T,150);const y=+(10+0.95*T).toFixed(1);return {y,h:+(470-y).toFixed(1),w:'translate(-20,'+(T+6)+')',p:'translate('+(hW?72:-20)+','+(T+6)+')'};}
-_render(){const LY=this._lay();this._cfhSp=0;const CHV=this._c.flow_style!=='comet'&&!!(window.CSS&&CSS.supports&&CSS.supports('offset-path',"path('M0,0 L1,1')")),FZ=Math.min(2.5,Math.max(0.5,Number(this._c.flow_size)||0.7)),CSP=Math.max(6,13*FZ),CA=(3*FZ).toFixed(2),CB=(4*FZ).toFixed(2),CC=(2*FZ).toFixed(2);this._chv=CHV;const CV=(id,d)=>{if(!CHV)return '';const p=d.match(/-?[\d.]+/g).map(Number);let len=0;for(let i=2;i<p.length;i+=2)len+=Math.hypot(p[i]-p[i-2],p[i+1]-p[i-1]);const n=Math.max(2,Math.round(len/CSP));let o='<g id="c'+id+'" class="cvg" opacity="0">';for(let i=0;i<n;i++)o+='<path class="cv" d="M-'+CA+',-'+CB+' L'+CC+',0 L-'+CA+','+CB+'" style="offset-path:path(\''+d+'\');offset-distance:'+((i+0.5)/n*100).toFixed(1)+'%;animation-delay:calc(var(--spd,3s) * -'+(i/n).toFixed(3)+')"/>';return o+'</g>';};const FL=Math.min(80,Math.max(10,Number(this._c.flow_length)||60)),FP=100+FL,HL=FL,HP=FP;this._fl=FL;this._fp=FP;this._hl=HL;this._hp=HP;this._elc={};this._fsp={};this._fs={};this._wxKey='';this._hmN=undefined;this._syncSpd=0;this._ringKey='';this._mwc=new Map();this._srTk=null;this._srLit=-1;this._srKey='';const L=this._lang;const FSZ=(n=>n>0&&n<=200?n:24)(parseFloat(this._c.font_size));const INV=String(this._c.inverter_name||'').replace(/[<>&]/g,m=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[m]));const s=this.shadowRoot;s.innerHTML=`<style>
+// Extra consumers 4-6 branch down from the home, mirroring 1-3 above it. Slots: left / centre / right; the EV node keeps the centre when set
+_xdSlots(){const c=this._c,n=[4,5,6].filter(k=>c['extra'+k+'_power']);const ev=!!(c.ev_power||c.ev_soc);const pos=ev?['L','R']:n.length===1?['C']:n.length===2?['L','R']:['L','C','R'];const o={};n.forEach((k,i)=>{if(pos[i])o[k]=pos[i];});return o;}
+_xdown(){const S=this._xdSlots();let o='';for(const k in S){const P=S[k],d=P==='L'?'M434,304 L434,338 L381,338':P==='R'?'M434,304 L434,338 L487,338':'M434,304 L434,388',x=P==='L'?369:P==='R'?499:434,iy=P==='C'?400:338,ly=P==='C'?424:316,val=P==='C'?'<text x="410" y="400" style="fill:var(--load);font-size:13px;font-weight:600;text-anchor:end;dominant-baseline:middle" id="ex'+k+'val"></text>':'<text x="'+x+'" y="361" class="vm" style="fill:var(--load);font-size:13px" id="ex'+k+'val"></text>';o+='<g id="nExtra'+k+'" class="ct" style="display:none"><path class="fl" d="'+d+'"/><path id="fex'+k+'" class="fa" d="'+d+'" pathLength="100" opacity="0"/>'+(this._cv?this._cv('fex'+k,d):'')+'<text x="'+x+'" y="'+ly+'" class="vl" id="ex'+k+'lbl" font-size="8"></text><g id="ex'+k+'Icon" transform="translate('+x+','+iy+') scale(1.05)">'+XICO+'</g>'+val+'</g>';}return o;}
+_render(){const LY=this._lay();this._cfhSp=0;const CHV=this._c.flow_style!=='comet'&&!!(window.CSS&&CSS.supports&&CSS.supports('offset-path',"path('M0,0 L1,1')")),FZ=Math.min(2.5,Math.max(0.5,Number(this._c.flow_size)||0.7)),CSP=Math.max(6,13*FZ),CA=(3*FZ).toFixed(2),CB=(4*FZ).toFixed(2),CC=(2*FZ).toFixed(2);this._chv=CHV;const CV=this._cv=(id,d)=>{if(!CHV)return '';const p=d.match(/-?[\d.]+/g).map(Number);let len=0;for(let i=2;i<p.length;i+=2)len+=Math.hypot(p[i]-p[i-2],p[i+1]-p[i-1]);const n=Math.max(2,Math.round(len/CSP));let o='<g id="c'+id+'" class="cvg" opacity="0">';for(let i=0;i<n;i++)o+='<path class="cv" d="M-'+CA+',-'+CB+' L'+CC+',0 L-'+CA+','+CB+'" style="offset-path:path(\''+d+'\');offset-distance:'+((i+0.5)/n*100).toFixed(1)+'%;animation-delay:calc(var(--spd,3s) * -'+(i/n).toFixed(3)+')"/>';return o+'</g>';};const FL=Math.min(80,Math.max(10,Number(this._c.flow_length)||60)),FP=100+FL,HL=FL,HP=FP;this._fl=FL;this._fp=FP;this._hl=HL;this._hp=HP;this._elc={};this._fsp={};this._fs={};this._wxKey='';this._hmN=undefined;this._syncSpd=0;this._ringKey='';this._mwc=new Map();this._srTk=null;this._srLit=-1;this._srKey='';const L=this._lang;const FSZ=(n=>n>0&&n<=200?n:24)(parseFloat(this._c.font_size));const INV=String(this._c.inverter_name||'').replace(/[<>&]/g,m=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[m]));const s=this.shadowRoot;s.innerHTML=`<style>
 :host{--solar:var(--xpf-solar,#FFB300);--battery:var(--xpf-battery,#7C4DFF);--grid:var(--xpf-grid,#42A5F5);--load:var(--xpf-load,#26C6DA);--green:var(--xpf-green,#66BB6A);--red:var(--xpf-red,#EF5350);--orange:var(--xpf-orange,#FFA726);--t1:var(--xpf-text,rgba(255,255,255,0.92));--t3:var(--xpf-text-secondary,rgba(255,255,255,0.45));--xpf-r:var(--xpf-radius,20px);--xpf-vm-size:var(--xpf-font-size,${FSZ}px);--mps:var(--xpf-mppt-scale,${Math.min(1.6,Math.max(0.8,Number(this._c.mppt_scale)||1))});--flow-w:var(--xpf-flow-width,3);--fw:var(--xpf-frame-width,1px);--fo:var(--xpf-frame-opacity,0.7);--batf:#fff;--batn:#111;--batt:rgba(255,255,255,0.22);--batb:#c3c7cc;--batbg:rgba(255,255,255,0.08)}
 :host(.light){--t1:var(--xpf-text,rgba(0,0,0,0.85));--t3:var(--xpf-text-secondary,rgba(0,0,0,0.45));--batf:rgba(0,0,0,0.85);--batn:#fff;--batt:rgba(0,0,0,0.12);--batb:#7c8189;--batbg:rgba(0,0,0,0.06)}
 :host(.light) ha-card{background:var(--xpf-bg,rgba(255,255,255,0.92))}
@@ -1001,10 +1064,7 @@ ${this._ns?'#nSolar,#flS,#fs,#cfs,#as,#aubadge{display:none !important}':''}
 <path id="fex1" class="fa" d="M434,204 L434,160 L381,160" pathLength="100" opacity="0"/>${CV('fex1','M434,204 L434,160 L381,160')}
 <text x="369" y="138" class="vl" id="ex1lbl" font-size="8"></text>
 <g id="ex1Icon" transform="translate(369,160) scale(1.05)">
-<g data-t="appliance" style="display:none"><rect x="-9" y="-10" width="18" height="20" rx="2" fill="var(--load)" opacity="0.6"/><circle cx="0" cy="2" r="6" fill="none" stroke="var(--load)" stroke-width="1.4" opacity="0.9"/><circle cx="0" cy="2" r="3" fill="var(--load)" opacity="0.4"/><rect x="-6" y="-8" width="4" height="2" rx="0.5" fill="var(--load)" opacity="0.5"/><circle cx="-6.5" cy="-8" r="0.9" fill="var(--load)" opacity="0.8"/></g>
-<g data-t="heatpump" style="display:none"><rect x="-10" y="-7" width="20" height="14" rx="2" fill="var(--load)" opacity="0.6"/><circle cx="0" cy="0" r="5" fill="none" stroke="var(--load)" stroke-width="1.1" opacity="0.9"/><line x1="0" y1="-5" x2="0" y2="5" stroke="var(--load)" stroke-width="1" opacity="0.7"/><line x1="-5" y1="0" x2="5" y2="0" stroke="var(--load)" stroke-width="1" opacity="0.7"/></g>
-<g data-t="garage" style="display:none"><path d="M-11,-2 L0,-11 L11,-2 Z" fill="var(--load)" opacity="0.8"/><rect x="-9" y="-2" width="18" height="12" rx="1" fill="var(--load)" opacity="0.6"/><line x1="-9" y1="1" x2="9" y2="1" stroke="rgba(0,0,0,0.3)" stroke-width="0.8"/><line x1="-9" y1="4" x2="9" y2="4" stroke="rgba(0,0,0,0.3)" stroke-width="0.8"/><line x1="-9" y1="7" x2="9" y2="7" stroke="rgba(0,0,0,0.3)" stroke-width="0.8"/></g>
-<g data-t="generic" style="display:none"><path d="M1,-10 L-7,3 L-1,3 L-3,10 L8,-3 L2,-3 Z" fill="var(--load)" opacity="0.8"/></g>
+${XICO}
 </g>
 <text x="369" y="183" class="vm" style="fill:var(--load);font-size:13px" id="ex1val"></text>
 </g>
@@ -1013,10 +1073,7 @@ ${this._ns?'#nSolar,#flS,#fs,#cfs,#as,#aubadge{display:none !important}':''}
 <path id="fex2" class="fa" d="M434,204 L434,160 L434,112" pathLength="100" opacity="0"/>${CV('fex2','M434,204 L434,160 L434,112')}
 <text x="434" y="78" class="vl" id="ex2lbl" font-size="8"></text>
 <g id="ex2Icon" transform="translate(434,100) scale(1.05)">
-<g data-t="appliance" style="display:none"><rect x="-9" y="-10" width="18" height="20" rx="2" fill="var(--load)" opacity="0.6"/><circle cx="0" cy="2" r="6" fill="none" stroke="var(--load)" stroke-width="1.4" opacity="0.9"/><circle cx="0" cy="2" r="3" fill="var(--load)" opacity="0.4"/><rect x="-6" y="-8" width="4" height="2" rx="0.5" fill="var(--load)" opacity="0.5"/><circle cx="-6.5" cy="-8" r="0.9" fill="var(--load)" opacity="0.8"/></g>
-<g data-t="heatpump" style="display:none"><rect x="-10" y="-7" width="20" height="14" rx="2" fill="var(--load)" opacity="0.6"/><circle cx="0" cy="0" r="5" fill="none" stroke="var(--load)" stroke-width="1.1" opacity="0.9"/><line x1="0" y1="-5" x2="0" y2="5" stroke="var(--load)" stroke-width="1" opacity="0.7"/><line x1="-5" y1="0" x2="5" y2="0" stroke="var(--load)" stroke-width="1" opacity="0.7"/></g>
-<g data-t="garage" style="display:none"><path d="M-11,-2 L0,-11 L11,-2 Z" fill="var(--load)" opacity="0.8"/><rect x="-9" y="-2" width="18" height="12" rx="1" fill="var(--load)" opacity="0.6"/><line x1="-9" y1="1" x2="9" y2="1" stroke="rgba(0,0,0,0.3)" stroke-width="0.8"/><line x1="-9" y1="4" x2="9" y2="4" stroke="rgba(0,0,0,0.3)" stroke-width="0.8"/><line x1="-9" y1="7" x2="9" y2="7" stroke="rgba(0,0,0,0.3)" stroke-width="0.8"/></g>
-<g data-t="generic" style="display:none"><path d="M1,-10 L-7,3 L-1,3 L-3,10 L8,-3 L2,-3 Z" fill="var(--load)" opacity="0.8"/></g>
+${XICO}
 </g>
 <text x="410" y="100" style="fill:var(--load);font-size:13px;font-weight:600;text-anchor:end;dominant-baseline:middle" id="ex2val"></text>
 </g>
@@ -1025,20 +1082,18 @@ ${this._ns?'#nSolar,#flS,#fs,#cfs,#as,#aubadge{display:none !important}':''}
 <path id="fex3" class="fa" d="M434,204 L434,160 L487,160" pathLength="100" opacity="0"/>${CV('fex3','M434,204 L434,160 L487,160')}
 <text x="499" y="138" class="vl" id="ex3lbl" font-size="8"></text>
 <g id="ex3Icon" transform="translate(499,160) scale(1.05)">
-<g data-t="appliance" style="display:none"><rect x="-9" y="-10" width="18" height="20" rx="2" fill="var(--load)" opacity="0.6"/><circle cx="0" cy="2" r="6" fill="none" stroke="var(--load)" stroke-width="1.4" opacity="0.9"/><circle cx="0" cy="2" r="3" fill="var(--load)" opacity="0.4"/><rect x="-6" y="-8" width="4" height="2" rx="0.5" fill="var(--load)" opacity="0.5"/><circle cx="-6.5" cy="-8" r="0.9" fill="var(--load)" opacity="0.8"/></g>
-<g data-t="heatpump" style="display:none"><rect x="-10" y="-7" width="20" height="14" rx="2" fill="var(--load)" opacity="0.6"/><circle cx="0" cy="0" r="5" fill="none" stroke="var(--load)" stroke-width="1.1" opacity="0.9"/><line x1="0" y1="-5" x2="0" y2="5" stroke="var(--load)" stroke-width="1" opacity="0.7"/><line x1="-5" y1="0" x2="5" y2="0" stroke="var(--load)" stroke-width="1" opacity="0.7"/></g>
-<g data-t="garage" style="display:none"><path d="M-11,-2 L0,-11 L11,-2 Z" fill="var(--load)" opacity="0.8"/><rect x="-9" y="-2" width="18" height="12" rx="1" fill="var(--load)" opacity="0.6"/><line x1="-9" y1="1" x2="9" y2="1" stroke="rgba(0,0,0,0.3)" stroke-width="0.8"/><line x1="-9" y1="4" x2="9" y2="4" stroke="rgba(0,0,0,0.3)" stroke-width="0.8"/><line x1="-9" y1="7" x2="9" y2="7" stroke="rgba(0,0,0,0.3)" stroke-width="0.8"/></g>
-<g data-t="generic" style="display:none"><path d="M1,-10 L-7,3 L-1,3 L-3,10 L8,-3 L2,-3 Z" fill="var(--load)" opacity="0.8"/></g>
+${XICO}
 </g>
 <text x="499" y="183" class="vm" style="fill:var(--load);font-size:13px" id="ex3val"></text>
 </g>
+${this._xdown()}
 </g></svg>
 <div class="xch" id="chB">${this._chMk('bottom')}</div></ha-card>`;this._setupCharts();this._setupClicks();this._drawSparks();this._ringPath();requestAnimationFrame(()=>this._ringPath());if(this._ro)this._ro.disconnect();if('ResizeObserver' in window){this._ro=new ResizeObserver(()=>{this._ringPath();this._drawSparks();});const cd=this._$('xcard');if(cd)this._ro.observe(cd);}}
 
 _$(id){let c=this._elc;if(!c)c=this._elc={};let el=c[id];if(el&&el.isConnected)return el;el=this.shadowRoot.getElementById(id);c[id]=el;return el;}
 _rsv(){const c=this._c;const v=c.reserve_entity?this._gv(c.reserve_entity):null;return v!==null&&!isNaN(v)?v:(c.shutdown_soc??20);}
   _moreInfo(entityId){if(!entityId)return;this.dispatchEvent(new CustomEvent('hass-more-info',{detail:{entityId},bubbles:true,composed:true}));}
-_setupClicks(){const c=this._c;const bind=(id,entity)=>{const el=this._$(id);if(el&&entity)el.addEventListener('click',()=>this._moreInfo(entity));};bind('nSolar',c.solar);bind('nGrid',c.grid);bind('nLoad',c.load);bind('nBat',c.battery||c.soc);{const bi=this._$('batIcon');if(bi&&c.reserve_entity)bi.addEventListener('click',(e)=>{e.stopPropagation();this._moreInfo(c.reserve_entity);});}bind('nEV',c.ev_power||c.ev_soc);bind('nChg',c.charger_ac_power);bind('nExtra1',c.extra1_power);bind('nExtra2',c.extra2_power);bind('nExtra3',c.extra3_power);const hit=this._$('srhit'),sg=this._$('sunRing');if(hit&&sg)hit.addEventListener('click',(e)=>{e.stopPropagation();sg.classList.add('srshow');clearTimeout(this._srT);this._srT=setTimeout(()=>sg.classList.remove('srshow'),3000);});[1,2,3].forEach(k=>{const g=this._$('mp'+k);if(g)g.addEventListener('click',(e)=>{e.stopPropagation();this._moreInfo(g.dataset.e);});});const aH=this._$('auhit'),aB=this._$('aulbl');if(aH&&aB){const show=()=>{aB.classList.add('show');clearTimeout(this._auT);this._auT=setTimeout(()=>aB.classList.remove('show'),3000);};aH.addEventListener('pointerenter',show);aH.addEventListener('pointerdown',e=>{e.stopPropagation();show();});aH.addEventListener('click',e=>e.stopPropagation());aH.addEventListener('pointerleave',()=>{clearTimeout(this._auT);this._auT=setTimeout(()=>aB.classList.remove('show'),600);});}}
+_setupClicks(){const c=this._c;const bind=(id,entity)=>{const el=this._$(id);if(el&&entity)el.addEventListener('click',()=>this._moreInfo(entity));};bind('nSolar',c.solar);bind('nGrid',c.grid);bind('nLoad',c.load);bind('nBat',c.battery||c.soc);{const bi=this._$('batIcon');if(bi&&c.reserve_entity)bi.addEventListener('click',(e)=>{e.stopPropagation();this._moreInfo(c.reserve_entity);});}bind('nEV',c.ev_power||c.ev_soc);bind('nChg',c.charger_ac_power);bind('nExtra1',c.extra1_power);bind('nExtra2',c.extra2_power);bind('nExtra3',c.extra3_power);bind('nExtra4',c.extra4_power);bind('nExtra5',c.extra5_power);bind('nExtra6',c.extra6_power);const hit=this._$('srhit'),sg=this._$('sunRing');if(hit&&sg)hit.addEventListener('click',(e)=>{e.stopPropagation();sg.classList.add('srshow');clearTimeout(this._srT);this._srT=setTimeout(()=>sg.classList.remove('srshow'),3000);});[1,2,3].forEach(k=>{const g=this._$('mp'+k);if(g)g.addEventListener('click',(e)=>{e.stopPropagation();this._moreInfo(g.dataset.e);});});const aH=this._$('auhit'),aB=this._$('aulbl');if(aH&&aB){const show=()=>{aB.classList.add('show');clearTimeout(this._auT);this._auT=setTimeout(()=>aB.classList.remove('show'),3000);};aH.addEventListener('pointerenter',show);aH.addEventListener('pointerdown',e=>{e.stopPropagation();show();});aH.addEventListener('click',e=>e.stopPropagation());aH.addEventListener('pointerleave',()=>{clearTimeout(this._auT);this._auT=setTimeout(()=>aB.classList.remove('show'),600);});}}
 // Frame path + stroke width: scales with card width (≈0.75px phone, 1px desktop, 2px TV, max 3px); an explicit --xpf-frame-width wins
 _ringPath(){const card=this._$('xcard'),svg=this._$('aur');if(!card||!svg)return;const w=card.clientWidth,h=card.clientHeight;if(!w||!h)return;const cs=getComputedStyle(card);const bw=parseFloat(cs.borderTopWidth)||0;const ov=parseFloat(cs.getPropertyValue('--xpf-frame-width'));const dpr=window.devicePixelRatio||1;const sw=ov>0?ov:Math.min(3,Math.max(dpr>=1.5?0.75:1,Math.round(w/480*100)/100));const i=sw/2,W=w-sw,H=h-sw;let r=(parseFloat(cs.borderTopLeftRadius)||20)-bw-i;r=Math.max(0,Math.min(r,Math.min(W,H)/2));const key=w+'|'+h+'|'+r+'|'+sw;if(key===this._ringKey)return;this._ringKey=key;svg.style.setProperty('--fw',sw+'px');const q=v=>Math.round(v*4)/4;const d='M'+q(i+W/2)+','+q(i)+' H'+q(i+W-r)+' A'+q(r)+','+q(r)+' 0 0 1 '+q(i+W)+','+q(i+r)+' V'+q(i+H-r)+' A'+q(r)+','+q(r)+' 0 0 1 '+q(i+W-r)+','+q(i+H)+' H'+q(i+r)+' A'+q(r)+','+q(r)+' 0 0 1 '+q(i)+','+q(i+H-r)+' V'+q(i+r)+' A'+q(r)+','+q(r)+' 0 0 1 '+q(i+r)+','+q(i)+' Z';this._sa(svg,'viewBox','0 0 '+w+' '+h);['aut','au-s','au-b','au-g','aurhit'].forEach(id=>this._sa(this._$(id),'d',d));}
 _spd(p){const a=Math.abs(p);if(a<10)return 0;let s=Math.max(ANIM_MIN_SPD,ANIM_MAX_SPD-(a/ANIM_MAX_W)*(ANIM_MAX_SPD-ANIM_MIN_SPD));if(a>=3000)s*=0.4;else if(a>=2000)s*=0.6;else if(a>=1000)s*=0.8;return s;}
@@ -1145,7 +1200,7 @@ const chOn=!!c.charger_ac_power,chA=chOn?this._gp(c.charger_ac_power):null,chD=c
 const batI=chOn&&c.charger_in_battery!==false&&bat!==null?batF+chIn:batF;this._live={s:sol,l:load,g:grid,b:bat,soc:soc};if(this._chK===null||this._chK===undefined)this._chHead();
 const maxP=Math.max(solF,Math.abs(batI),Math.abs(gridF),loadF,chAin);
 const syncSpd=maxP>10?this._spd(maxP):3;
-if(c.flow_speed==='synced'&&(this._syncSpd<=0||Math.abs(syncSpd-this._syncSpd)/this._syncSpd>0.1)){this._syncSpd=syncSpd;const spd=syncSpd.toFixed(1)+'s';['fs','fg','fb','fh','fh2','fh3','fe','fex1','fex2','fex3','fca','fcb'].forEach(id=>{const el=this._$(id);if(el)el.style.setProperty('--spd',spd);const cg=this._$('c'+id);if(cg)cg.style.setProperty('--spd',spd);});this._resync=true;}
+if(c.flow_speed==='synced'&&(this._syncSpd<=0||Math.abs(syncSpd-this._syncSpd)/this._syncSpd>0.1)){this._syncSpd=syncSpd;const spd=syncSpd.toFixed(1)+'s';['fs','fg','fb','fh','fh2','fh3','fe','fex1','fex2','fex3','fex4','fex5','fex6','fca','fcb'].forEach(id=>{const el=this._$(id);if(el)el.style.setProperty('--spd',spd);const cg=this._$('c'+id);if(cg)cg.style.setProperty('--spd',spd);});this._resync=true;}
 this._sf(this._$('fs'),'s',solF,'fd','var(--green)','0.8');
 this._sf(this._$('fg'),'g',gridF,gridF>0?'fr':'fL',gridF>0?'var(--red)':'var(--green)','0.7');
 const FX=xpfFlows(solF,batI,gridF,loadF),{sToH:_sToH,bDis:_bDis,gImp:_gImp,gB:_gB,sB:_sB,feed:_feed}=FX,_Bc=batF<0?-batF:0;
@@ -1192,9 +1247,9 @@ if(nEV){
   }else{this._ss(nEV,'display','none');}
 }
 
-// Extra consumer nodes (1-3) — generic slots, each with a selectable icon
-const iconLbl={appliance:L.appliance,heatpump:L.heatpump,garage:L.garage,generic:L.extra};
-[1,2,3].forEach(n=>{
+// Extra consumer nodes (1-3 above the home, 4-6 below) — generic slots, each with a selectable icon
+const iconLbl={appliance:L.appliance,heatpump:L.heatpump,garage:L.garage,car:L.ev,generic:L.extra};
+[1,2,3,4,5,6].forEach(n=>{
   const nEl=this._$('nExtra'+n);
   if(!nEl)return;
   const pKey=c['extra'+n+'_power'];
@@ -1216,7 +1271,7 @@ const iconLbl={appliance:L.appliance,heatpump:L.heatpump,garage:L.garage,generic
 
 // Phase lock — restart all flow animations in the same frame so pulses relay through the inverter
 if(this._resync&&c.flow_speed!=='synced'){this._resync=false;}
-if(this._resync){this._resync=false;const els=['fs','fg','fb','fh','fh2','fh3','fe','fex1','fex2','fex3','fca','fcb'].map(id=>this._$(id)).filter(Boolean);const half='-'+(this._syncSpd/2).toFixed(2)+'s';els.forEach(el=>{let d='0s';if(el.id==='fh'||el.id==='fh2'||el.id==='fh3')d=half;else if(el.id==='fb'&&this._fs['b']==='fd')d=half;else if(el.id==='fg'&&this._fs['g']==='fL')d=half;el.style.animationDelay=d;if(el.getAnimations)el.getAnimations().forEach(a=>{a.currentTime=0;});});}
+if(this._resync){this._resync=false;const els=['fs','fg','fb','fh','fh2','fh3','fe','fex1','fex2','fex3','fex4','fex5','fex6','fca','fcb'].map(id=>this._$(id)).filter(Boolean);const half='-'+(this._syncSpd/2).toFixed(2)+'s';els.forEach(el=>{let d='0s';if(el.id==='fh'||el.id==='fh2'||el.id==='fh3')d=half;else if(el.id==='fb'&&this._fs['b']==='fd')d=half;else if(el.id==='fg'&&this._fs['g']==='fL')d=half;el.style.animationDelay=d;if(el.getAnimations)el.getAnimations().forEach(a=>{a.currentTime=0;});});}
 
 const batCap=c.battery_capacity??5120;const shuSoc=this._rsv();
 const brEl=this._$('br'),br2=this._$('br2'),brG=this._$('brg');let rt=null;

@@ -275,6 +275,36 @@ test('separate charger node: values, flows and battery share (#21)', () => {
   c3.close();
 });
 
+test('extra consumers 4-6 branch below the home; EV keeps the centre (#28)', () => {
+  const sr = c => c.el.shadowRoot, slot = (c, k) => { const p = sr(c).getElementById('fex' + k); return p ? p.getAttribute('d') : null; };
+  const st3 = { 'sensor.a': st(7400), 'sensor.b': st(3600), 'sensor.c': st(0) };
+  const three = mount({ ...FULL, extra4_power: 'sensor.a', extra4_name: 'Wattpilot', extra5_power: 'sensor.b', extra6_power: 'sensor.c' }, ok(st3));
+  assert.match(slot(three, 4), /L381,338$/);
+  assert.match(slot(three, 5), /L434,388$/);
+  assert.match(slot(three, 6), /L487,338$/);
+  assert.equal(three.$('ex4lbl'), 'WATTPILOT');
+  assert.equal(three.$('ex5lbl'), 'EV', 'car icon is the default, labelled like the EV node');
+  assert.match(three.$('ex4val'), /7[.,]4 kW/);
+  assert.equal(sr(three).getElementById('nExtra4').style.display, '');
+  noJunk(three.text(), 'three below');
+  assert.deepEqual(three.errors, []);
+  three.close();
+
+  const one = mount({ ...FULL, extra6_power: 'sensor.a' }, ok(st3));
+  assert.match(slot(one, 6), /L434,388$/, 'a single one goes straight down');
+  one.close();
+
+  const ev = mount({ ...FULL, ev_power: 'sensor.a', extra4_power: 'sensor.a', extra5_power: 'sensor.b', extra6_power: 'sensor.c' }, ok(st3));
+  assert.match(slot(ev, 4), /L381,338$/);
+  assert.match(slot(ev, 5), /L487,338$/);
+  assert.equal(slot(ev, 6), null, 'no third slot next to the EV node');
+  ev.close();
+
+  const none = mount(FULL, ok());
+  assert.equal(sr(none).getElementById('nExtra4'), null);
+  none.close();
+});
+
 test('clicking a chart legend item hides and shows its line', () => {
   const c = mount({ ...FULL, energy_chart: 'bottom', solar_forecast: false }, ok());
   const N = 96, ser = v => Array.from({ length: N }, (_, k) => (k < 60 ? v : null));
