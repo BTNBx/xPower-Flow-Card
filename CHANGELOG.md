@@ -1,3 +1,7 @@
+## v1.3.76
+
+- Custom icons (#44): new options `grid_icon`, `load_icon` and `inverter_icon`, and `extra1_icon` … `extra6_icon` now also take a custom value. Use any Home Assistant icon (`mdi:transmission-tower`, `mdi:home`, …), drawn in the node's colour, or an image (`/local/icons/house.png`). Empty keeps the card's own icons
+
 ## v1.3.75
 
 - Up to 3 more extra consumers below the home (#28, #17): `extra4_power` … `extra6_power` with `_name` and `_icon`, branching down from the home the same way 1–3 branch up. One is drawn straight down, two left and right, three left / centre / right; when the EV node is set it keeps the centre and the extras use left and right
