@@ -1,3 +1,8 @@
+## v1.3.74
+
+- Separate AC/DC battery charger (#21): new options `charger_ac_power` and `charger_dc_power` (optional) add a charger node under the grid, with flows grid → charger → battery, AC power, and DC power with efficiency when the DC sensor is set
+- When the battery power sensor already includes the charger (shunt / BMS, the usual case on Victron), the charger's share is taken off the inverter ↔ battery line so it shows only the inverter; set `charger_in_battery: false` if the battery sensor measures the inverter only
+
 ## v1.3.73
 
 - New option `show_solar: false` (editor: Solar / PV → Hidden) for installations without a PV system: the solar node, its flow line and the self-sufficiency badge are removed, the top of the card is cropped so it becomes shorter, the solar line and forecast leave the energy chart, and the energy source frame only shows battery and grid. The weather and price pills move down next to the grid node (#23)

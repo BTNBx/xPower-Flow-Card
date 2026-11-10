@@ -242,6 +242,39 @@ test('editor: Solar / PV select writes show_solar only when hidden', () => {
   assert.ok(!('show_solar' in out));
 });
 
+test('separate charger node: values, flows and battery share (#21)', () => {
+  const sr = c => c.el.shadowRoot, g = (c, id) => sr(c).getElementById(id);
+  const none = mount(FULL, ok());
+  assert.equal(g(none, 'nChg').style.display, 'none');
+  none.close();
+
+  const cfg = { ...FULL, charger_ac_power: 'sensor.chg_ac', charger_dc_power: 'sensor.chg_dc' };
+  // battery shunt reads -1500 W charging, of which 900 W come from the charger → inverter charges 600 W
+  const c = mount(cfg, ok({ 'sensor.bat': st(-1500), 'sensor.chg_ac': st(1000), 'sensor.chg_dc': st(900), 'sensor.solar': st(2100), 'sensor.load': st(1500) }));
+  assert.equal(g(c, 'nChg').style.display, '');
+  assert.match(c.$('vch'), /1[.,]0 kW|1000 W/);
+  assert.match(c.$('dchg'), /^DC .*· 90%$/);
+  assert.equal(g(c, 'fca').getAttribute('opacity'), '0.7');
+  assert.equal(g(c, 'fcb').getAttribute('opacity'), '0.7');
+  assert.equal(g(c, 'fb').getAttribute('class'), 'fa fd', 'inverter still charging');
+  assert.equal(c.el._fsp.b, Math.min(6, Math.max(0.5, 2500 / 600)), 'inverter line speed from 600 W, not 1500 W');
+  noJunk(c.text(), 'charger');
+  assert.deepEqual(c.errors, []);
+  c.close();
+
+  // battery sensor measures the inverter only: nothing is taken off
+  const c2 = mount({ ...cfg, charger_in_battery: false }, ok({ 'sensor.bat': st(-1500), 'sensor.chg_ac': st(1000), 'sensor.chg_dc': st(900) }));
+  assert.equal(c2.el._fsp.b, Math.min(6, Math.max(0.5, 2500 / 1500)));
+  c2.close();
+
+  // AC sensor only, charger off
+  const c3 = mount({ ...FULL, charger_ac_power: 'sensor.chg_ac' }, ok({ 'sensor.chg_ac': st(0) }));
+  assert.equal(c3.$('dchg'), '');
+  assert.equal(g(c3, 'fca').getAttribute('opacity'), '0');
+  noJunk(c3.text(), 'charger idle');
+  c3.close();
+});
+
 test('clicking a chart legend item hides and shows its line', () => {
   const c = mount({ ...FULL, energy_chart: 'bottom', solar_forecast: false }, ok());
   const N = 96, ser = v => Array.from({ length: N }, (_, k) => (k < 60 ? v : null));
