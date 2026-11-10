@@ -1,3 +1,7 @@
+## v1.3.73
+
+- New option `show_solar: false` (editor: Solar / PV → Hidden) for installations without a PV system: the solar node, its flow line and the self-sufficiency badge are removed, the top of the card is cropped so it becomes shorter, the solar line and forecast leave the energy chart, and the energy source frame only shows battery and grid. The weather and price pills move down next to the grid node (#23)
+
 ## v1.3.72
 
 - The visual editor now writes only the options you changed to the YAML instead of every option (everything else keeps coming from the brand preset, so preset updates reach the card); a config saved by an older version is shortened on the next edit without changing the card, and new cards start from `preset: deye` only

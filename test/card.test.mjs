@@ -100,7 +100,8 @@ test('every DEFAULTS key set in YAML survives setConfig', () => {
   const { DEFAULTS, w } = boot();
   const el = w.document.createElement('xpower-flow-card');
   const cfg = { preset: 'deye' };
-  for (const k of Object.keys(DEFAULTS)) if (k !== 'preset') cfg[k] = typeof DEFAULTS[k] === 'number' ? 7 : typeof DEFAULTS[k] === 'boolean' ? !DEFAULTS[k] : 'x_' + k;
+  // show_solar: false clears the solar inputs on purpose — covered by its own test below
+  for (const k of Object.keys(DEFAULTS)) if (k !== 'preset' && k !== 'show_solar') cfg[k] = typeof DEFAULTS[k] === 'number' ? 7 : typeof DEFAULTS[k] === 'boolean' ? !DEFAULTS[k] : 'x_' + k;
   el.setConfig(cfg);
   for (const k of Object.keys(cfg)) assert.deepEqual(el._c[k], cfg[k], `option ${k} was lost`);
   w.close();
@@ -190,6 +191,56 @@ test('battery runtime still averages within the 15 min window', () => {
 });
 
 // ── Chart legend ─────────────────────────────────────
+
+test('show_solar: false removes the solar node and crops the card (#23)', () => {
+  const vb = c => c.el.shadowRoot.getElementById('main').getAttribute('viewBox').split(' ').map(Number);
+  const full = mount(FULL, ok());
+  assert.deepEqual(vb(full), [0, -8, 526, 478]);
+  assert.doesNotMatch(full.el.shadowRoot.querySelector('style').textContent, /#nSolar,/);
+  full.close();
+
+  const c = mount({ ...FULL, show_solar: false, energy_chart: 'bottom' }, ok({ 'sensor.grid': st(900), 'sensor.bat': st(600) }));
+  assert.equal(c.el._c.show_solar, false);
+  const [, y, , h] = vb(c);
+  assert.ok(y > 150 && Math.abs(y + h - 470) < 0.01, 'top cropped, bottom edge unchanged');
+  assert.match(c.el.shadowRoot.querySelector('style').textContent, /#nSolar,#flS,#fs,#cfs,#as,#aubadge\{display:none/);
+  // a solar sensor that still reports power is ignored: the house is fed by battery + grid only
+  const off = id => c.el.shadowRoot.getElementById(id).getAttribute('offset');
+  assert.equal(off('hs1'), '0.0%', 'no solar share on the house line');
+  assert.equal(c.el.shadowRoot.getElementById('fs').getAttribute('opacity'), '0');
+  assert.equal(c.el.shadowRoot.getElementById('led1').getAttribute('class') || '', '');
+  assert.equal(c.el.shadowRoot.querySelector('#cvE [data-s="s"]'), null, 'no solar item in the chart header');
+  assert.ok(c.el.shadowRoot.querySelector('#cvE [data-s="g"]'));
+  assert.ok(c.el.getGridOptions().rows < 10);
+  noJunk(c.text(), 'no solar');
+  assert.deepEqual(c.errors, []);
+  c.close();
+
+  // extra consumers and the weather / price pills need room above the grid row
+  const top = cfg => { const m = mount({ ...FULL, show_solar: false, ...cfg }, ok()); const v = vb(m)[1]; m.close(); return v; };
+  const base = top({});
+  assert.ok(top({ price_sensor: 'sensor.price' }) < base);
+  assert.ok(top({ extra1_power: 'sensor.x' }) < top({ price_sensor: 'sensor.price' }));
+  assert.ok(top({ extra2_power: 'sensor.x' }) < top({ extra1_power: 'sensor.x' }));
+});
+
+test('editor: Solar / PV select writes show_solar only when hidden', () => {
+  const { w } = boot();
+  const ed = w.document.createElement('xpower-flow-card-editor');
+  ed.setConfig({ preset: 'deye' });
+  w.document.body.appendChild(ed);
+  let out = null;
+  ed.addEventListener('config-changed', e => { out = e.detail.config; });
+  const sel = ed.querySelector('#ed-pvshow');
+  assert.equal(sel.value, 'true');
+  sel.value = 'false';
+  sel.dispatchEvent(new w.Event('change', { bubbles: true }));
+  assert.equal(out.show_solar, false);
+  ed.setConfig(out);
+  ed.querySelector('#ed-pvshow').value = 'true';
+  ed.querySelector('#ed-pvshow').dispatchEvent(new w.Event('change', { bubbles: true }));
+  assert.ok(!('show_solar' in out));
+});
 
 test('clicking a chart legend item hides and shows its line', () => {
   const c = mount({ ...FULL, energy_chart: 'bottom', solar_forecast: false }, ok());
