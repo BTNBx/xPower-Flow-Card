@@ -305,6 +305,32 @@ test('extra consumers 4-6 branch below the home; EV keeps the centre (#28)', () 
   none.close();
 });
 
+test('custom icons: mdi via ha-icon, images, extras, editor keeps them (#44)', async () => {
+  const PATHS = { 'mdi:home': 'M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z', 'mdi:flash': 'M7,2V13H10V22L17,10H13L17,2H7Z' };
+  const { w } = boot();
+  // stand-in for Home Assistant's <ha-icon>: renders <ha-svg-icon> with .path
+  w.customElements.define('ha-icon', class extends w.HTMLElement {
+    connectedCallback() { const r = this.attachShadow({ mode: 'open' }); const sv = w.document.createElement('ha-svg-icon'); sv.path = PATHS[this.icon] || ''; r.appendChild(sv); }
+  });
+  const el = w.document.createElement('xpower-flow-card');
+  el.setConfig({ ...FULL, grid_icon: 'mdi:flash', load_icon: '/local/house.png', inverter_icon: 'mdi:home', extra1_power: 'sensor.load', extra1_icon: 'mdi:home', extra4_power: 'sensor.load', extra4_icon: '/local/"x".png' });
+  w.document.body.appendChild(el);
+  const r = el.shadowRoot;
+  await new Promise(res => setTimeout(res, 50));
+  assert.equal(r.querySelector('#gridIcon path[data-ic]').getAttribute('d'), PATHS['mdi:flash']);
+  assert.equal(r.querySelector('#loadIcon image').getAttribute('href'), '/local/house.png');
+  assert.equal(r.querySelector('path[data-ic="mdi:home"]:not(#gridIcon *)').getAttribute('d'), PATHS['mdi:home']);
+  assert.ok(r.querySelector('#ex1Icon [data-t="mdi:home"] path'));
+  assert.equal(r.querySelector('#ex4Icon image').getAttribute('href'), '/local/"x".png', 'quotes escaped, not breaking the markup');
+  assert.equal(r.getElementById('ivbar'), null, 'default inverter replaced');
+  assert.equal(w.document.querySelectorAll('ha-icon').length, 0, 'helper icons are removed');
+  // defaults untouched
+  const d = mount(FULL, ok());
+  assert.ok(d.el.shadowRoot.querySelector('#gridIcon path[d^="M32 4"]'));
+  assert.ok(d.el.shadowRoot.getElementById('ivbar'));
+  d.close();
+});
+
 test('clicking a chart legend item hides and shows its line', () => {
   const c = mount({ ...FULL, energy_chart: 'bottom', solar_forecast: false }, ok());
   const N = 96, ser = v => Array.from({ length: N }, (_, k) => (k < 60 ? v : null));
@@ -374,6 +400,14 @@ function editor(config) {
   const used = cfg => { const el = w.document.createElement('xpower-flow-card'); el.setConfig(cfg); return { ...el._c }; };
   return { ed, field, change, used, full: () => ({ ...ed._config }), PRESETS: B.PRESETS, DEFAULTS: B.DEFAULTS };
 }
+
+test('editor: icon fields write the option and a custom extra icon survives an edit', () => {
+  const e = editor({ type: TYPE, preset: 'deye', extra1_icon: 'mdi:pool' });
+  assert.equal(e.field('ex1icon').value, 'mdi:pool');
+  const out = e.change('gicon', ' mdi:transmission-tower ');
+  assert.equal(out.grid_icon, 'mdi:transmission-tower');
+  assert.equal(out.extra1_icon, 'mdi:pool');
+});
 
 test('editor writes only what differs from the preset', () => {
   const e = editor({ type: TYPE, preset: 'huawei' });

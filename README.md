@@ -188,6 +188,17 @@ weather_humidity: sensor.my_outdoor_humidity
 
 Set in YAML (not exposed in the visual editor yet).
 
+### Custom icons
+Replace the built-in grid, home and inverter icons with any Home Assistant icon or your own image. Empty (the default) keeps the card's icons.
+
+| Option | Description |
+| --- | --- |
+| `grid_icon` | e.g. `mdi:transmission-tower` (drawn in the grid colour) or `/local/icons/grid.png` |
+| `load_icon` | e.g. `mdi:home` (drawn in the home colour) or an image |
+| `inverter_icon` | e.g. `mdi:solar-power` or an image — replaces the inverter drawing, including its status LEDs |
+
+`extra1_icon` … `extra6_icon` accept the same custom values besides the built-in names.
+
 ### Extra consumption nodes
 Up to six extra loads branch off the home node: 1–3 above it, 4–6 below it. Each appears only when its `*_power` entity is set.
 
@@ -195,7 +206,7 @@ Up to six extra loads branch off the home node: 1–3 above it, 4–6 below it. 
 | --- | --- |
 | `extra1_power` … `extra6_power` | Power sensor for the extra load (required to show the node) |
 | `extra1_name` … `extra6_name` | Optional label (falls back to the icon's default name) |
-| `extra1_icon` … `extra6_icon` | Icon type — `appliance`, `heatpump`, `garage`, `car` or `generic` (defaults: 1 = appliance, 2 = heatpump, 3 = garage, 4–6 = car) |
+| `extra1_icon` … `extra6_icon` | Icon type — `appliance`, `heatpump`, `garage`, `car` or `generic` (defaults: 1 = appliance, 2 = heatpump, 3 = garage, 4–6 = car), or a custom `mdi:…` icon / image path |
 
 Below the home, one extra is drawn straight down, two go left and right, three go left / centre / right. When the EV node (`ev_power` / `ev_soc`) is set it keeps the centre, so only `extra4` and `extra5` are shown (left and right).
 
