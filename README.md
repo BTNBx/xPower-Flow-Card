@@ -189,13 +189,15 @@ weather_humidity: sensor.my_outdoor_humidity
 Set in YAML (not exposed in the visual editor yet).
 
 ### Extra consumption nodes
-Up to three extra loads branch off the home node. Each appears only when its `*_power` entity is set.
+Up to six extra loads branch off the home node: 1–3 above it, 4–6 below it. Each appears only when its `*_power` entity is set.
 
 | Option | Description |
 | --- | --- |
-| `extra1_power`, `extra2_power`, `extra3_power` | Power sensor for the extra load (required to show the node) |
-| `extra1_name`, `extra2_name`, `extra3_name` | Optional label (falls back to the icon's default name) |
-| `extra1_icon`, `extra2_icon`, `extra3_icon` | Icon type — `appliance`, `heatpump`, or `garage` (defaults: 1 = appliance, 2 = heatpump, 3 = garage) |
+| `extra1_power` … `extra6_power` | Power sensor for the extra load (required to show the node) |
+| `extra1_name` … `extra6_name` | Optional label (falls back to the icon's default name) |
+| `extra1_icon` … `extra6_icon` | Icon type — `appliance`, `heatpump`, `garage`, `car` or `generic` (defaults: 1 = appliance, 2 = heatpump, 3 = garage, 4–6 = car) |
+
+Below the home, one extra is drawn straight down, two go left and right, three go left / centre / right. When the EV node (`ev_power` / `ev_soc`) is set it keeps the centre, so only `extra4` and `extra5` are shown (left and right).
 
 Shorthand aliases also work and map to the three slots: `appliance_power` → extra1, `heatpump_power` → extra2, `garage_power` → extra3 (each with a matching `*_name`).
 
