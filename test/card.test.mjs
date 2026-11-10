@@ -331,6 +331,23 @@ test('custom icons: mdi via ha-icon, images, extras, editor keeps them (#44)', a
   d.close();
 });
 
+test('colors option sets the --xpf-* properties; light theme texts follow the theme (#42)', () => {
+  const c = mount({ ...FULL, colors: { solar: '#123456', text: ' #222 ', background: 'rgb(240,240,240)', grid: 'red;x:1', bogus: '#fff' } }, ok());
+  const v = n => c.el.style.getPropertyValue(n);
+  assert.equal(v('--xpf-green'), '#123456', 'solar colour is the green token');
+  assert.equal(v('--xpf-text'), '#222');
+  assert.equal(v('--xpf-bg'), 'rgb(240,240,240)');
+  assert.equal(v('--xpf-grid'), '', 'unsafe value ignored');
+  c.el.setConfig({ ...FULL });
+  assert.equal(v('--xpf-green'), '', 'removed when the option goes away');
+  c.el.setConfig({ ...FULL, colors: { battery: '#abcdef' } });
+  assert.equal(v('--xpf-solar'), '#abcdef');
+  assert.equal(v('--xpf-orange'), '#abcdef');
+  for (const id of ['bpe', 'bp']) assert.match(c.el.shadowRoot.getElementById(id).getAttribute('style'), /fill:var\(--t1\)/);
+  assert.doesNotMatch(c.el.shadowRoot.querySelector('style').textContent, /\.il\{fill:rgba\(255/);
+  c.close();
+});
+
 test('clicking a chart legend item hides and shows its line', () => {
   const c = mount({ ...FULL, energy_chart: 'bottom', solar_forecast: false }, ok());
   const N = 96, ser = v => Array.from({ length: N }, (_, k) => (k < 60 ? v : null));

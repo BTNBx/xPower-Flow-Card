@@ -188,6 +188,20 @@ weather_humidity: sensor.my_outdoor_humidity
 
 Set in YAML (not exposed in the visual editor yet).
 
+### Colours
+Change the main colours from YAML (no card-mod needed). Any CSS colour works; colours left out keep their default.
+
+```yaml
+colors:
+  solar: '#66BB6A'        # solar node, solar flows and charging
+  battery: '#FFA726'      # battery value and discharge
+  grid: '#EF5350'         # grid node and grid import
+  load: '#26C6DA'         # home node and consumers
+  text: '#202020'         # main text
+  text_secondary: '#666'  # labels and secondary text
+  background: '#f2f2f2'   # card background
+```
+
 ### Custom icons
 Replace the built-in grid, home and inverter icons with any Home Assistant icon or your own image. Empty (the default) keeps the card's icons.
 

@@ -1,3 +1,8 @@
+## v1.3.78
+
+- Light themes: the battery percentage over the empty part of the battery and the inverter name were drawn in fixed white and could not be read on a light background; they now follow the theme's text colour (#42)
+- New `colors:` option to change the card's colours from YAML without card-mod: `solar`, `battery`, `grid`, `load`, `text`, `text_secondary`, `background` (any CSS colour; colours left out keep their default)
+
 ## v1.3.77
 
 - Fixed text in the diagram flickering between two heights in Chrome and Edge on Windows (#20): text is now drawn with geometric precision and the diagram is no longer forced onto its own compositing layer
