@@ -34,7 +34,7 @@ function boot() {
   w.console.info = () => {};
   const errors = [];
   w.console.error = (...a) => errors.push(a.join(' '));
-  w.eval(src + '\n;window.__x={DEFAULTS,ENTITY_FIELDS,PRESETS,LANG,EDL,FLBL};');
+  w.eval(src + '\n;window.__x={DEFAULTS,ENTITY_FIELDS,PRESETS,LANG,EDL,FLBL,EDK,EDX,V};');
   const flush = () => {
     for (let i = 0; i < 50 && q.length; i++) {
       const cur = q; q = [];
@@ -47,14 +47,14 @@ function boot() {
 
 const st = (v, u = 'W') => ({ state: String(v), attributes: { unit_of_measurement: u } });
 
-function mount(config, states, { now } = {}) {
+function mount(config, states, { now, hass: hx } = {}) {
   const B = boot();
   const { w } = B;
   if (now !== undefined) w.Date.now = () => now.t;
   const el = w.document.createElement('xpower-flow-card');
   el.setConfig(config);
   w.document.body.appendChild(el);
-  const hass = s => ({ states: s, themes: { darkMode: true }, language: 'en', locale: { language: 'en' }, callWS: async () => ({}), callApi: async () => ({}) });
+  const hass = s => ({ states: s, themes: { darkMode: true }, language: 'en', locale: { language: 'en' }, callWS: async () => ({}), callApi: async () => ({}), ...hx });
   const set = s => { el.hass = hass(s); el._update(); B.flush(); };
   set(states);
   const $ = id => { const n = el.shadowRoot.getElementById(id); return n ? n.textContent : null; };
@@ -556,4 +556,141 @@ test('every entity field of the editor has a label in every language', () => {
       assert.equal(txt, FLBL[k](EDL[l]), `${l}: label of ${k} is not the translated one`);
     }
   }
+});
+
+// ── v1.3.79 ──────────────────────────────────────────
+
+test('editor keeps working after being detached and attached again (code editor <-> visual editor)', () => {
+  const e = editor({ type: TYPE, preset: 'deye' });
+  const host = e.ed.parentNode;
+  e.ed.remove();
+  host.appendChild(e.ed);
+  e.ed.setConfig({ type: TYPE, preset: 'deye' }); // same config: the form is not rebuilt
+  assert.equal(e.change('inv', 'AFTER').inverter_name, 'AFTER');
+});
+
+const dev = (v, dc, u = 'W') => ({ state: String(v), attributes: { unit_of_measurement: u, device_class: dc } });
+const FOUND = {
+  'sensor.inv_pv1_power': dev(1000, 'power'), 'sensor.inv_battery_power': dev(-200, 'power'),
+  'sensor.inv_grid_power': dev(10, 'power'), 'sensor.inv_load_power': dev(800, 'power'), 'sensor.inv_battery_soc': dev(80, 'battery', '%'),
+};
+
+test('auto-detect replaces brand defaults that do not exist here, keeps sensors that do, never blanks a field', async () => {
+  const e = editor({ type: TYPE, preset: 'deye', grid: 'sensor.my_grid' });
+  let out = null;
+  e.ed.addEventListener('config-changed', ev => { out = { ...ev.detail.config }; });
+  e.ed.hass = { states: { ...FOUND, 'sensor.my_grid': dev(5, 'power') }, language: 'en', callWS: async () => ({ energy_sources: [] }) };
+  await e.ed._autoDetect();
+  assert.equal(out.solar, 'sensor.inv_pv1_power');
+  assert.equal(out.battery, 'sensor.inv_battery_power');
+  assert.equal(out.load, 'sensor.inv_load_power');
+  assert.equal(out.soc, 'sensor.inv_battery_soc');
+  assert.equal(out.grid, 'sensor.my_grid', 'an existing sensor is kept');
+  // nothing to find: the preset defaults stay as they are
+  const e2 = editor({ type: TYPE, preset: 'deye' });
+  let out2 = null;
+  e2.ed.addEventListener('config-changed', ev => { out2 = { ...ev.detail.config }; });
+  await e2.ed._autoDetect();
+  assert.deepEqual(out2, { type: TYPE, preset: 'deye' });
+});
+
+test('a new card starts from the sensors found in Home Assistant', () => {
+  const { w, PRESETS } = boot();
+  const stub = s => ({ ...w.customElements.get('xpower-flow-card').getStubConfig(s === undefined ? undefined : { states: s }) });
+  assert.deepEqual(stub({}), { preset: 'deye' }, 'nothing found: as before');
+  assert.deepEqual(stub(FOUND), {
+    preset: 'custom', solar: 'sensor.inv_pv1_power', battery: 'sensor.inv_battery_power',
+    grid: 'sensor.inv_grid_power', load: 'sensor.inv_load_power', soc: 'sensor.inv_battery_soc',
+  });
+  const hw = PRESETS.huawei.e;
+  assert.deepEqual(stub({ ...FOUND, [hw.solar]: dev(1, 'power'), [hw.grid]: dev(1, 'power') }), { preset: 'huawei' }, 'a brand whose sensors exist wins');
+});
+
+test('no load sensor: the home is solar + grid + battery', () => {
+  const cfg = { preset: 'custom', language: 'en', solar: 'sensor.solar', battery: 'sensor.bat', grid: 'sensor.grid', soc: 'sensor.soc' };
+  const c = mount(cfg, ok({ 'sensor.solar': st(500), 'sensor.bat': st(200), 'sensor.grid': st(1000) }));
+  assert.equal(c.$('vl'), '1.7 kW');
+  assert.equal(c.$('va'), '41%', 'self-sufficiency uses the calculated load');
+  c.set(ok({ 'sensor.solar': st('unavailable'), 'sensor.grid': st('unavailable') }));
+  assert.equal(c.$('vl'), '--', 'nothing to calculate from');
+  noJunk(c.text(), 'calculated load');
+  c.close();
+  const k = mount(FULL, ok({ 'sensor.load': st('unavailable') }));
+  assert.equal(k.$('vl'), '--', 'a configured load sensor is never replaced');
+  k.close();
+});
+
+test('numbers follow the Home Assistant number format; costs read naturally', () => {
+  const cfg = { ...FULL, battery_voltage: 'sensor.bv', import_cost: 'sensor.cost' };
+  const s = ok({ 'sensor.bv': st(52.34, 'V'), 'sensor.cost': st(1.234, 'EUR') });
+  const c = mount(cfg, s, { hass: { locale: { language: 'en', number_format: 'decimal_comma' } } });
+  assert.equal(c.$('vs'), '2,0 kW');
+  assert.match(c.$('ds'), /10,5 kWh/);
+  assert.equal(c.$('bv'), '52,3V');
+  assert.match(c.$('dg'), /1,23 EUR/);
+  c.close();
+  const p = mount(cfg, s, { hass: { language: 'pt', locale: { language: 'pt', number_format: 'language' } } });
+  assert.equal(p.$('vs'), '2,0 kW', '"language" format follows the locale');
+  p.close();
+  const d = mount(cfg, { ...s, 'sensor.cost': st(1.234, '€') });
+  assert.equal(d.$('vs'), '2.0 kW');
+  assert.match(d.$('dg'), /€1\.23/);
+  d.close();
+});
+
+test('colors option also reaches the inverter LEDs, the grid dot and the home line gradient', () => {
+  const c = mount({ ...FULL, grid_status: 'binary_sensor.g' }, ok({ 'sensor.grid': st(400), 'binary_sensor.g': { state: 'on', attributes: {} } }));
+  const at = (id, a) => c.el.shadowRoot.getElementById(id).getAttribute(a);
+  assert.equal(at('led1', 'fill'), 'var(--green)');
+  assert.equal(at('led3', 'fill'), 'var(--red)');
+  assert.equal(at('gsd', 'fill'), 'var(--green)');
+  assert.equal(at('hs0', 'stop-color'), 'var(--green)');
+  assert.equal(at('hs4', 'stop-color'), 'var(--red)');
+  c.close();
+});
+
+test('a slightly negative solar reading at night shows 0 W', () => {
+  const c = mount(FULL, ok({ 'sensor.solar': st(-4), 'sensor.bat': st(0), 'sensor.grid': st(1500) }));
+  assert.equal(c.$('vs'), '0 W');
+  c.close();
+});
+
+test("a new day clears yesterday's chart data at once", () => {
+  const c = mount(FULL, ok());
+  c.el._hist = { solar: new Array(96).fill(500), load: [], grid: [], battery: [] };
+  c.el._histT0 = 900000 * 4 * 24; // some earlier midnight
+  Object.defineProperty(c.el.ownerDocument, 'hidden', { value: false, configurable: true }); // jsdom documents are hidden
+  c.set(ok());
+  assert.equal(c.el._hist.solar.length, 0);
+  assert.equal(c.el._histT0, 0);
+  c.close();
+});
+
+test('every plain label and choice of the editor is translated in every language', () => {
+  const { LANG, EDK, EDX } = boot();
+  for (const l of Object.keys(LANG)) {
+    if (l === 'en') continue;
+    assert.ok(EDX[l], `no option labels for "${l}"`);
+    assert.equal(EDX[l].length, EDK.length, `EDX.${l}`);
+    assert.equal(EDX[l].filter(t => !t || typeof t !== 'string').length, 0, `EDX.${l} has an empty entry`);
+  }
+  const txt = (e, id) => e.field(id).parentElement.querySelector('label').textContent;
+  const pt = editor({ type: TYPE, preset: 'deye', language: 'pt' });
+  assert.equal(txt(pt, 'theme'), 'Tema');
+  assert.equal(pt.field('theme').querySelector('option[value="dark"]').textContent, 'Escuro');
+  assert.equal(txt(pt, 'ex4name'), 'Consumo Extra 4 ↓: Nome');
+  const en = editor({ type: TYPE, preset: 'deye', language: 'en' });
+  assert.equal(txt(en, 'theme'), 'Theme');
+  // no English label left behind in a translated editor (same words in both languages are skipped)
+  const same = new Set(EDK.filter((k, i) => EDX.pt[i] === k));
+  for (const lb of pt.ed.querySelectorAll('label')) assert.ok(!EDK.includes(lb.textContent) || same.has(lb.textContent), `untranslated label "${lb.textContent}"`);
+});
+
+test('version is the same in the card, package.json and the changelog', () => {
+  const { V } = boot();
+  const root = f => readFileSync(new URL('../' + f, import.meta.url), 'utf8');
+  assert.equal(JSON.parse(root('package.json')).version, V);
+  assert.equal(JSON.parse(root('package-lock.json')).version, V);
+  assert.match(root('CHANGELOG.md'), new RegExp('^## v' + V.replace(/\./g, '\\.') + '\\n'));
+  assert.match(src, new RegExp('\\n## v' + V.replace(/\./g, '\\.') + '\\n'), 'changelog block inside the card');
 });

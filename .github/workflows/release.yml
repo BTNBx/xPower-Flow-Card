@@ -16,17 +16,31 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-
-      - name: Install dependencies
-        run: npm install --no-audit --no-fund
-
-      - name: Build
-        run: npm run build
+          node-version: '22'
 
       - name: Get version
         id: version
         run: echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      # The tag must be the version the card reports (const V) and the one in package.json
+      - name: Check tag against the card version
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          CARD="$(sed -n "s/^const V='\([^']*\)';.*/\1/p" xpower-flow-card.js)"
+          PKG="$(node -p "require('./package.json').version")"
+          echo "tag $TAG / card $CARD / package.json $PKG"
+          if [ "$TAG" != "$CARD" ] || [ "$TAG" != "$PKG" ]; then
+            echo "::error::Tag v$TAG does not match the card (v$CARD) or package.json (v$PKG)"
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Tests
+        run: |
+          node --check xpower-flow-card.js
+          npm test
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
