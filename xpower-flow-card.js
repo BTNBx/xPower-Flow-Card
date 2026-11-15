@@ -1,14 +1,22 @@
 // xPower Flow Card — Modern power flow card for solar hybrid inverters
 // Copyright (C) 2025 BTNBx — MIT License
-const V='1.3.78';
+const V='1.3.79';
 
 /* ═══════════════════════════════════════
    CHANGELOG — full history in CHANGELOG.md
    ═══════════════════════════════════════
-## v1.3.78
+## v1.3.79
 
-- Light themes: the battery percentage over the empty part of the battery and the inverter name were drawn in fixed white and could not be read on a light background; they now follow the theme's text colour (#42)
-- New `colors:` option to change the card's colours from YAML without card-mod: `solar`, `battery`, `grid`, `load`, `text`, `text_secondary`, `background` (any CSS colour; colours left out keep their default)
+- Visual editor: after switching to the code editor and back, changes were no longer saved; fixed
+- Auto-detect now also works on a brand preset: a preset sensor that does not exist in your Home Assistant is replaced by the one found (before, it only filled empty fields, so it did nothing outside the Custom preset)
+- A card added from the card picker starts from the sensors found in your Home Assistant (the brand whose sensors exist, else the power sensors it can find) instead of always the Deye defaults
+- `load` is optional: when it is left empty the home consumption is calculated (solar + grid + battery), live and in the energy chart
+- Numbers follow your Home Assistant number format (`1,5 kW` with a decimal comma); a cost with a currency code reads `1,23 EUR` instead of `EUR1.23`
+- `colors:` now also reaches the inverter LEDs, the grid status dot and the home line in reduced motion
+- A slightly negative solar reading at night (inverter standby) shows `0 W` instead of its absolute value
+- Charts: at midnight yesterday's curves are cleared at once instead of staying up to 5 minutes
+- Editor: every option label and choice is translated in all 9 languages
+- Releases: the tag is checked against the card version and the tests run before a release is created
 */
 
 /* ═══════════════════════════════════════
@@ -327,8 +335,15 @@ const WXN=WST(275,15,4.5,0)+WST(284,29,3,1.2);
 const FLBL={solar:t=>t.ps+' (MPPT1)',solar2:t=>t.ps+' (MPPT2)',solar3:t=>t.ps+' (MPPT3)',battery:t=>t.pb,battery_charge:t=>t.pbc+' '+t.sp,battery_discharge:t=>t.pbd+' '+t.sp,soc:t=>t.sc,grid:t=>t.pg,load:t=>t.pl,grid_voltage:t=>t.vg+' (L1)',grid_voltage_l2:t=>t.vg+' L2 '+t.op,grid_voltage_l3:t=>t.vg+' L3 '+t.op,battery_voltage:t=>t.vb,reserve_entity:t=>(t&&t.rsv)||'Backup Reserve SOC (optional)',temperature:t=>t.ti,battery_temperature:t=>t.tb,frequency:t=>t.fq,grid_status:t=>t.gs,pv_voltage:t=>t.vp+' (MPPT1)',pv_voltage2:t=>t.vp+' (MPPT2)',pv_voltage3:t=>t.vp+' (MPPT3)',sun_entity:t=>(t&&t.sun)||'Sun Entity (solar ring)',daily_solar:t=>t.dso,daily_import:t=>t.dim,daily_export:t=>t.dex,daily_load:t=>t.dlo,daily_charge:t=>t.dch,daily_discharge:t=>t.ddi,weather_entity:t=>(t&&t.wx)||'Weather Entity (sun icon)',weather_temp:t=>t.wt,weather_humidity:t=>t.wh,charger_ac_power:t=>t.chg+' AC '+t.op,charger_dc_power:t=>t.chg+' DC '+t.op,ev_power:t=>t.evp+' '+t.op,ev_soc:t=>t.evs+' '+t.op,daily_ev:t=>t.evd+' '+t.op,import_cost:t=>t.cim,export_cost:t=>t.cex,price_sensor:t=>t.pr+' '+t.op,extra1_power:t=>t.exc+' 1 '+t.op,extra2_power:t=>t.exc+' 2 '+t.op,extra3_power:t=>t.exc+' 3 '+t.op,extra4_power:t=>t.exc+' 4 \u2193 '+t.op,extra5_power:t=>t.exc+' 5 \u2193 '+t.op,extra6_power:t=>t.exc+' 6 \u2193 '+t.op};
 const EDL={"pt":{"chg":"Pot\u00eancia Carregador Bateria","rsv":"Reserva Backup SOC (opcional)","wx":"Entidade Meteo (\u00edcone sol)","ps":"Pot\u00eancia Solar","pb":"Pot\u00eancia Bateria","pbc":"Pot\u00eancia Carga Bat.","pbd":"Pot\u00eancia Descarga Bat.","sc":"SOC Bateria","pg":"Pot\u00eancia Rede","pl":"Pot\u00eancia Consumo","vg":"Tens\u00e3o Rede","vb":"Tens\u00e3o Bateria","vp":"Tens\u00e3o PV","sun":"Entidade Sol (anel solar)","ti":"Temp. Inversor","tb":"Temp. Bateria","fq":"Frequ\u00eancia Rede","gs":"Estado Rede","dso":"Solar Di\u00e1rio","dim":"Importa\u00e7\u00e3o Di\u00e1ria","dex":"Exporta\u00e7\u00e3o Di\u00e1ria","dlo":"Consumo Di\u00e1rio","dch":"Carga Di\u00e1ria","ddi":"Descarga Di\u00e1ria","wt":"Temp. Exterior","wh":"Humidade","evp":"Pot\u00eancia Carregador EV","evs":"SOC EV","evd":"Energia EV Di\u00e1ria","cim":"Custo Importa\u00e7\u00e3o Di\u00e1rio","cex":"Ganhos Exporta\u00e7\u00e3o Di\u00e1rios","op":"(opcional)","sp":"(separado, opcional)","pr":"Pre\u00e7o Eletricidade","exc":"Pot\u00eancia Consumo Extra"},"sv":{"chg":"Effekt batteriladdare","rsv":"Reserv-SOC f\u00f6r backup (valfritt)","wx":"V\u00e4derentitet (solikon)","ps":"Solcellseffekt","pb":"Batterieffekt","pbc":"Laddeffekt bat.","pbd":"Urladdningseffekt bat.","sc":"Batteri-SOC","pg":"N\u00e4teffekt","pl":"F\u00f6rbrukningseffekt","vg":"N\u00e4tsp\u00e4nning","vb":"Batterisp\u00e4nning","vp":"PV-sp\u00e4nning","sun":"Solentitet (solring)","ti":"V\u00e4xelriktartemp.","tb":"Batteritemp.","fq":"N\u00e4tfrekvens","gs":"N\u00e4tstatus","dso":"Daglig solproduktion","dim":"Daglig import","dex":"Daglig export","dlo":"Daglig f\u00f6rbrukning","dch":"Daglig laddning","ddi":"Daglig urladdning","wt":"Utetemp.","wh":"Luftfuktighet","evp":"Laddeffekt elbil","evs":"Elbil-SOC","evd":"Daglig elbilsenergi","cim":"Daglig importkostnad","cex":"Daglig exportint\u00e4kt","op":"(valfritt)","sp":"(separat, valfritt)","pr":"Elpris","exc":"Effekt extra f\u00f6rbrukare"},"de":{"chg":"Leistung Batterieladeger\u00e4t","rsv":"Backup-Reserve SOC (optional)","wx":"Wetter-Entit\u00e4t (Sonnensymbol)","ps":"Solarleistung","pb":"Batterieleistung","pbc":"Ladeleistung Bat.","pbd":"Entladeleistung Bat.","sc":"Batterie-SOC","pg":"Netzleistung","pl":"Verbrauchsleistung","vg":"Netzspannung","vb":"Batteriespannung","vp":"PV-Spannung","sun":"Sonnen-Entit\u00e4t (Ring)","ti":"WR-Temp.","tb":"Bat.-Temp.","fq":"Netzfrequenz","gs":"Netzstatus","dso":"Tagesertrag Solar","dim":"Tagesimport","dex":"Tagesexport","dlo":"Tagesverbrauch","dch":"Tagesladung","ddi":"Tagesentladung","wt":"Au\u00dfentemp.","wh":"Luftfeuchte","evp":"EV-Ladeleistung","evs":"EV-SOC","evd":"EV-Tagesenergie","cim":"T\u00e4gl. Importkosten","cex":"T\u00e4gl. Exporterl\u00f6s","op":"(optional)","sp":"(getrennt, optional)","pr":"Strompreis","exc":"Leistung Zusatzverbraucher"},"fr":{"chg":"Puissance chargeur batterie","rsv":"R\u00e9serve de secours SOC (optionnel)","wx":"Entit\u00e9 m\u00e9t\u00e9o (ic\u00f4ne soleil)","ps":"Puissance solaire","pb":"Puissance batterie","pbc":"Puissance charge bat.","pbd":"Puissance d\u00e9charge bat.","sc":"SOC batterie","pg":"Puissance r\u00e9seau","pl":"Puissance conso.","vg":"Tension r\u00e9seau","vb":"Tension batterie","vp":"Tension PV","sun":"Entit\u00e9 soleil (anneau)","ti":"Temp. onduleur","tb":"Temp. batterie","fq":"Fr\u00e9quence r\u00e9seau","gs":"\u00c9tat r\u00e9seau","dso":"Solaire journalier","dim":"Import journalier","dex":"Export journalier","dlo":"Conso. journali\u00e8re","dch":"Charge journali\u00e8re","ddi":"D\u00e9charge journali\u00e8re","wt":"Temp. ext.","wh":"Humidit\u00e9","evp":"Puissance chargeur VE","evs":"SOC VE","evd":"\u00c9nergie VE journali\u00e8re","cim":"Co\u00fbt import journalier","cex":"Gains export journaliers","op":"(optionnel)","sp":"(s\u00e9par\u00e9, optionnel)","pr":"Prix \u00e9lectricit\u00e9","exc":"Puissance conso. suppl\u00e9mentaire"},"es":{"chg":"Potencia cargador bater\u00eda","rsv":"Reserva de respaldo SOC (opcional)","wx":"Entidad tiempo (icono sol)","ps":"Potencia solar","pb":"Potencia bater\u00eda","pbc":"Potencia carga bat.","pbd":"Potencia descarga bat.","sc":"SOC bater\u00eda","pg":"Potencia red","pl":"Potencia consumo","vg":"Tensi\u00f3n red","vb":"Tensi\u00f3n bater\u00eda","vp":"Tensi\u00f3n PV","sun":"Entidad sol (anillo)","ti":"Temp. inversor","tb":"Temp. bater\u00eda","fq":"Frecuencia red","gs":"Estado red","dso":"Solar diario","dim":"Importaci\u00f3n diaria","dex":"Exportaci\u00f3n diaria","dlo":"Consumo diario","dch":"Carga diaria","ddi":"Descarga diaria","wt":"Temp. exterior","wh":"Humedad","evp":"Potencia cargador VE","evs":"SOC VE","evd":"Energ\u00eda VE diaria","cim":"Coste importaci\u00f3n diario","cex":"Ganancias exportaci\u00f3n diarias","op":"(opcional)","sp":"(separado, opcional)","pr":"Precio electricidad","exc":"Potencia consumo extra"},"it":{"chg":"Potenza caricabatterie","rsv":"Riserva backup SOC (opzionale)","wx":"Entit\u00e0 meteo (icona sole)","ps":"Potenza solare","pb":"Potenza batteria","pbc":"Potenza carica bat.","pbd":"Potenza scarica bat.","sc":"SOC batteria","pg":"Potenza rete","pl":"Potenza consumo","vg":"Tensione rete","vb":"Tensione batteria","vp":"Tensione PV","sun":"Entit\u00e0 sole (anello)","ti":"Temp. inverter","tb":"Temp. batteria","fq":"Frequenza rete","gs":"Stato rete","dso":"Solare giornaliero","dim":"Import giornaliero","dex":"Export giornaliero","dlo":"Consumo giornaliero","dch":"Carica giornaliera","ddi":"Scarica giornaliera","wt":"Temp. esterna","wh":"Umidit\u00e0","evp":"Potenza caricatore EV","evs":"SOC EV","evd":"Energia EV giornaliera","cim":"Costo import giornaliero","cex":"Guadagni export giornalieri","op":"(opzionale)","sp":"(separato, opzionale)","pr":"Prezzo elettricit\u00e0","exc":"Potenza consumo extra"},"nl":{"chg":"Vermogen batterijlader","rsv":"Back-upreserve SOC (optioneel)","wx":"Weer-entiteit (zonicoon)","ps":"Zonnevermogen","pb":"Batterijvermogen","pbc":"Laadvermogen bat.","pbd":"Ontlaadvermogen bat.","sc":"Batterij-SOC","pg":"Netvermogen","pl":"Verbruiksvermogen","vg":"Netspanning","vb":"Batterijspanning","vp":"PV-spanning","sun":"Zon-entiteit (ring)","ti":"Omvormer temp.","tb":"Batterij temp.","fq":"Netfrequentie","gs":"Netstatus","dso":"Dagelijks zonne","dim":"Dagelijkse import","dex":"Dagelijkse export","dlo":"Dagelijks verbruik","dch":"Dagelijkse lading","ddi":"Dagelijkse ontlading","wt":"Buitentemp.","wh":"Vochtigheid","evp":"EV-laadvermogen","evs":"EV-SOC","evd":"Dagelijkse EV-energie","cim":"Dagelijkse importkosten","cex":"Dagelijkse exportopbrengst","op":"(optioneel)","sp":"(gescheiden, optioneel)","pr":"Stroomprijs","exc":"Vermogen extra verbruiker"},"pl":{"chg":"Moc \u0142adowarki baterii","rsv":"Rezerwa awaryjna SOC (opcjonalnie)","wx":"Encja pogody (ikona s\u0142o\u0144ca)","ps":"Moc PV","pb":"Moc baterii","pbc":"Moc \u0142adowania bat.","pbd":"Moc roz\u0142adowania bat.","sc":"SOC baterii","pg":"Moc sieci","pl":"Moc obci\u0105\u017cenia","vg":"Napi\u0119cie sieci","vb":"Napi\u0119cie baterii","vp":"Napi\u0119cie PV","sun":"Encja s\u0142o\u0144ca (pier\u015bcie\u0144)","ti":"Temp. falownika","tb":"Temp. baterii","fq":"Cz\u0119stotliwo\u015b\u0107 sieci","gs":"Stan sieci","dso":"Dzienny solar","dim":"Dzienny import","dex":"Dzienny eksport","dlo":"Dzienne zu\u017cycie","dch":"Dzienne \u0142adowanie","ddi":"Dzienne roz\u0142adowanie","wt":"Temp. zewn.","wh":"Wilgotno\u015b\u0107","evp":"Moc \u0142adowarki EV","evs":"SOC EV","evd":"Dzienna energia EV","cim":"Dzienny koszt importu","cex":"Dzienny zysk z eksportu","op":"(opcjonalnie)","sp":"(osobno, opcjonalnie)","pr":"Cena energii","exc":"Moc dodatkowego odbiornika"}};
 
+// Editor option labels and choices: English text is the key (EDK), translations by position (EDX); a missing one falls back to English
+const EDK=["Grid icon","Home icon","Inverter icon","Theme","Card style","Energy source frame","Solar / PV","Charger included in battery power","Layout","Grid min. (W)","Animations","Flow speed","Flow density","Detail level","Power unit","Temp. unit","Energy chart","Values font (px)","MPPT text scale","Battery chart","Solar forecast (chart)","Flow style","Flow size","Extra Consumer","Name","Icon","Dark","Light","On","Off","Shown","Hidden (no PV system)","Yes (shunt / BMS)","No (inverter only)","Full","Compact","Always","Proportional to power","Synced","Everything configured","Essential","Normal","Technical","Top","Bottom","Chevrons","Comet","Appliances","Heat Pump","Garage/Shed","Car / EV charger","Generic"];
+const EDX={"pt":["\u00cdcone da rede","\u00cdcone da casa","\u00cdcone do inversor","Tema","Estilo do cart\u00e3o","Moldura origem da energia","Solar / PV","Carregador inclu\u00eddo na pot\u00eancia da bateria","Disposi\u00e7\u00e3o","Rede m\u00edn. (W)","Anima\u00e7\u00f5es","Velocidade do fluxo","Densidade do fluxo","N\u00edvel de detalhe","Unidade de pot\u00eancia","Unidade de temp.","Gr\u00e1fico de energia","Tamanho dos valores (px)","Escala do texto MPPT","Gr\u00e1fico da bateria","Previs\u00e3o solar (gr\u00e1fico)","Estilo do fluxo","Tamanho do fluxo","Consumo Extra","Nome","\u00cdcone","Escuro","Claro","Ligado","Desligado","Vis\u00edvel","Oculto (sem pain\u00e9is)","Sim (shunt / BMS)","N\u00e3o (s\u00f3 inversor)","Completo","Compacto","Sempre","Proporcional \u00e0 pot\u00eancia","Sincronizado","Tudo o que est\u00e1 configurado","Essencial","Normal","T\u00e9cnico","Em cima","Em baixo","Setas","Cometa","Eletrodom\u00e9sticos","Bomba de calor","Garagem/Anexo","Carro / Carregador EV","Gen\u00e9rico"],"sv":["N\u00e4tikon","Hemikon","V\u00e4xelriktarikon","Tema","Kortstil","Ram f\u00f6r energik\u00e4lla","Sol / PV","Laddare ing\u00e5r i batterieffekt","Layout","N\u00e4t min. (W)","Animationer","Fl\u00f6deshastighet","Fl\u00f6dest\u00e4thet","Detaljniv\u00e5","Effektenhet","Temp.-enhet","Energidiagram","Teckenstorlek v\u00e4rden (px)","MPPT-textskala","Batteridiagram","Solprognos (diagram)","Fl\u00f6desstil","Fl\u00f6desstorlek","Extra f\u00f6rbrukare","Namn","Ikon","M\u00f6rkt","Ljust","P\u00e5","Av","Visas","Dold (ingen solcellsanl\u00e4ggning)","Ja (shunt / BMS)","Nej (endast v\u00e4xelriktare)","Full","Kompakt","Alltid","Proportionell mot effekt","Synkroniserad","Allt som \u00e4r konfigurerat","V\u00e4sentligt","Normal","Teknisk","\u00d6verst","Nederst","Pilar","Komet","Vitvaror","V\u00e4rmepump","Garage/F\u00f6rr\u00e5d","Bil / Elbilsladdare","Allm\u00e4n"],"de":["Netz-Symbol","Haus-Symbol","Wechselrichter-Symbol","Design","Kartenstil","Rahmen Energiequelle","Solar / PV","Ladeger\u00e4t in Batterieleistung enthalten","Layout","Netz min. (W)","Animationen","Flussgeschwindigkeit","Flussdichte","Detailstufe","Leistungseinheit","Temp.-Einheit","Energiediagramm","Schriftgr\u00f6\u00dfe Werte (px)","MPPT-Textgr\u00f6\u00dfe","Batteriediagramm","Solarprognose (Diagramm)","Flussstil","Flussgr\u00f6\u00dfe","Zusatzverbraucher","Name","Symbol","Dunkel","Hell","An","Aus","Sichtbar","Ausgeblendet (keine PV-Anlage)","Ja (Shunt / BMS)","Nein (nur Wechselrichter)","Voll","Kompakt","Immer","Proportional zur Leistung","Synchron","Alles Konfigurierte","Wesentlich","Normal","Technisch","Oben","Unten","Pfeile","Komet","Haushaltsger\u00e4te","W\u00e4rmepumpe","Garage/Schuppen","Auto / Wallbox","Allgemein"],"fr":["Ic\u00f4ne r\u00e9seau","Ic\u00f4ne maison","Ic\u00f4ne onduleur","Th\u00e8me","Style de carte","Cadre source d'\u00e9nergie","Solaire / PV","Chargeur inclus dans la puissance batterie","Disposition","R\u00e9seau min. (W)","Animations","Vitesse du flux","Densit\u00e9 du flux","Niveau de d\u00e9tail","Unit\u00e9 de puissance","Unit\u00e9 de temp.","Graphique d'\u00e9nergie","Taille des valeurs (px)","\u00c9chelle du texte MPPT","Graphique batterie","Pr\u00e9vision solaire (graphique)","Style du flux","Taille du flux","Consommateur suppl\u00e9mentaire","Nom","Ic\u00f4ne","Sombre","Clair","Activ\u00e9","D\u00e9sactiv\u00e9","Affich\u00e9","Masqu\u00e9 (pas de PV)","Oui (shunt / BMS)","Non (onduleur seul)","Complet","Compact","Toujours","Proportionnel \u00e0 la puissance","Synchronis\u00e9","Tout ce qui est configur\u00e9","Essentiel","Normal","Technique","En haut","En bas","Chevrons","Com\u00e8te","\u00c9lectrom\u00e9nager","Pompe \u00e0 chaleur","Garage/Abri","Voiture / Borne VE","G\u00e9n\u00e9rique"],"es":["Icono de red","Icono de casa","Icono del inversor","Tema","Estilo de tarjeta","Marco origen de la energ\u00eda","Solar / FV","Cargador incluido en la potencia de bater\u00eda","Dise\u00f1o","Red m\u00edn. (W)","Animaciones","Velocidad del flujo","Densidad del flujo","Nivel de detalle","Unidad de potencia","Unidad de temp.","Gr\u00e1fico de energ\u00eda","Tama\u00f1o de los valores (px)","Escala del texto MPPT","Gr\u00e1fico de bater\u00eda","Previsi\u00f3n solar (gr\u00e1fico)","Estilo del flujo","Tama\u00f1o del flujo","Consumo extra","Nombre","Icono","Oscuro","Claro","Activado","Desactivado","Visible","Oculto (sin paneles)","S\u00ed (shunt / BMS)","No (solo inversor)","Completo","Compacto","Siempre","Proporcional a la potencia","Sincronizado","Todo lo configurado","Esencial","Normal","T\u00e9cnico","Arriba","Abajo","Flechas","Cometa","Electrodom\u00e9sticos","Bomba de calor","Garaje/Cobertizo","Coche / Cargador VE","Gen\u00e9rico"],"it":["Icona rete","Icona casa","Icona inverter","Tema","Stile scheda","Cornice origine energia","Solare / FV","Caricatore incluso nella potenza batteria","Layout","Rete min. (W)","Animazioni","Velocit\u00e0 del flusso","Densit\u00e0 del flusso","Livello di dettaglio","Unit\u00e0 di potenza","Unit\u00e0 di temp.","Grafico energia","Dimensione valori (px)","Scala testo MPPT","Grafico batteria","Previsione solare (grafico)","Stile del flusso","Dimensione del flusso","Consumo extra","Nome","Icona","Scuro","Chiaro","Attivo","Disattivo","Visibile","Nascosto (senza FV)","S\u00ec (shunt / BMS)","No (solo inverter)","Completo","Compatto","Sempre","Proporzionale alla potenza","Sincronizzato","Tutto ci\u00f2 che \u00e8 configurato","Essenziale","Normale","Tecnico","In alto","In basso","Frecce","Cometa","Elettrodomestici","Pompa di calore","Garage/Capanno","Auto / Wallbox","Generico"],"nl":["Netpictogram","Huispictogram","Omvormerpictogram","Thema","Kaartstijl","Kader energiebron","Zon / PV","Lader inbegrepen in batterijvermogen","Indeling","Net min. (W)","Animaties","Stroomsnelheid","Stroomdichtheid","Detailniveau","Vermogenseenheid","Temp.-eenheid","Energiegrafiek","Lettergrootte waarden (px)","MPPT-tekstschaal","Batterijgrafiek","Zonneprognose (grafiek)","Stroomstijl","Stroomgrootte","Extra verbruiker","Naam","Pictogram","Donker","Licht","Aan","Uit","Zichtbaar","Verborgen (geen PV)","Ja (shunt / BMS)","Nee (alleen omvormer)","Volledig","Compact","Altijd","Evenredig met vermogen","Gesynchroniseerd","Alles wat is ingesteld","Essentieel","Normaal","Technisch","Boven","Onder","Pijlen","Komeet","Huishoudapparaten","Warmtepomp","Garage/Schuur","Auto / Laadpaal","Algemeen"],"pl":["Ikona sieci","Ikona domu","Ikona falownika","Motyw","Styl karty","Ramka \u017ar\u00f3d\u0142a energii","Fotowoltaika / PV","\u0141adowarka wliczona w moc baterii","Uk\u0142ad","Sie\u0107 min. (W)","Animacje","Pr\u0119dko\u015b\u0107 przep\u0142ywu","G\u0119sto\u015b\u0107 przep\u0142ywu","Poziom szczeg\u00f3\u0142\u00f3w","Jednostka mocy","Jednostka temp.","Wykres energii","Rozmiar warto\u015bci (px)","Skala tekstu MPPT","Wykres baterii","Prognoza solarna (wykres)","Styl przep\u0142ywu","Rozmiar przep\u0142ywu","Dodatkowy odbiornik","Nazwa","Ikona","Ciemny","Jasny","W\u0142.","Wy\u0142.","Widoczne","Ukryte (brak PV)","Tak (bocznik / BMS)","Nie (tylko falownik)","Pe\u0142ny","Kompaktowy","Zawsze","Proporcjonalnie do mocy","Zsynchronizowany","Wszystko skonfigurowane","Podstawowy","Normalny","Techniczny","G\u00f3ra","D\u00f3\u0142","Strza\u0142ki","Kometa","AGD","Pompa ciep\u0142a","Gara\u017c/Szopa","Samoch\u00f3d / \u0141adowarka EV","Og\u00f3lny"]};
+const xpfE=lk=>{const a=EDX[lk];return t=>{const i=EDK.indexOf(t);return a&&i>=0&&a[i]?a[i]:t;};};
 const _lk=(l,h)=>{const k=l||String(h?.locale?.language||h?.language||'en').toLowerCase().slice(0,2);return LANG[k]?k:'en';};
 
+// Decimal separator of the user's Home Assistant number format ("language"/"system" follow the locale)
+const xpfDec=h=>{const lc=(h&&h.locale)||{},nf=lc.number_format;if(nf==='decimal_comma'||nf==='space_comma')return ',';if(nf==='comma_decimal'||nf==='quote_decimal'||nf==='none')return '.';
+try{return new Intl.NumberFormat(nf==='system'?undefined:(lc.language||(h&&h.language)||'en')).format(1.5).indexOf(',')>-1?',':'.';}catch{return '.';}};
 const HIST_POINTS=96;
 const HIST_INTERVAL=5*60*1000;
 const HIST_SLOT=24*60*60*1000/HIST_POINTS;
@@ -367,12 +382,26 @@ const _xdet=(raw,cfg)=>{const P=XPF_DETAIL[raw.detail];if(!P)return;for(const k 
 // defaults), so the YAML stays short and later preset changes still reach the card. `preset` and keys the card doesn't own are kept.
 const _xmin=cfg=>{const B=_pdef(cfg.preset),P=XPF_DETAIL[cfg.detail];if(P)Object.assign(B,P);const o=cfg.type!==undefined?{type:cfg.type}:{};for(const k in cfg){if(k!=='preset'&&Object.prototype.hasOwnProperty.call(DEFAULTS,k)&&cfg[k]===B[k])continue;o[k]=cfg[k];}return o;};
 
+// Sensor auto-detection, shared by the editor button and by new cards. A field is free when it is empty or names an entity
+// that does not exist here (a brand preset's default on another brand); a field is only filled when a sensor is found.
+const xpfDetect=(st,cfg)=>{const o={},free=k=>!cfg[k]||!st[cfg[k]],ids=Object.keys(st).filter(id=>id.startsWith('sensor.'));
+const pow=ids.filter(id=>st[id].attributes?.device_class==='power'),pick=re=>pow.find(id=>re.test(id))||'',set=(k,v)=>{if(v&&free(k))o[k]=v;};
+set('solar',pick(/pv1?_power|solar_power|photovolta/));
+if(!cfg.battery_charge)set('battery',pick(/battery_power|storage_power/));
+set('grid',pick(/grid_power|ct1?_power|meter_active_power/));
+set('load',pick(/load_power|house_consumption|essential_power|ac_consumption/));
+set('soc',ids.filter(id=>st[id].attributes?.device_class==='battery').find(id=>/battery|soc/.test(id))||'');
+return o;};
+// Config of a card just added from the picker: the brand whose default sensors exist here, else whatever power sensors can be found
+const xpfStub=st=>{if(!st)return{preset:DEFAULTS.preset};let best='',n=1;
+for(const k in PRESETS){if(k==='custom')continue;const e=PRESETS[k].e,c=['solar','battery','soc','grid','load'].filter(f=>e[f]&&st[e[f]]).length;if(c>n){n=c;best=k;}}
+if(best)return{preset:best};const d=xpfDetect(st,{});return d.solar||d.grid||d.load||d.battery?{preset:'custom',...d}:{preset:DEFAULTS.preset};};
+
 class XPowerFlowCardEditor extends HTMLElement{
   constructor(){super();this._config={};this._hass=null;this._onchange=this._fire.bind(this);}
   _esc(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
   setConfig(config){const merged={..._pdef(config.preset),...config};_xdet(config,merged);if(config.energy_frame===undefined&&config.autarky_frame!==undefined)merged.energy_frame=config.autarky_frame;delete merged.autarky_frame;if(this._ready&&JSON.stringify(merged)===JSON.stringify(this._config))return;this._config=merged;this._render();this._ready=true;}
   set hass(hass){const first=!this._hass;this._hass=hass;if(first&&this._ready&&!this._config.language)this._render();}
-  disconnectedCallback(){const el=this.querySelector('.editor');if(el)el.removeEventListener('change',this._onchange);}
 
   _fire(e){
     if(!e.target.matches('input,select'))return;
@@ -455,14 +484,8 @@ class XPowerFlowCardEditor extends HTMLElement{
           if(s.stat_energy_from&&st[s.stat_energy_from]&&!cfg.daily_discharge)cfg.daily_discharge=s.stat_energy_from;
         }
       }
-    }catch(e){}
-    const pow=Object.keys(st).filter(id=>id.startsWith('sensor.')&&st[id].attributes?.device_class==='power');
-    const pick=re=>pow.find(id=>re.test(id))||'';
-    if(!cfg.solar)cfg.solar=pick(/pv1?_power|solar_power|photovolta/);
-    if(!cfg.battery&&!cfg.battery_charge)cfg.battery=pick(/battery_power|storage_power/);
-    if(!cfg.grid)cfg.grid=pick(/grid_power|ct1?_power|meter_active_power/);
-    if(!cfg.load)cfg.load=pick(/load_power|house_consumption|essential_power|ac_consumption/);
-    if(!cfg.soc){const socs=Object.keys(st).filter(id=>id.startsWith('sensor.')&&st[id].attributes?.device_class==='battery');cfg.soc=socs.find(id=>/battery|soc/.test(id))||'';}
+    }catch{}
+    Object.assign(cfg,xpfDetect(st,cfg));
     this._config=cfg;
     this.dispatchEvent(new CustomEvent('config-changed',{detail:{config:_xmin(cfg)},bubbles:true,composed:true}));
     this._render();
@@ -473,7 +496,7 @@ class XPowerFlowCardEditor extends HTMLElement{
     const lk=_lk(this._config.language,this._hass);
     const L=LANG[lk];
     const c=this._config;
-    const T=EDL[lk];const lbl=f=>T&&FLBL[f.key]?FLBL[f.key](T):f.label;
+    const T=EDL[lk],E=xpfE(lk);const lbl=f=>T&&FLBL[f.key]?FLBL[f.key](T):f.label;
     const selStyle='padding:8px;border:1px solid var(--divider-color);border-radius:4px;background:var(--card-background-color);color:var(--primary-text-color);width:100%;font-size:14px';
     this.innerHTML=`
     <style>
@@ -517,15 +540,15 @@ class XPowerFlowCardEditor extends HTMLElement{
 
       <div class="row">
         <div class="field">
-          <label>Grid icon</label>
+          <label>${E('Grid icon')}</label>
           <input type="text" id="ed-gicon" value="${this._esc(c.grid_icon)}" placeholder="mdi:… or /local/…">
         </div>
         <div class="field">
-          <label>Home icon</label>
+          <label>${E('Home icon')}</label>
           <input type="text" id="ed-licon" value="${this._esc(c.load_icon)}" placeholder="mdi:… or /local/…">
         </div>
         <div class="field">
-          <label>Inverter icon</label>
+          <label>${E('Inverter icon')}</label>
           <input type="text" id="ed-iicon" value="${this._esc(c.inverter_icon)}" placeholder="mdi:… or /local/…">
         </div>
       </div>
@@ -535,46 +558,46 @@ class XPowerFlowCardEditor extends HTMLElement{
           <input type="text" id="ed-inv" value="${this._esc(c.inverter_name)}">
         </div>
         <div class="field">
-          <label>Theme</label>
+          <label>${E('Theme')}</label>
           <select id="ed-theme" style="${selStyle}">
             <option value="auto" ${c.theme==='auto'?'selected':''}>Auto</option>
-            <option value="dark" ${c.theme==='dark'?'selected':''}>Dark</option>
-            <option value="light" ${c.theme==='light'?'selected':''}>Light</option>
+            <option value="dark" ${c.theme==='dark'?'selected':''}>${E('Dark')}</option>
+            <option value="light" ${c.theme==='light'?'selected':''}>${E('Light')}</option>
           </select>
         </div>
         <div class="field">
-          <label>Card style</label>
+          <label>${E('Card style')}</label>
           <select id="ed-cstyle" style="${selStyle}">
             <option value="xpower" ${c.card_style!=='ha'?'selected':''}>xPower</option>
             <option value="ha" ${c.card_style==='ha'?'selected':''}>Home Assistant</option>
           </select>
         </div>
         <div class="field">
-          <label>Energy source frame</label>
+          <label>${E('Energy source frame')}</label>
           <select id="ed-aframe" style="${selStyle}">
-            <option value="true" ${c.energy_frame!==false?'selected':''}>On</option>
-            <option value="false" ${c.energy_frame===false?'selected':''}>Off</option>
+            <option value="true" ${c.energy_frame!==false?'selected':''}>${E('On')}</option>
+            <option value="false" ${c.energy_frame===false?'selected':''}>${E('Off')}</option>
           </select>
         </div>
         <div class="field">
-          <label>Solar / PV</label>
+          <label>${E('Solar / PV')}</label>
           <select id="ed-pvshow" style="${selStyle}">
-            <option value="true" ${c.show_solar!==false?'selected':''}>Shown</option>
-            <option value="false" ${c.show_solar===false?'selected':''}>Hidden (no PV system)</option>
+            <option value="true" ${c.show_solar!==false?'selected':''}>${E('Shown')}</option>
+            <option value="false" ${c.show_solar===false?'selected':''}>${E('Hidden (no PV system)')}</option>
           </select>
         </div>
         <div class="field">
-          <label>Charger included in battery power</label>
+          <label>${E('Charger included in battery power')}</label>
           <select id="ed-chgbat" style="${selStyle}">
-            <option value="true" ${c.charger_in_battery!==false?'selected':''}>Yes (shunt / BMS)</option>
-            <option value="false" ${c.charger_in_battery===false?'selected':''}>No (inverter only)</option>
+            <option value="true" ${c.charger_in_battery!==false?'selected':''}>${E('Yes (shunt / BMS)')}</option>
+            <option value="false" ${c.charger_in_battery===false?'selected':''}>${E('No (inverter only)')}</option>
           </select>
         </div>
         <div class="field">
-          <label>Layout</label>
+          <label>${E('Layout')}</label>
           <select id="ed-compact" style="${selStyle}">
-            <option value="false" ${!c.compact?'selected':''}>Full</option>
-            <option value="true" ${c.compact?'selected':''}>Compact</option>
+            <option value="false" ${!c.compact?'selected':''}>${E('Full')}</option>
+            <option value="true" ${c.compact?'selected':''}>${E('Compact')}</option>
           </select>
         </div>
       </div>
@@ -608,41 +631,41 @@ class XPowerFlowCardEditor extends HTMLElement{
           <input type="number" id="ed-cap" min="0" value="${this._esc(c.battery_capacity??5120)}">
         </div>
         <div class="field">
-          <label>Grid min. (W)</label>
+          <label>${E('Grid min. (W)')}</label>
           <input type="number" id="ed-gth" min="0" value="${this._esc(c.grid_threshold??0)}">
         </div>
         <div class="field">
-          <label>Animations</label>
+          <label>${E('Animations')}</label>
           <select id="ed-anim" style="${selStyle}">
             <option value="auto" ${c.animations!=='always'?'selected':''}>Auto</option>
-            <option value="always" ${c.animations==='always'?'selected':''}>Always</option>
+            <option value="always" ${c.animations==='always'?'selected':''}>${E('Always')}</option>
           </select>
         </div>
         <div class="field">
-          <label>Flow speed</label>
+          <label>${E('Flow speed')}</label>
           <select id="ed-fspd" style="${selStyle}">
-            <option value="proportional" ${c.flow_speed!=='synced'?'selected':''}>Proportional to power</option>
-            <option value="synced" ${c.flow_speed==='synced'?'selected':''}>Synced</option>
+            <option value="proportional" ${c.flow_speed!=='synced'?'selected':''}>${E('Proportional to power')}</option>
+            <option value="synced" ${c.flow_speed==='synced'?'selected':''}>${E('Synced')}</option>
           </select>
         </div>
         <div class="field">
-          <label>Flow density</label>
+          <label>${E('Flow density')}</label>
           <select id="ed-fdens" style="${selStyle}">
-            <option value="power" ${c.flow_density!=='full'?'selected':''}>Proportional to power</option>
-            <option value="full" ${c.flow_density==='full'?'selected':''}>Full</option>
+            <option value="power" ${c.flow_density!=='full'?'selected':''}>${E('Proportional to power')}</option>
+            <option value="full" ${c.flow_density==='full'?'selected':''}>${E('Full')}</option>
           </select>
         </div>
         <div class="field">
-          <label>Detail level</label>
+          <label>${E('Detail level')}</label>
           <select id="ed-detail" style="${selStyle}">
-            <option value="" ${!XPF_DETAIL[c.detail]?'selected':''}>Everything configured</option>
-            <option value="essential" ${c.detail==='essential'?'selected':''}>Essential</option>
-            <option value="normal" ${c.detail==='normal'?'selected':''}>Normal</option>
-            <option value="technical" ${c.detail==='technical'?'selected':''}>Technical</option>
+            <option value="" ${!XPF_DETAIL[c.detail]?'selected':''}>${E('Everything configured')}</option>
+            <option value="essential" ${c.detail==='essential'?'selected':''}>${E('Essential')}</option>
+            <option value="normal" ${c.detail==='normal'?'selected':''}>${E('Normal')}</option>
+            <option value="technical" ${c.detail==='technical'?'selected':''}>${E('Technical')}</option>
           </select>
         </div>
         <div class="field">
-          <label>Power unit</label>
+          <label>${E('Power unit')}</label>
           <select id="ed-punit" style="${selStyle}">
             <option value="auto" ${(c.power_unit||'auto')==='auto'?'selected':''}>Auto</option>
             <option value="W" ${c.power_unit==='W'?'selected':''}>W</option>
@@ -650,7 +673,7 @@ class XPowerFlowCardEditor extends HTMLElement{
           </select>
         </div>
         <div class="field">
-          <label>Temp. unit</label>
+          <label>${E('Temp. unit')}</label>
           <select id="ed-tunit" style="${selStyle}">
             <option value="auto" ${(c.temp_unit||'auto')==='auto'?'selected':''}>Auto</option>
             <option value="C" ${c.temp_unit==='C'?'selected':''}>°C</option>
@@ -658,152 +681,152 @@ class XPowerFlowCardEditor extends HTMLElement{
           </select>
         </div>
         <div class="field">
-          <label>Energy chart</label>
+          <label>${E('Energy chart')}</label>
           <select id="ed-ech" style="${selStyle}">
-            <option value="top" ${(c.energy_chart||'bottom')==='top'?'selected':''}>Top</option>
-            <option value="bottom" ${(c.energy_chart||'bottom')==='bottom'?'selected':''}>Bottom</option>
-            <option value="off" ${(c.energy_chart||'bottom')==='off'?'selected':''}>Off</option>
+            <option value="top" ${(c.energy_chart||'bottom')==='top'?'selected':''}>${E('Top')}</option>
+            <option value="bottom" ${(c.energy_chart||'bottom')==='bottom'?'selected':''}>${E('Bottom')}</option>
+            <option value="off" ${(c.energy_chart||'bottom')==='off'?'selected':''}>${E('Off')}</option>
           </select>
         </div>
         <div class="field">
-          <label>Values font (px)</label>
+          <label>${E('Values font (px)')}</label>
           <input type="number" id="ed-fsize" min="10" max="48" value="${this._esc(c.font_size??24)}">
         </div>
       </div>
       <div class="row">
         <div class="field">
-          <label>MPPT text scale</label>
+          <label>${E('MPPT text scale')}</label>
           <input type="number" id="ed-mps" min="0.8" max="1.6" step="0.1" value="${this._esc(c.mppt_scale??1)}">
         </div>
       </div>
       <div class="row">
         <div class="field">
-          <label>Battery chart</label>
+          <label>${E('Battery chart')}</label>
           <select id="ed-bch" style="${selStyle}">
-            <option value="top" ${(c.battery_chart||'off')==='top'?'selected':''}>Top</option>
-            <option value="bottom" ${(c.battery_chart||'off')==='bottom'?'selected':''}>Bottom</option>
-            <option value="off" ${(c.battery_chart||'off')==='off'?'selected':''}>Off</option>
+            <option value="top" ${(c.battery_chart||'off')==='top'?'selected':''}>${E('Top')}</option>
+            <option value="bottom" ${(c.battery_chart||'off')==='bottom'?'selected':''}>${E('Bottom')}</option>
+            <option value="off" ${(c.battery_chart||'off')==='off'?'selected':''}>${E('Off')}</option>
           </select>
         </div>
         <div class="field">
-          <label>Solar forecast (chart)</label>
+          <label>${E('Solar forecast (chart)')}</label>
           <select id="ed-sfc" style="${selStyle}">
-            <option value="true" ${c.solar_forecast!==false?'selected':''}>On</option>
-            <option value="false" ${c.solar_forecast===false?'selected':''}>Off</option>
+            <option value="true" ${c.solar_forecast!==false?'selected':''}>${E('On')}</option>
+            <option value="false" ${c.solar_forecast===false?'selected':''}>${E('Off')}</option>
           </select>
         </div>
       </div>
       <div class="row">
         <div class="field">
-          <label>Flow style</label>
+          <label>${E('Flow style')}</label>
           <select id="ed-fsty" style="${selStyle}">
-            <option value="chevron" ${c.flow_style!=='comet'?'selected':''}>Chevrons</option>
-            <option value="comet" ${c.flow_style==='comet'?'selected':''}>Comet</option>
+            <option value="chevron" ${c.flow_style!=='comet'?'selected':''}>${E('Chevrons')}</option>
+            <option value="comet" ${c.flow_style==='comet'?'selected':''}>${E('Comet')}</option>
           </select>
         </div>
         <div class="field">
-          <label>Flow size</label>
+          <label>${E('Flow size')}</label>
           <input type="number" id="ed-fsz" min="0.5" max="2.5" step="0.1" value="${this._esc(c.flow_size??0.7)}">
         </div>
       </div>
       <div class="row">
         <div class="field">
-          <label>Extra Consumer 1: Name</label>
+          <label>${E('Extra Consumer')} 1: ${E('Name')}</label>
           <input type="text" id="ed-ex1name" value="${this._esc(c.extra1_name)}" placeholder="Auto">
         </div>
         <div class="field">
-          <label>Extra Consumer 1: Icon</label>
+          <label>${E('Extra Consumer')} 1: ${E('Icon')}</label>
           <select id="ed-ex1icon" style="${selStyle}">
-            <option value="appliance" ${c.extra1_icon==='appliance'?'selected':''}>Appliances</option>
-            <option value="heatpump" ${c.extra1_icon==='heatpump'?'selected':''}>Heat Pump</option>
-            <option value="garage" ${c.extra1_icon==='garage'?'selected':''}>Garage/Shed</option>
-            <option value="car" ${c.extra1_icon==='car'?'selected':''}>Car / EV charger</option>
-            <option value="generic" ${c.extra1_icon==='generic'?'selected':''}>Generic</option>
+            <option value="appliance" ${c.extra1_icon==='appliance'?'selected':''}>${E('Appliances')}</option>
+            <option value="heatpump" ${c.extra1_icon==='heatpump'?'selected':''}>${E('Heat Pump')}</option>
+            <option value="garage" ${c.extra1_icon==='garage'?'selected':''}>${E('Garage/Shed')}</option>
+            <option value="car" ${c.extra1_icon==='car'?'selected':''}>${E('Car / EV charger')}</option>
+            <option value="generic" ${c.extra1_icon==='generic'?'selected':''}>${E('Generic')}</option>
             ${xpfXOpt(c.extra1_icon)}
           </select>
         </div>
       </div>
       <div class="row">
         <div class="field">
-          <label>Extra Consumer 2: Name</label>
+          <label>${E('Extra Consumer')} 2: ${E('Name')}</label>
           <input type="text" id="ed-ex2name" value="${this._esc(c.extra2_name)}" placeholder="Auto">
         </div>
         <div class="field">
-          <label>Extra Consumer 2: Icon</label>
+          <label>${E('Extra Consumer')} 2: ${E('Icon')}</label>
           <select id="ed-ex2icon" style="${selStyle}">
-            <option value="appliance" ${c.extra2_icon==='appliance'?'selected':''}>Appliances</option>
-            <option value="heatpump" ${c.extra2_icon==='heatpump'?'selected':''}>Heat Pump</option>
-            <option value="garage" ${c.extra2_icon==='garage'?'selected':''}>Garage/Shed</option>
-            <option value="car" ${c.extra2_icon==='car'?'selected':''}>Car / EV charger</option>
-            <option value="generic" ${c.extra2_icon==='generic'?'selected':''}>Generic</option>
+            <option value="appliance" ${c.extra2_icon==='appliance'?'selected':''}>${E('Appliances')}</option>
+            <option value="heatpump" ${c.extra2_icon==='heatpump'?'selected':''}>${E('Heat Pump')}</option>
+            <option value="garage" ${c.extra2_icon==='garage'?'selected':''}>${E('Garage/Shed')}</option>
+            <option value="car" ${c.extra2_icon==='car'?'selected':''}>${E('Car / EV charger')}</option>
+            <option value="generic" ${c.extra2_icon==='generic'?'selected':''}>${E('Generic')}</option>
             ${xpfXOpt(c.extra2_icon)}
           </select>
         </div>
       </div>
       <div class="row">
         <div class="field">
-          <label>Extra Consumer 3: Name</label>
+          <label>${E('Extra Consumer')} 3: ${E('Name')}</label>
           <input type="text" id="ed-ex3name" value="${this._esc(c.extra3_name)}" placeholder="Auto">
         </div>
         <div class="field">
-          <label>Extra Consumer 3: Icon</label>
+          <label>${E('Extra Consumer')} 3: ${E('Icon')}</label>
           <select id="ed-ex3icon" style="${selStyle}">
-            <option value="appliance" ${c.extra3_icon==='appliance'?'selected':''}>Appliances</option>
-            <option value="heatpump" ${c.extra3_icon==='heatpump'?'selected':''}>Heat Pump</option>
-            <option value="garage" ${c.extra3_icon==='garage'?'selected':''}>Garage/Shed</option>
-            <option value="car" ${c.extra3_icon==='car'?'selected':''}>Car / EV charger</option>
-            <option value="generic" ${c.extra3_icon==='generic'?'selected':''}>Generic</option>
+            <option value="appliance" ${c.extra3_icon==='appliance'?'selected':''}>${E('Appliances')}</option>
+            <option value="heatpump" ${c.extra3_icon==='heatpump'?'selected':''}>${E('Heat Pump')}</option>
+            <option value="garage" ${c.extra3_icon==='garage'?'selected':''}>${E('Garage/Shed')}</option>
+            <option value="car" ${c.extra3_icon==='car'?'selected':''}>${E('Car / EV charger')}</option>
+            <option value="generic" ${c.extra3_icon==='generic'?'selected':''}>${E('Generic')}</option>
             ${xpfXOpt(c.extra3_icon)}
           </select>
         </div>
       </div>
       <div class="row">
         <div class="field">
-          <label>Extra Consumer 4 (below): Name</label>
+          <label>${E('Extra Consumer')} 4 \u2193: ${E('Name')}</label>
           <input type="text" id="ed-ex4name" value="${this._esc(c.extra4_name)}" placeholder="Auto">
         </div>
         <div class="field">
-          <label>Extra Consumer 4 (below): Icon</label>
+          <label>${E('Extra Consumer')} 4 \u2193: ${E('Icon')}</label>
           <select id="ed-ex4icon" style="${selStyle}">
-            <option value="appliance" ${c.extra4_icon==='appliance'?'selected':''}>Appliances</option>
-            <option value="heatpump" ${c.extra4_icon==='heatpump'?'selected':''}>Heat Pump</option>
-            <option value="garage" ${c.extra4_icon==='garage'?'selected':''}>Garage/Shed</option>
-            <option value="car" ${c.extra4_icon==='car'?'selected':''}>Car / EV charger</option>
-            <option value="generic" ${c.extra4_icon==='generic'?'selected':''}>Generic</option>
+            <option value="appliance" ${c.extra4_icon==='appliance'?'selected':''}>${E('Appliances')}</option>
+            <option value="heatpump" ${c.extra4_icon==='heatpump'?'selected':''}>${E('Heat Pump')}</option>
+            <option value="garage" ${c.extra4_icon==='garage'?'selected':''}>${E('Garage/Shed')}</option>
+            <option value="car" ${c.extra4_icon==='car'?'selected':''}>${E('Car / EV charger')}</option>
+            <option value="generic" ${c.extra4_icon==='generic'?'selected':''}>${E('Generic')}</option>
             ${xpfXOpt(c.extra4_icon)}
           </select>
         </div>
       </div>
       <div class="row">
         <div class="field">
-          <label>Extra Consumer 5 (below): Name</label>
+          <label>${E('Extra Consumer')} 5 \u2193: ${E('Name')}</label>
           <input type="text" id="ed-ex5name" value="${this._esc(c.extra5_name)}" placeholder="Auto">
         </div>
         <div class="field">
-          <label>Extra Consumer 5 (below): Icon</label>
+          <label>${E('Extra Consumer')} 5 \u2193: ${E('Icon')}</label>
           <select id="ed-ex5icon" style="${selStyle}">
-            <option value="appliance" ${c.extra5_icon==='appliance'?'selected':''}>Appliances</option>
-            <option value="heatpump" ${c.extra5_icon==='heatpump'?'selected':''}>Heat Pump</option>
-            <option value="garage" ${c.extra5_icon==='garage'?'selected':''}>Garage/Shed</option>
-            <option value="car" ${c.extra5_icon==='car'?'selected':''}>Car / EV charger</option>
-            <option value="generic" ${c.extra5_icon==='generic'?'selected':''}>Generic</option>
+            <option value="appliance" ${c.extra5_icon==='appliance'?'selected':''}>${E('Appliances')}</option>
+            <option value="heatpump" ${c.extra5_icon==='heatpump'?'selected':''}>${E('Heat Pump')}</option>
+            <option value="garage" ${c.extra5_icon==='garage'?'selected':''}>${E('Garage/Shed')}</option>
+            <option value="car" ${c.extra5_icon==='car'?'selected':''}>${E('Car / EV charger')}</option>
+            <option value="generic" ${c.extra5_icon==='generic'?'selected':''}>${E('Generic')}</option>
             ${xpfXOpt(c.extra5_icon)}
           </select>
         </div>
       </div>
       <div class="row">
         <div class="field">
-          <label>Extra Consumer 6 (below): Name</label>
+          <label>${E('Extra Consumer')} 6 \u2193: ${E('Name')}</label>
           <input type="text" id="ed-ex6name" value="${this._esc(c.extra6_name)}" placeholder="Auto">
         </div>
         <div class="field">
-          <label>Extra Consumer 6 (below): Icon</label>
+          <label>${E('Extra Consumer')} 6 \u2193: ${E('Icon')}</label>
           <select id="ed-ex6icon" style="${selStyle}">
-            <option value="appliance" ${c.extra6_icon==='appliance'?'selected':''}>Appliances</option>
-            <option value="heatpump" ${c.extra6_icon==='heatpump'?'selected':''}>Heat Pump</option>
-            <option value="garage" ${c.extra6_icon==='garage'?'selected':''}>Garage/Shed</option>
-            <option value="car" ${c.extra6_icon==='car'?'selected':''}>Car / EV charger</option>
-            <option value="generic" ${c.extra6_icon==='generic'?'selected':''}>Generic</option>
+            <option value="appliance" ${c.extra6_icon==='appliance'?'selected':''}>${E('Appliances')}</option>
+            <option value="heatpump" ${c.extra6_icon==='heatpump'?'selected':''}>${E('Heat Pump')}</option>
+            <option value="garage" ${c.extra6_icon==='garage'?'selected':''}>${E('Garage/Shed')}</option>
+            <option value="car" ${c.extra6_icon==='car'?'selected':''}>${E('Car / EV charger')}</option>
+            <option value="generic" ${c.extra6_icon==='generic'?'selected':''}>${E('Generic')}</option>
             ${xpfXOpt(c.extra6_icon)}
           </select>
         </div>
@@ -828,7 +851,7 @@ class XPowerFlowCardEditor extends HTMLElement{
 if(!customElements.get('xpower-flow-card-editor'))customElements.define('xpower-flow-card-editor',XPowerFlowCardEditor);
 
 // Custom icons (#44): 'mdi:…' (any HA icon set) is drawn as a native SVG path, anything with a '/' as an image
-const xpfIsImg=v=>typeof v==='string'&&/[\/]/.test(v);
+const xpfIsImg=v=>typeof v==='string'&&v.indexOf('/')>-1;
 const xpfIsIco=v=>typeof v==='string'&&!xpfIsImg(v)&&/^[a-z0-9_-]+:[a-z0-9_-]+$/i.test(v.trim());
 const xpfAttr=v=>String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 // <g> drawing a custom icon of size sz centred on cx,cy; '' when v is not a custom icon
@@ -847,7 +870,7 @@ class XPowerFlowCard extends HTMLElement{
 constructor(){super();this.attachShadow({mode:'open'});this._c={};this._h=null;this._prev={solar:0,bat:0,grid:0,load:0};this._hist={solar:[],load:[],grid:[],battery:[]};this._fs={};this._histTimer=null;this._histLastLoad=0;this._histLoading=false;this._syncSpd=0;this._resync=false;this._rafId=null;this._twv={};this._twq={};this._twRaf=null;this._entList=[];this._srKey='';this._rm=!!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);this._mq=window.matchMedia?window.matchMedia('(prefers-color-scheme: light)'):null;this._onMq=()=>this._applyTheme();this._mwc=new Map();this._io=null;this._ro=null;this._ringKey='';this._auT=null;this._srT=null;this._vis=true;this._srTk=null;this._srLit=-1;this._onVis=()=>{if(!document.hidden&&this._h){this._histLastLoad=0;this._schedule();}};}
 
 static getConfigElement(){return document.createElement('xpower-flow-card-editor');}
-static getStubConfig(){return{preset:DEFAULTS.preset};}
+static getStubConfig(hass){return xpfStub(hass&&hass.states);}
 
 setConfig(c){
   this._c={};
@@ -894,8 +917,10 @@ set hass(h){
   this._h=h;
   if(!this._c.language){const k=_lk('',h);if(k!==this._lk){this._lk=k;this._lang=LANG[k];this._render();this._applyTheme();this._prev={solar:0,bat:0,grid:0,load:0};this._twv={};this._fs={};this._syncSpd=0;this._schedule();}}
   if(!prev||h.themes!==prev.themes)this._applyTheme();
+  if(!prev||h.locale!==prev.locale){const d=xpfDec(h);if(d!==this._dc){this._dc=d;if(prev)this._schedule();}}
   if(document.hidden||!this._vis)return;
   const now=Date.now();
+  if(this._histT0&&Math.floor(this._mid()/HIST_SLOT)*HIST_SLOT!==this._histT0){this._histT0=0;this._hist={solar:[],load:[],grid:[],battery:[]};this._fc=null;this._fcT=0;this._histLastLoad=0;this._drawSparks();}
   if(!this._c.compact&&now-this._histLastLoad>HIST_INTERVAL){this._histLastLoad=now;this._loadHistory();}
   if(this._dirty(prev,h))this._schedule();
 }
@@ -944,7 +969,8 @@ _ge(e){const v=this._gv(e);if(v===null)return null;const a=this._h.states[e].att
 _gst(e){const st=e&&this._h&&this._h.states[e];if(!st)return undefined;const s=String(st.state).trim().toLowerCase();if(!s||s==='unavailable'||s==='unknown'||s==='none')return null;return /^(on|1|true|yes|online|connected|on[-_ ]?grid)$/.test(s);}
 _temp(e){const v=this._gv(e);if(v===null)return null;const st=this._h.states[e];return this._tfmt(v,st&&st.attributes&&st.attributes.unit_of_measurement);}
 _tfmt(v,su0){const su=(su0||'').toUpperCase();const srcF=su.indexOf('F')>-1;const u=this._c.temp_unit||'auto';let val,unit;if(u==='F'){val=srcF?v:v*9/5+32;unit='\u00B0F';}else if(u==='C'){val=srcF?(v-32)*5/9:v;unit='\u00B0C';}else{val=v;unit=srcF?'\u00B0F':'\u00B0C';}return val.toFixed(0)+unit;}
-_fmt(v){if(v===null)return this._lang.unavailable;const a=Math.abs(v);return a>=1000?(a/1000).toFixed(1)+' kW':a.toFixed(0)+' W';}
+_nf(v,d){const s=v.toFixed(d);return this._dc===','?s.replace('.',','):s;}
+_fmt(v){if(v===null)return this._lang.unavailable;const a=Math.abs(v);return a>=1000?this._nf(a/1000,1)+' kW':a.toFixed(0)+' W';}
 _wx(c){const g=this._$('wxG'),b=this._$('wxBody');if(!g||!b)return;const H=this._h&&this._h.states;if(!H)return;const ws=c.weather_entity?H[c.weather_entity]:null;let s=ws?ws.state:'';if(s==='unavailable'||s==='unknown')s='';const sn=H[c.sun_entity||'sun.sun'];const night=!!s&&(s==='clear-night'||(sn&&sn.state==='below_horizon'));const k=s?(WXK[s]||''):'';const key=k+'|'+night;if(key===this._wxKey)return;this._wxKey=key;this._wxOn=!!s;
 const L=WXL[k];if(L){this._sa(b,'transform',`translate(${L[0]} ${L[1]}) translate(250 38) scale(${L[2]}) translate(-250 -38)`);this._ss(b,'opacity',String(L[3]));}else{this._ss(b,'opacity','0');}
 this._ss(this._$('sunBody'),'display',night?'none':'');this._ss(this._$('moonBody'),'display',night?'':'none');g.innerHTML=WXG[k]+(night&&k===''?WXN:'');}
@@ -961,10 +987,10 @@ if(lit!==this._srLit){this._srLit=lit;for(let i=0;i<n;i++)tk[i].style.opacity=i<
 const tf=t=>{const dt=new Date(t);return String(dt.getHours()).padStart(2,'0')+':'+String(dt.getMinutes()).padStart(2,'0');};
 const sr=this._$('srx'),ss=this._$('ssx');
 this._st(sr,tf(rise));this._st(ss,tf(set));}
-_fmtE(v){if(v===null)return this._lang.unavailable;return v.toFixed(1)+' kWh';}
-_fmtC(e){if(!e||!this._h||!this._h.states[e])return '';const s=this._h.states[e];const v=parseFloat(s.state);if(isNaN(v))return '';const u=s.attributes?.unit_of_measurement||'€';return u+v.toFixed(2);}
+_fmtE(v){if(v===null)return this._lang.unavailable;return this._nf(v,1)+' kWh';}
+_fmtC(e){if(!e||!this._h||!this._h.states[e])return '';const s=this._h.states[e];const v=parseFloat(s.state);if(isNaN(v))return '';const u=String(s.attributes?.unit_of_measurement||'€').trim(),n=this._nf(v,2);return /^[A-Za-z]/.test(u)?n+' '+u:u+n;}
 _mw(s){let w=this._mwc.get(s);if(w!==undefined)return w;const m=this._$('meas');if(!m)return 0;m.textContent=s;w=m.getComputedTextLength()||0;if(w){if(this._mwc.size>2000)this._mwc.clear();this._mwc.set(s,w);}return w;}
-_arw(id,cur,prev,col){const g=this._$(id);if(!g)return;if(cur===null){this._ss(g,'display','none');this._twv['_'+id]=null;return;}this._ss(g,'display','');const vx=+g.dataset.vx,vy=+g.dataset.vy;const w=this._mw(this._fmt(cur));this._sa(g,'transform','translate('+(vx-w/2-11).toFixed(1)+','+vy+')');const inner=g.firstElementChild,p1=inner.children[0],p2=inner.children[1];this._sa(inner,'opacity',Math.abs(cur)<10?'0.28':'1');const pv=prev==null?cur:prev,d=Math.abs(cur)-Math.abs(pv),dir=d>5?'up':d<-5?'down':'flat';const style=this._c.arrow_style==='arrow'?'arrow':'chevron';const G=XPF_ARROW[style][dir];this._sa(p1,'d',G[0]);this._sa(p1,'stroke',col);if(G[1]){this._ss(p2,'display','');this._sa(p2,'d',G[1]);this._sa(p2,'stroke',col);}else{this._ss(p2,'display','none');}const last=this._twv['_'+id];const changed=last===undefined||last===null||Math.abs(cur-last)>=1;this._twv['_'+id]=cur;if(changed&&dir!=='flat'&&!(this._rm&&this._c.animations!=='always')){const kf=XPF_NUDGE[style][dir];if(kf){try{inner.animate(kf,{duration:480,easing:'cubic-bezier(.3,0,.2,1)'});}catch(e){}}}}
+_arw(id,cur,prev,col){const g=this._$(id);if(!g)return;if(cur===null){this._ss(g,'display','none');this._twv['_'+id]=null;return;}this._ss(g,'display','');const vx=+g.dataset.vx,vy=+g.dataset.vy;const w=this._mw(this._fmt(cur));this._sa(g,'transform','translate('+(vx-w/2-11).toFixed(1)+','+vy+')');const inner=g.firstElementChild,p1=inner.children[0],p2=inner.children[1];this._sa(inner,'opacity',Math.abs(cur)<10?'0.28':'1');const pv=prev==null?cur:prev,d=Math.abs(cur)-Math.abs(pv),dir=d>5?'up':d<-5?'down':'flat';const style=this._c.arrow_style==='arrow'?'arrow':'chevron';const G=XPF_ARROW[style][dir];this._sa(p1,'d',G[0]);this._sa(p1,'stroke',col);if(G[1]){this._ss(p2,'display','');this._sa(p2,'d',G[1]);this._sa(p2,'stroke',col);}else{this._ss(p2,'display','none');}const last=this._twv['_'+id];const changed=last===undefined||last===null||Math.abs(cur-last)>=1;this._twv['_'+id]=cur;if(changed&&dir!=='flat'&&!(this._rm&&this._c.animations!=='always')){const kf=XPF_NUDGE[style][dir];if(kf){try{inner.animate(kf,{duration:480,easing:'cubic-bezier(.3,0,.2,1)'});}catch{}}}}
 
 _norm(raw,type){
   if(raw===null)return null;
@@ -996,8 +1022,9 @@ if(sA.length)H.solar=sA[0].map((v,k)=>v===null?null:sA.reduce((a,x)=>a+(x[k]||0)
 H.load=ser(c.load);const g=ser(c.grid);if(g)H.grid=g.map(v=>v===null?null:Math.max(0,v));
 const bc=ser(c.battery_charge,true),bd=ser(c.battery_discharge,true);
 H.bat=bc||bd?(bd||bc).map((_,k)=>{const a=bd?bd[k]:0,b=bc?bc[k]:0;return a===null&&b===null?null:Math.abs(a||0)-Math.abs(b||0);}):ser(c.battery,true);
+if(!c.load&&(H.solar||g)){const S=H.solar,B=H.bat;H.load=(S||g).map((_,k)=>{const a=S?S[k]:null,b=g?g[k]:null;return a===null&&b===null?null:Math.max(0,(a||0)+(b||0)+((B&&B[k])||0));});}
 H.soc=ser(c.soc,true);this._hist=H;
-if(c.solar_forecast!==false&&c.energy_chart!=='off'&&(!this._fcT||now-this._fcT>30*60000||this._fcD!==this._mid())){this._fcT=now;this._fcD=this._mid();try{const fr=await this._h.callWS({type:'energy/solar_forecast'});const fc=new Array(HIST_POINTS).fill(0);let any=false;if(fr)for(const eid in fr){const wh=fr[eid]&&fr[eid].wh_hours;if(!wh)continue;for(const ts in wh){const t=Date.parse(ts),k=Math.floor(t/HIST_SLOT)-i0;const W=+wh[ts];if(isNaN(t)||isNaN(W))continue;for(let q=0;q<4;q++){const kk=k+q;if(kk>=0&&kk<HIST_POINTS){fc[kk]+=W;any=true;}}}}if(any){const sm=fc.slice();for(let k=1;k<HIST_POINTS-1;k++)sm[k]=(fc[k-1]+fc[k]*2+fc[k+1])/4;this._fc=sm;}else this._fc=null;}catch(e){this._fc=null;}}
+if(c.solar_forecast!==false&&c.energy_chart!=='off'&&(!this._fcT||now-this._fcT>30*60000||this._fcD!==this._mid())){this._fcT=now;this._fcD=this._mid();try{const fr=await this._h.callWS({type:'energy/solar_forecast'});const fc=new Array(HIST_POINTS).fill(0);let any=false;if(fr)for(const eid in fr){const wh=fr[eid]&&fr[eid].wh_hours;if(!wh)continue;for(const ts in wh){const t=Date.parse(ts),k=Math.floor(t/HIST_SLOT)-i0;const W=+wh[ts];if(isNaN(t)||isNaN(W))continue;for(let q=0;q<4;q++){const kk=k+q;if(kk>=0&&kk<HIST_POINTS){fc[kk]+=W;any=true;}}}}if(any){const sm=fc.slice();for(let k=1;k<HIST_POINTS-1;k++)sm[k]=(fc[k-1]+fc[k]*2+fc[k+1])/4;this._fc=sm;}else this._fc=null;}catch{this._fc=null;}}
 this._drawSparks();}catch(e){console.warn('xPower history:',e);}finally{this._histLoading=false;}}
 
 // Without solar the top of the diagram is cropped: T = first visible row (inner coordinates), pills move down to it
@@ -1158,7 +1185,7 @@ o+=area(Ld,'egL')+area(Gr,'egG')+line(Gr.map((v,k)=>v>1||Gr[k-1]>1||Gr[k+1]>1?v:
 o+=area(S,'egS')+line(S,'stroke="var(--green)" stroke-width="1.2"');
 o+=line(Ld,'stroke="var(--load)" stroke-width="1.2" filter="url(#egSh)"');
 const now=Date.now(),t0=this._histT0||this._mid(),nk=Math.floor((now-t0)/HIST_SLOT);if(nk>=0&&nk<n){const nx=(L0+(now-t0)/86400000*(W-L0)).toFixed(1);o+='<line x1="'+nx+'" x2="'+nx+'" y1="2" y2="'+B0+'" stroke="var(--t1)" stroke-width="0.8" stroke-dasharray="2 3" opacity="0.4"/>';}
-let pk=-1;for(let k=0;k<n;k++)if(S[k]!==null&&S[k]!==undefined&&(pk<0||S[k]>S[pk]))pk=k;if(pk>=0&&S[pk]>=50){const px=X(pk),py=Y(S[pk]),t=(S[pk]/1000).toFixed(2)+' kW',bw=t.length*4.3+8,bx=Math.min(W-bw/2-1,Math.max(L0+bw/2,px)),by=Math.max(1,py-15);o+='<circle cx="'+px.toFixed(1)+'" cy="'+py.toFixed(1)+'" r="2.4" style="fill:var(--green)" stroke="rgba(0,0,0,0.35)" stroke-width="1"/><rect x="'+(bx-bw/2).toFixed(1)+'" y="'+by.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="11" rx="3" style="fill:var(--green)"/><text x="'+bx.toFixed(1)+'" y="'+(by+8).toFixed(1)+'" text-anchor="middle" style="fill:#10240f;font-weight:700;font-size:7.5px">'+t+'</text>';}
+let pk=-1;for(let k=0;k<n;k++)if(S[k]!==null&&S[k]!==undefined&&(pk<0||S[k]>S[pk]))pk=k;if(pk>=0&&S[pk]>=50){const px=X(pk),py=Y(S[pk]),t=this._nf(S[pk]/1000,2)+' kW',bw=t.length*4.3+8,bx=Math.min(W-bw/2-1,Math.max(L0+bw/2,px)),by=Math.max(1,py-15);o+='<circle cx="'+px.toFixed(1)+'" cy="'+py.toFixed(1)+'" r="2.4" style="fill:var(--green)" stroke="rgba(0,0,0,0.35)" stroke-width="1"/><rect x="'+(bx-bw/2).toFixed(1)+'" y="'+by.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="11" rx="3" style="fill:var(--green)"/><text x="'+bx.toFixed(1)+'" y="'+(by+8).toFixed(1)+'" text-anchor="middle" style="fill:#10240f;font-weight:700;font-size:7.5px">'+t+'</text>';}
 g.innerHTML=o;}
 _drawChartB(){const svg=this._$('csB'),g=this._$('cgB');if(!svg||!g)return;const G=this._cGeo(svg);const {W,H,T0,B0,L0,n,X}=G;svg.setAttribute('viewBox','0 0 '+W+' '+H);const Hh=this._hist||{},C=Hh.soc||[],L=this._lang;const Y=v=>B0-Math.max(0,Math.min(100,v))/100*(B0-T0);G.Y=Y;this._cgB=G;
 let o='<defs><linearGradient id="bgA" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--green);stop-opacity:0.4"/><stop offset="1" style="stop-color:var(--green);stop-opacity:0"/></linearGradient></defs><path class="cbl" d="M'+L0+' '+B0+'H'+W+'"/>';
@@ -1171,19 +1198,20 @@ const kf=C.findIndex(v=>v!==null&&v!==undefined&&v>=99.5);if(kf>=0&&(kl<0||Math.
 if(kl>=0){const cx=X(kl),cy=Y(C[kl]),t=Math.round(C[kl])+'%',bw=t.length*4.6+9,bh=11,bx=Math.min(W-bw/2-1,Math.max(L0+bw/2,cx)),by=cy-bh-5<1?cy+5:cy-bh-5;o+='<circle cx="'+cx.toFixed(1)+'" cy="'+cy.toFixed(1)+'" r="2.6" style="fill:var(--green)" stroke="rgba(0,0,0,0.35)" stroke-width="1"/><rect x="'+(bx-bw/2).toFixed(1)+'" y="'+by.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+bh+'" rx="5.5" style="fill:var(--green)"/><text x="'+bx.toFixed(1)+'" y="'+(by+8).toFixed(1)+'" text-anchor="middle" style="fill:#10240f;font-weight:700;font-size:7.5px">'+t+'</text>';}
 g.innerHTML=o;}
 _chHead(){const L=this._lang,fmt=v=>this._fmt(v),c=this._c;const eE=this._$('cvE'),eB=this._$('cvB');const k=this._chK,Hh=this._hist||{};const at=(a)=>k!==null&&k!==undefined&&a&&a[k]!==null&&a[k]!==undefined?a[k]:null;
-if(eE){const off=this._chOffSet(),sp=(cl,t,id)=>'<span data-s="'+id+'" role="button" tabindex="0" aria-pressed="'+!off.has(id)+'" class="chs'+(off.has(id)?' off':'')+'" style="color:'+cl+'">'+t+'</span>',kw=v=>v===null||v===undefined?L.unavailable:v.toFixed(1)+' kWh',fw=v=>v===null||v===undefined?L.unavailable:fmt(Math.max(0,v));let html;if(k!==null&&k!==undefined){const f=this._fc;html=(this._ns?'':sp('var(--green)','☀ '+fw(at(Hh.solar)),'s'))+sp('var(--load)','⌂ '+fw(at(Hh.load)),'l')+sp('var(--red)','⚡ '+fw(at(Hh.grid)),'g')+(f?sp('#FFCA28',L.fcst+' '+fw(f[k]),'f'):'');}else{const dv=e=>e?this._ge(e):null;let dS=dv(c.daily_solar),dL=dv(c.daily_load),dI=dv(c.daily_import);if(dS===null)dS=Hh.solar?xpfKWh(Hh.solar):null;if(dL===null)dL=Hh.load?xpfKWh(Hh.load):null;if(dI===null)dI=Hh.grid?xpfKWh(Hh.grid):null;html=(this._ns?'':sp('var(--green)','☀ '+kw(dS),'s'))+sp('var(--load)','⌂ '+kw(dL),'l')+sp('var(--red)','⚡ '+kw(dI),'g')+(this._fc?sp('#FFCA28',L.fcst+' '+kw(xpfKWh(this._fc)),'f'):'');}if(eE._h!==html){eE._h=html;eE.innerHTML=html;}}
-{const ck=this._$('ckB');if(ck){const dv=e=>e?this._ge(e):null,Bh=Hh.bat;let a=dv(c.daily_charge),d=dv(c.daily_discharge);if(a===null&&Bh)a=Bh.reduce((t,v)=>t+(v<0?-v:0),0)/4000;if(d===null&&Bh)d=Bh.reduce((t,v)=>t+(v>0?v:0),0)/4000;const f=v=>v===null||isNaN(v)?L.unavailable:v.toFixed(1);const html=a===null&&d===null?'':'<span style="color:var(--green)">+'+f(a)+'</span> / <span style="color:var(--orange)">\u2212'+f(d)+'</span> kWh';if(ck._h!==html){ck._h=html;ck.innerHTML=html;}}}
+if(eE){const off=this._chOffSet(),sp=(cl,t,id)=>'<span data-s="'+id+'" role="button" tabindex="0" aria-pressed="'+!off.has(id)+'" class="chs'+(off.has(id)?' off':'')+'" style="color:'+cl+'">'+t+'</span>',kw=v=>v===null||v===undefined?L.unavailable:this._nf(v,1)+' kWh',fw=v=>v===null||v===undefined?L.unavailable:fmt(Math.max(0,v));let html;if(k!==null&&k!==undefined){const f=this._fc;html=(this._ns?'':sp('var(--green)','☀ '+fw(at(Hh.solar)),'s'))+sp('var(--load)','⌂ '+fw(at(Hh.load)),'l')+sp('var(--red)','⚡ '+fw(at(Hh.grid)),'g')+(f?sp('#FFCA28',L.fcst+' '+fw(f[k]),'f'):'');}else{const dv=e=>e?this._ge(e):null;let dS=dv(c.daily_solar),dL=dv(c.daily_load),dI=dv(c.daily_import);if(dS===null)dS=Hh.solar?xpfKWh(Hh.solar):null;if(dL===null)dL=Hh.load?xpfKWh(Hh.load):null;if(dI===null)dI=Hh.grid?xpfKWh(Hh.grid):null;html=(this._ns?'':sp('var(--green)','☀ '+kw(dS),'s'))+sp('var(--load)','⌂ '+kw(dL),'l')+sp('var(--red)','⚡ '+kw(dI),'g')+(this._fc?sp('#FFCA28',L.fcst+' '+kw(xpfKWh(this._fc)),'f'):'');}if(eE._h!==html){eE._h=html;eE.innerHTML=html;}}
+{const ck=this._$('ckB');if(ck){const dv=e=>e?this._ge(e):null,Bh=Hh.bat;let a=dv(c.daily_charge),d=dv(c.daily_discharge);if(a===null&&Bh)a=Bh.reduce((t,v)=>t+(v<0?-v:0),0)/4000;if(d===null&&Bh)d=Bh.reduce((t,v)=>t+(v>0?v:0),0)/4000;const f=v=>v===null||isNaN(v)?L.unavailable:this._nf(v,1);const html=a===null&&d===null?'':'<span style="color:var(--green)">+'+f(a)+'</span> / <span style="color:var(--orange)">\u2212'+f(d)+'</span> kWh';if(ck._h!==html){ck._h=html;ck.innerHTML=html;}}}
 if(eB){let soc,b;if(k!==null&&k!==undefined){soc=at(Hh.soc);b=at(Hh.bat);}else{const lv=this._live||{};soc=lv.soc;b=lv.b;}const stt=b===null||b===undefined?'I':b<-20?'C':b>20?'D':'I';const cl=stt==='C'?'var(--green)':stt==='D'?'var(--orange)':'#9aa0a6';const html='<span style="color:'+cl+'">'+(soc===null||soc===undefined?L.unavailable:Math.round(soc)+'%')+'</span><span style="color:var(--t2,var(--t1));opacity:0.8">'+(stt==='C'?'▾ '+fmt(-b):stt==='D'?'▴ '+fmt(b):'')+'</span>';if(eB._h!==html){eB._h=html;eB.innerHTML=html;}}}
-_chOffSet(){if(!this._chOff){let a=[];try{a=JSON.parse(localStorage.getItem('xpf-chart-off')||'[]');}catch(e){}this._chOff=new Set(Array.isArray(a)?a:[]);}return this._chOff;}
-_chToggle(id){const off=this._chOffSet();if(off.has(id))off.delete(id);else off.add(id);try{localStorage.setItem('xpf-chart-off',JSON.stringify([...off]));}catch(e){}this._drawChartE();this._chHead();}
-_setupCharts(){this._chK=null;{const eE=this._$('cvE');if(eE){const tg=e=>{const t=e.target.closest&&e.target.closest('[data-s]');if(!t)return;e.stopPropagation();if(e.type==='keydown'){if(e.key!=='Enter'&&e.key!==' ')return;e.preventDefault();}this._chToggle(t.dataset.s);};eE.addEventListener('click',tg);eE.addEventListener('keydown',tg);}}for(const k of ['E','B']){const svg=this._$('cs'+k);if(!svg)continue;const show=cx=>{const G=k==='E'?this._cgE:this._cgB;if(!G)return;const r=svg.getBoundingClientRect();const x=(cx-r.left)/r.width*G.W;let i=Math.floor((x-G.L0)/(G.W-G.L0)*G.n);i=Math.max(0,Math.min(G.n-1,i));const nk=Math.floor((Date.now()-(this._histT0||this._mid()))/HIST_SLOT);i=Math.min(i,Math.max(0,nk));this._chK=i;const X=G.X(i).toFixed(1);for(const q of ['E','B']){const ln=this._$('cc'+q),G2=q==='E'?this._cgE:this._cgB,d=this._$('cd'+q);if(!ln||!G2)continue;const X2=G2.X(i).toFixed(1);ln.setAttribute('x1',X2);ln.setAttribute('x2',X2);ln.setAttribute('opacity','0.7');const Hh=this._hist||{};let dots='';const dot=(v,cl)=>{if(v!==null&&v!==undefined)dots+='<circle cx="'+X2+'" cy="'+G2.Y(v).toFixed(1)+'" r="2.6" fill="'+cl+'"/>';};if(q==='E'){const off=this._chOffSet();if(!off.has('s'))dot(Hh.solar&&Hh.solar[i],'var(--green)');if(!off.has('l'))dot(Hh.load&&Hh.load[i],'var(--load)');}else{dot(Hh.soc&&Hh.soc[i],'var(--green)');}d.innerHTML=dots;}this._chHead();};const hide=()=>{this._chK=null;for(const q of ['E','B']){const ln=this._$('cc'+q),d=this._$('cd'+q);if(ln)ln.setAttribute('opacity','0');if(d)d.innerHTML='';}this._chHead();};svg.addEventListener('mousemove',e=>show(e.clientX));svg.addEventListener('mouseleave',hide);let tx=0,ty=0;svg.addEventListener('touchstart',e=>{const t=e.touches[0];tx=t.clientX;ty=t.clientY;show(t.clientX);},{passive:true});svg.addEventListener('touchmove',e=>{const t=e.touches[0];if(Math.abs(t.clientY-ty)>Math.abs(t.clientX-tx)+6)return hide();show(t.clientX);},{passive:true});svg.addEventListener('touchend',hide);svg.addEventListener('touchcancel',hide);}}
+_chOffSet(){if(!this._chOff){let a=[];try{a=JSON.parse(localStorage.getItem('xpf-chart-off')||'[]');}catch{}this._chOff=new Set(Array.isArray(a)?a:[]);}return this._chOff;}
+_chToggle(id){const off=this._chOffSet();if(off.has(id))off.delete(id);else off.add(id);try{localStorage.setItem('xpf-chart-off',JSON.stringify([...off]));}catch{}this._drawChartE();this._chHead();}
+_setupCharts(){this._chK=null;{const eE=this._$('cvE');if(eE){const tg=e=>{const t=e.target.closest&&e.target.closest('[data-s]');if(!t)return;e.stopPropagation();if(e.type==='keydown'){if(e.key!=='Enter'&&e.key!==' ')return;e.preventDefault();}this._chToggle(t.dataset.s);};eE.addEventListener('click',tg);eE.addEventListener('keydown',tg);}}for(const k of ['E','B']){const svg=this._$('cs'+k);if(!svg)continue;const show=cx=>{const G=k==='E'?this._cgE:this._cgB;if(!G)return;const r=svg.getBoundingClientRect();const x=(cx-r.left)/r.width*G.W;let i=Math.floor((x-G.L0)/(G.W-G.L0)*G.n);i=Math.max(0,Math.min(G.n-1,i));const nk=Math.floor((Date.now()-(this._histT0||this._mid()))/HIST_SLOT);i=Math.min(i,Math.max(0,nk));this._chK=i;for(const q of ['E','B']){const ln=this._$('cc'+q),G2=q==='E'?this._cgE:this._cgB,d=this._$('cd'+q);if(!ln||!G2)continue;const X2=G2.X(i).toFixed(1);ln.setAttribute('x1',X2);ln.setAttribute('x2',X2);ln.setAttribute('opacity','0.7');const Hh=this._hist||{};let dots='';const dot=(v,cl)=>{if(v!==null&&v!==undefined)dots+='<circle cx="'+X2+'" cy="'+G2.Y(v).toFixed(1)+'" r="2.6" fill="'+cl+'"/>';};if(q==='E'){const off=this._chOffSet();if(!off.has('s'))dot(Hh.solar&&Hh.solar[i],'var(--green)');if(!off.has('l'))dot(Hh.load&&Hh.load[i],'var(--load)');}else{dot(Hh.soc&&Hh.soc[i],'var(--green)');}d.innerHTML=dots;}this._chHead();};const hide=()=>{this._chK=null;for(const q of ['E','B']){const ln=this._$('cc'+q),d=this._$('cd'+q);if(ln)ln.setAttribute('opacity','0');if(d)d.innerHTML='';}this._chHead();};svg.addEventListener('mousemove',e=>show(e.clientX));svg.addEventListener('mouseleave',hide);let tx=0,ty=0;svg.addEventListener('touchstart',e=>{const t=e.touches[0];tx=t.clientX;ty=t.clientY;show(t.clientX);},{passive:true});svg.addEventListener('touchmove',e=>{const t=e.touches[0];if(Math.abs(t.clientY-ty)>Math.abs(t.clientX-tx)+6)return hide();show(t.clientX);},{passive:true});svg.addEventListener('touchend',hide);svg.addEventListener('touchcancel',hide);}}
 
 _update(){if(!this._h||!this.shadowRoot.getElementById('vs'))return;
 const c=this._c,L=this._lang;
 
-const sol1=this._gp(c.solar);
-const sol2=this._gp(c.solar2);
-const sol3=this._gp(c.solar3);
+const _pv=e=>{const v=this._gp(e);return v===null?null:Math.max(0,v);};
+const sol1=_pv(c.solar);
+const sol2=_pv(c.solar2);
+const sol3=_pv(c.solar3);
 const _sv=[sol1,sol2,sol3].filter(v=>v!==null);
 const sol=_sv.length?_sv.reduce((a,b)=>a+b,0):null;
 const batCh=this._gp(c.battery_charge);
@@ -1191,7 +1219,11 @@ const batDis=this._gp(c.battery_discharge);
 const bat=(batCh!==null||batDis!==null)?(batDis??0)-(batCh??0):this._norm(this._gp(c.battery),'bat');
 const soc=this._gv(c.soc);
 let grid=this._norm(this._gp(c.grid),'grid');const gth=Number(c.grid_threshold)||0;if(grid!==null&&Math.abs(grid)<gth)grid=0;
-const load=this._gp(c.load);
+// Separate AC/DC charger (#21): what it puts into the battery (DC, else AC) is taken off the battery reading so the inverter line shows only the inverter's share
+const chOn=!!c.charger_ac_power,chA=chOn?this._gp(c.charger_ac_power):null,chD=chOn?this._gp(c.charger_dc_power):null,chIn=chOn?Math.max(0,chD??chA??0):0,chAin=chOn?Math.max(0,chA??chD??0):0;
+const batI=chOn&&c.charger_in_battery!==false&&bat!==null?bat+chIn:(bat??0);
+// No load sensor configured: the home is what the sources leave over (solar + grid + battery, less what a separate charger draws)
+const load=c.load?this._gp(c.load):(sol!==null||grid!==null?Math.max(0,(sol??0)+(grid??0)-chAin+batI):null);
 const temp=this._gv(c.temperature);
 const gv=this._gv(c.grid_voltage);
 const gv2=this._gv(c.grid_voltage_l2);
@@ -1219,8 +1251,8 @@ const shu=this._rsv();let batC='#66BB6A';if(soc!==null&&socVal<=shu){batC='#EF53
 
 if(temp!==null)this._st(this._$('tp'),this._temp(c.temperature));else this._st(this._$('tp'),'');
 const gvTxt=gv!==null?(gv2!==null&&gv3!==null?gv.toFixed(0)+'/'+gv2.toFixed(0)+'/'+gv3.toFixed(0)+'V':gv.toFixed(0)+'V'):null;
-if(gvTxt!==null&&freq!==null)this._st(this._$('gv'),gvTxt+' \u00B7 '+freq.toFixed(1)+'Hz');else if(gvTxt!==null)this._st(this._$('gv'),gvTxt);else if(freq!==null)this._st(this._$('gv'),freq.toFixed(1)+'Hz');else this._st(this._$('gv'),'');
-if(bv!==null)this._st(this._$('bv'),bv.toFixed(1)+'V');else this._st(this._$('bv'),'');
+if(gvTxt!==null&&freq!==null)this._st(this._$('gv'),gvTxt+' \u00B7 '+this._nf(freq,1)+'Hz');else if(gvTxt!==null)this._st(this._$('gv'),gvTxt);else if(freq!==null)this._st(this._$('gv'),this._nf(freq,1)+'Hz');else this._st(this._$('gv'),'');
+if(bv!==null)this._st(this._$('bv'),this._nf(bv,1)+'V');else this._st(this._$('bv'),'');
 const btS=this._temp(c.battery_temperature);this._st(this._$('bt'),btS===null?'':btS);
 
 const dS=this._ge(c.daily_solar),dI=this._ge(c.daily_import),dE=this._ge(c.daily_export),dL=this._ge(c.daily_load),dC=this._ge(c.daily_charge),dD=this._ge(c.daily_discharge);
@@ -1236,18 +1268,16 @@ this._st(this._$('dl'),L.daily+' '+this._fmtE(dL));
 this._st(this._$('db'),L.charge+' '+this._fmtE(dC)+' '+L.discharge+' '+this._fmtE(dD));
 
 const solF=sol??0,batF=bat??0,gridF=grid??0,loadF=load??0;
-// Separate AC/DC charger (#21): what it puts into the battery (DC, else AC) is taken off the battery reading so the inverter line shows only the inverter's share
-const chOn=!!c.charger_ac_power,chA=chOn?this._gp(c.charger_ac_power):null,chD=chOn?this._gp(c.charger_dc_power):null,chIn=chOn?Math.max(0,chD??chA??0):0,chAin=chOn?Math.max(0,chA??chD??0):0;
-const batI=chOn&&c.charger_in_battery!==false&&bat!==null?batF+chIn:batF;this._live={s:sol,l:load,g:grid,b:bat,soc:soc};if(this._chK===null||this._chK===undefined)this._chHead();
+this._live={s:sol,l:load,g:grid,b:bat,soc:soc};if(this._chK===null||this._chK===undefined)this._chHead();
 const maxP=Math.max(solF,Math.abs(batI),Math.abs(gridF),loadF,chAin);
 const syncSpd=maxP>10?this._spd(maxP):3;
 if(c.flow_speed==='synced'&&(this._syncSpd<=0||Math.abs(syncSpd-this._syncSpd)/this._syncSpd>0.1)){this._syncSpd=syncSpd;const spd=syncSpd.toFixed(1)+'s';['fs','fg','fb','fh','fh2','fh3','fe','fex1','fex2','fex3','fex4','fex5','fex6','fca','fcb'].forEach(id=>{const el=this._$(id);if(el)el.style.setProperty('--spd',spd);const cg=this._$('c'+id);if(cg)cg.style.setProperty('--spd',spd);});this._resync=true;}
 this._sf(this._$('fs'),'s',solF,'fd','var(--green)','0.8');
 this._sf(this._$('fg'),'g',gridF,gridF>0?'fr':'fL',gridF>0?'var(--red)':'var(--green)','0.7');
-const FX=xpfFlows(solF,batI,gridF,loadF),{sToH:_sToH,bDis:_bDis,gImp:_gImp,gB:_gB,sB:_sB,feed:_feed}=FX,_Bc=batF<0?-batF:0;
+const FX=xpfFlows(solF,batI,gridF,loadF),{sToH:_sToH,bDis:_bDis,gImp:_gImp,gB:_gB,sB:_sB,feed:_feed}=FX;
 this._sf(this._$('fb'),'b',batI,batI<0?'fd':'fu',batI<0?(_gB>_sB?'var(--red)':'var(--green)'):'var(--solar)','0.75');
 {const cb=this._chv&&this._$('cfb');if(cb){const cs=cb.children;if(batI<-10&&_gB>0&&_sB>0){const nc=Math.min(10,cs.length),fG=_gB/(_gB+_sB);for(let i=0;i<cs.length;i++){const u=((cs.length-1-i)%nc+0.5)/nc;this._sa(cs[i],'stroke',u<1-fG?'var(--green)':'var(--red)');}}else{for(let i=0;i<cs.length;i++)this._sa(cs[i],'stroke','');}}}
-{const _sc=[[_sToH,'#66BB6A'],[_bDis,'#FFA726'],[_gImp,'#EF5350']];let _ac=0;for(let _i=0;_i<3;_i++){const _f=_feed>0?_sc[_i][0]/_feed*100:0;const _p0=this._$('hs'+(_i*2)),_p1=this._$('hs'+(_i*2+1));if(_p0){this._sa(_p0,'offset',_ac.toFixed(1)+'%');this._sa(_p0,'stop-color',_sc[_i][1]);}_ac+=_f;if(_p1){this._sa(_p1,'offset',_ac.toFixed(1)+'%');this._sa(_p1,'stop-color',_sc[_i][1]);}}}
+{const _sc=[[_sToH,'var(--green)'],[_bDis,'var(--orange)'],[_gImp,'var(--red)']];let _ac=0;for(let _i=0;_i<3;_i++){const _f=_feed>0?_sc[_i][0]/_feed*100:0;const _p0=this._$('hs'+(_i*2)),_p1=this._$('hs'+(_i*2+1));if(_p0){this._sa(_p0,'offset',_ac.toFixed(1)+'%');this._sa(_p0,'stop-color',_sc[_i][1]);}_ac+=_f;if(_p1){this._sa(_p1,'offset',_ac.toFixed(1)+'%');this._sa(_p1,'stop-color',_sc[_i][1]);}}}
 {const _mx=[['fh','h',_sToH,'var(--green)'],['fh2','h2',_bDis,'var(--orange)'],['fh3','h3',_gImp,'var(--red)']],FL=this._hl,FP=this._hp;let _c=0;for(const [_id,_k,_w,_col] of _mx){const el=this._$(_id);if(!el)continue;const _l=_feed>0?_w/_feed*FL:0;if(_l<0.5){this._sa(el,'opacity','0');continue;}this._sf(el,_k,loadF,'fr',_col,'0.75');el.style.strokeDasharray='0 '+(FP-_c-_l).toFixed(2)+' '+_l.toFixed(2)+' '+_c.toFixed(2);_c+=_l;}const cg=this._chv&&this._$('cfh');if(cg){if(loadF<10||_feed<=0)this._sa(cg,'opacity','0');else{this._sa(cg,'opacity','0.9');this._cvN(cg,loadF);const mx=[[_sToH,'var(--green)'],[_bDis,'var(--orange)'],[_gImp,'var(--red)']].filter(m=>m[0]>0),cs=cg.children,nc=Math.min(10,cs.length);for(let i=0;i<cs.length;i++){const u=((cs.length-1-i)%nc+0.5)/nc;let a=0,col=mx[mx.length-1][1];for(const m of mx){a+=m[0]/_feed;if(u<a+1e-9){col=m[1];break;}}this._sa(cs[i],'stroke',col);}const sp=c.flow_speed==='synced'&&this._syncSpd>0?this._syncSpd:Math.min(6,Math.max(0.5,2500/loadF));const o0=this._cfhSp;if(!o0||Math.abs(sp-o0)/o0>0.15){this._cfhSp=sp;cg.style.setProperty('--spd',sp.toFixed(2)+'s');}}}}
 
 // EV node — visible only when ev_power/ev_soc configured
@@ -1356,19 +1386,19 @@ const priceIcons=this._$('priceicons');const prEl=this._$('pr');
 if(c.price_sensor&&prv!==null){
   if(priceIcons)this._ss(priceIcons,'display','');
   const prU=(this._h&&this._h.states[c.price_sensor]&&this._h.states[c.price_sensor].attributes&&this._h.states[c.price_sensor].attributes.unit_of_measurement)||'';
-  if(prEl)this._st(prEl,prv.toFixed(2)+(prU?' '+prU:''));
+  if(prEl)this._st(prEl,this._nf(prv,2)+(prU?' '+prU:''));
 }else{
   if(priceIcons)this._ss(priceIcons,'display','none');
 }
 
 const _led=(id,on,color)=>{const el=this._$(id);if(!el)return;this._sa(el,'fill',on?color:'rgba(255,255,255,0.12)');this._sc(el,on?'led-on':'');};
-_led('led1',solF>10,'#66BB6A');
-_led('led2',batI>10,'#FFA726');
-_led('led3',gridF>10,'#EF5350');
+_led('led1',solF>10,'var(--green)');
+_led('led2',batI>10,'var(--orange)');
+_led('led3',gridF>10,'var(--red)');
 
 // Grid status dot
 const gst=this._gst(c.grid_status);
-const gsd=this._$('gsd');if(gsd){if(gst===undefined)this._ss(gsd,'display','none');else{this._sa(gsd,'fill',gst===null?'var(--t3)':gst?'#66BB6A':'#EF5350');this._ss(gsd,'display','');}}
+const gsd=this._$('gsd');if(gsd){if(gst===undefined)this._ss(gsd,'display','none');else{this._sa(gsd,'fill',gst===null?'var(--t3)':gst?'var(--green)':'var(--red)');this._ss(gsd,'display','');}}
 const ivbar=this._$('ivbar');if(ivbar)this._sa(ivbar,'fill',gst===undefined?'#E4002B':gst===null?'#8E8E93':gst?'#66BB6A':'#EF5350');
 
 // Sun spin when generating

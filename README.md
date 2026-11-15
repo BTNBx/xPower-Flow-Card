@@ -81,7 +81,7 @@ Select your brand in the visual editor. Entities and polarity are configured aut
 
 ### Visual Editor
 
-Add the card through the UI and use the built-in visual editor. Select your inverter brand from the **Preset** dropdown to fill in the entity and polarity fields, or use auto-detection. The editor only writes the options you change to the YAML.
+Add the card through the UI and use the built-in visual editor. Select your inverter brand from the **Preset** dropdown to fill in the entity and polarity fields, or use **Auto-detect**: it fills empty fields and replaces preset sensors that do not exist in your Home Assistant. A new card starts from the sensors it can find. The editor only writes the options you change to the YAML.
 
 ### YAML (Deye example)
 
@@ -169,7 +169,7 @@ Entity options take an entity id; leave them empty to hide what they drive. With
 | `battery_charge`, `battery_discharge` | | Separate charge / discharge power sensors, used instead of `battery` |
 | `soc` | preset | Battery state of charge |
 | `grid` | preset | Grid power |
-| `load` | preset | Home consumption |
+| `load` | preset | Home consumption. Leave it empty (`load: ''`, or the Custom preset) to have it calculated: solar + grid + battery |
 | `grid_voltage`, `grid_voltage_l2`, `grid_voltage_l3` | preset | Grid voltage (L2 / L3 for three-phase) |
 | `frequency` | preset | Grid frequency |
 | `grid_status` | preset | On-grid / off-grid entity (status dot and inverter bar) |

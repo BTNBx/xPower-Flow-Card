@@ -1,3 +1,16 @@
+## v1.3.79
+
+- Visual editor: after switching to the code editor and back, changes were no longer saved; fixed
+- Auto-detect now also works on a brand preset: a preset sensor that does not exist in your Home Assistant is replaced by the one found (before, it only filled empty fields, so it did nothing outside the Custom preset)
+- A card added from the card picker starts from the sensors found in your Home Assistant (the brand whose sensors exist, else the power sensors it can find) instead of always the Deye defaults
+- `load` is optional: when it is left empty the home consumption is calculated (solar + grid + battery), live and in the energy chart
+- Numbers follow your Home Assistant number format (`1,5 kW` with a decimal comma); a cost with a currency code reads `1,23 EUR` instead of `EUR1.23`
+- `colors:` now also reaches the inverter LEDs, the grid status dot and the home line in reduced motion
+- A slightly negative solar reading at night (inverter standby) shows `0 W` instead of its absolute value
+- Charts: at midnight yesterday's curves are cleared at once instead of staying up to 5 minutes
+- Editor: every option label and choice is translated in all 9 languages
+- Releases: the tag is checked against the card version and the tests run before a release is created
+
 ## v1.3.78
 
 - Light themes: the battery percentage over the empty part of the battery and the inverter name were drawn in fixed white and could not be read on a light background; they now follow the theme's text colour (#42)
