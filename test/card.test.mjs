@@ -367,6 +367,26 @@ test('clicking a chart legend item hides and shows its line', () => {
   c.close();
 });
 
+test('energy chart draws grid export below the zero line', () => {
+  const c = mount({ ...FULL, energy_chart: 'bottom', solar_forecast: false }, ok());
+  const N = 96, ser = f => Array.from({ length: N }, (_, k) => (k < 60 ? f(k) : null));
+  c.el._hist = { solar: ser(() => 3000), load: ser(() => 800), grid: ser(k => (k < 30 ? 500 : -2200)), bat: null, soc: null };
+  c.el._drawSparks();
+  const svg = c.el.shadowRoot.getElementById('cgE').innerHTML;
+  assert.match(svg, /stroke="var\(--grid\)"/, 'export line drawn');
+  assert.match(svg, /stroke="var\(--red\)"/, 'import line drawn');
+  assert.match(svg, /\u22123</, 'negative scale label');
+  assert.equal(c.el._cgE.mn, -3000);
+  assert.ok(c.el._cgE.Y(-2200) > c.el._cgE.Y(0), 'export is below zero');
+  const head = c.el.shadowRoot.getElementById('cvE').textContent;
+  assert.match(head, /\u2212/, 'export total in the header');
+  c.el._hist = { solar: ser(() => 3000), load: ser(() => 800), grid: ser(() => 500), bat: null, soc: null };
+  c.el._drawSparks();
+  assert.equal(c.el._cgE.mn, 0, 'no export: scale starts at zero');
+  assert.doesNotMatch(c.el.shadowRoot.getElementById('cgE').innerHTML, /stroke="var\(--grid\)"/);
+  c.close();
+});
+
 // ── Loading and config safety ────────────────────────
 
 test('loading the file twice does not throw or register the card twice', () => {
