@@ -47,6 +47,7 @@ Select your brand in the visual editor. Entities and polarity are configured aut
 * Detail levels (`essential`, `normal`, `technical`) to show only what you need
 * Custom colours (`colors:`) and custom icons (`mdi:…` or your own images)
 * Compact mode (diagram only), adjustable font size, MPPT text size, flow size and length
+* Sections view: set the rows in the card's layout options and it fills the cell, the diagram scales to fit
 * Respects `prefers-reduced-motion`; animations pause when the card is off screen
 
 **Other**
