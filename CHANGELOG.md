@@ -1,3 +1,8 @@
+## v1.3.80
+
+- Energy chart: grid export is drawn below the zero line in the grid colour, import stays above it in red; the scale grows down only when there is export (#52)
+- Energy chart header: today's export is shown next to the import (from `daily_export`, or from the grid history when it is not set); hovering an export moment shows `−` and the export power
+
 ## v1.3.79
 
 - Visual editor: after switching to the code editor and back, changes were no longer saved; fixed

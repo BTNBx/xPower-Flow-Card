@@ -39,7 +39,7 @@ Select your brand in the visual editor. Entities and polarity are configured aut
 * `show_solar: false` for installations without PV (the card gets shorter)
 
 **Charts**
-* Today's energy chart: solar, home and grid, with the solar forecast from the Energy dashboard; click the legend to hide a line
+* Today's energy chart: solar, home and grid (import above zero, export below), with the solar forecast from the Energy dashboard; click the legend to hide a line
 * Today's battery chart (state of charge, energy charged / discharged)
 
 **Look**
