@@ -34,6 +34,7 @@ Select your brand in the visual editor. Entities and polarity are configured aut
 
 **Optional nodes**
 * EV charger with SOC and daily energy
+* Backup / EPS loads with their own flow straight from the inverter
 * Up to 6 extra consumers: 3 above the home and 3 below it, each with its own icon and label
 * Separate AC/DC battery charger, with efficiency
 * `show_solar: false` for installations without PV (the card gets shorter)
@@ -241,6 +242,8 @@ Entity options take an entity id; leave them empty to hide what they drive. With
 | Option | Default | Description |
 |--------|---------|-------------|
 | `ev_power`, `ev_soc`, `daily_ev` | | EV charger node (power, car SOC, today's energy) |
+| `backup_power`, `backup_name`, `backup_icon` | | Backup / EPS port loads: own node and flow from the inverter (`backup_icon`: `mdi:…` or an image) |
+| `backup_in_load` | `true` | The `load` sensor already includes the backup loads, so the home shows the rest. Set `false` if `load` measures only the grid-side loads |
 | `extra1_power` … `extra6_power` | | Extra consumers, see [Extra consumption nodes](#extra-consumption-nodes) |
 | `charger_ac_power`, `charger_dc_power`, `charger_in_battery` | | Separate battery charger, see [Battery charger](#battery-charger) |
 

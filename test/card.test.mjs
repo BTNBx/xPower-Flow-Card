@@ -378,6 +378,23 @@ test('rows set in the layout options make the card fill its grid cell', () => {
   c.close();
 });
 
+test('backup loads get their own node and come off the home', () => {
+  const c = mount({ ...FULL, backup_power: 'sensor.bk' }, ok({ 'sensor.bk': st(500), 'sensor.load': st(1700) }));
+  const n = c.el.shadowRoot.getElementById('nBak');
+  assert.notEqual(n.style.display, 'none');
+  assert.equal(c.$('bkval'), '500 W');
+  assert.equal(c.$('bklbl'), 'BACKUP');
+  assert.equal(c.$('vl'), '1.2 kW', 'home = load − backup');
+  c.close();
+  const d = mount({ ...FULL, backup_power: 'sensor.bk', backup_in_load: false, backup_name: 'Eps' }, ok({ 'sensor.bk': st(450), 'sensor.load': st(1600) }));
+  assert.equal(d.$('vl'), '1.6 kW', 'load without the backup stays as it is');
+  assert.equal(d.$('bklbl'), 'EPS');
+  d.close();
+  const e = mount(FULL, ok());
+  assert.equal(e.el.shadowRoot.getElementById('nBak').style.display, 'none', 'hidden when not set');
+  e.close();
+});
+
 test('energy chart draws grid export below the zero line', () => {
   const c = mount({ ...FULL, energy_chart: 'bottom', solar_forecast: false }, ok());
   const N = 96, ser = f => Array.from({ length: N }, (_, k) => (k < 60 ? f(k) : null));

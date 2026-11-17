@@ -3,6 +3,7 @@
 - Energy chart: grid export is drawn below the zero line in the grid colour, import stays above it in red; the scale grows down only when there is export (#52)
 - Energy chart header: today's export is shown next to the import (from `daily_export`, or from the grid history when it is not set); hovering an export moment shows `−` and the export power
 - Sections view: when you set the rows by hand in the layout options (`grid_options: rows`), the card fills its grid cell and the diagram, flows included, scales to fit it, keeping its proportions and centred (#53)
+- Backup / EPS loads (`backup_power`): a node of their own with a flow straight from the inverter. When the `load` sensor already includes them (`backup_in_load`, default `true`, also in the editor) the home shows the rest, so home + backup = total consumption (#22)
 
 ## v1.3.79
 
